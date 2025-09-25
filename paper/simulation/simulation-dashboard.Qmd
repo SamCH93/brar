@@ -144,7 +144,7 @@ The simulation study was run on a server running `r si$running` and `r si$R.vers
 
 Cite this dashboard as 
 
-> Pawel, S., Held, L. (2025). Results from Simulation Study on Point Null Bayesian Response Adaptive Randomization Methods. <https://github.com/SamCH93/brar> 
+> Pawel, S., Held, L. (2025). Results from Simulation Study on Point Null Bayesian Response Adaptive Randomization Methods. <https://samch93.github.io/brar/>
 
 
 # Patient Benefit

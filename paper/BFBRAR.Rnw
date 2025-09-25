@@ -1844,8 +1844,7 @@ structured ADEMP approach \citep{Morris2019, Siepe2024}. Our simulation study
 was not preregistered as it constitutes early-phase methodological research
 where the properties of a new method are explored without the intention to give
 recommendations for practitioners \citep{Heinze2023}. A website with additional
-details and results is provided at \url{https://github.com/SamCH93/brar}.
-%% TODO: update link to GitHub pages website when live
+details and results is provided at \url{https://samch93.github.io/brar/}.
 
 \subsection{Aims}
 The aim of the simulation study is to evaluate the design characteristics of the

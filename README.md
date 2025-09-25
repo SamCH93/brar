@@ -17,7 +17,7 @@ To cite our work, use the following BibTeX reference
 }
 ```
 
-More simulation results are available at <https://github.com/SamCH93/brar/simulation/dashboard/simulation-dashboard.html>
+An interactively explorable simulation results dashboard is available at: <https://samch93.github.io/brar/>
 
 
 ## Reproducing the paper with Docker
@@ -25,6 +25,7 @@ More simulation results are available at <https://github.com/SamCH93/brar/simula
 Make sure to have Docker and Make installed, then run `make docker` from the
 root directory of this git repository. This will install all necessary
 dependencies. RStudio Server can then be opened from a browser
-(http://localhost:8787), and the R scripts in ./paper, (e.g., BFBRAR.R, which
-contains all code for the results from the paper), can be rerun. Make sure to
-change the working directory to ./paper inside RStudio Server.
+(http://localhost:8787), and the R scripts in `/paper`, for example,
+`/paper/BFBRAR.R`, which contains all code for the results from the paper), can
+be rerun. Make sure to change the working directory to `/paper` inside RStudio
+Server before running the R scripts.
