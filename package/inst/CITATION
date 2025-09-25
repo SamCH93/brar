@@ -1,0 +1,17 @@
+citHeader(paste("To cite the R-package 'brar' in publications,",
+                "please use:",
+                "Pawel, S., Held, L.",
+                "(2025).",
+                "Bayesian Response Adaptive Randomization with Point Null Bayesian Hypothesis Testing"))
+
+bibentry(bibtype = "Misc",
+         title = "Bayesian Response Adaptive Randomization with Point Null Bayesian Hypothesis Testing",
+         author = c(person(given = "Samuel", family = "Pawel", role = c("aut", "cre")),
+                    person(given = "Leonhard", family = "Held", role = "aut")),
+         ## journal = "",
+         ## volume = "",
+         ## number = "",
+         ## pages = "",
+         ## doi = "",
+         year = "2025"
+         )
