@@ -1673,8 +1673,7 @@ was used which was partially based on the simulation studies from
 description of the design and results of the simulation study following the
 structured ADEMP approach \citep{Morris2019, Siepe2024} are provided in
 Appendix~\ref{app:simulation}. A supplemental website provides an interactively
-explorable results dashboard
-(\url{https://brar-42c2c0.pages.uzh.ch/simulation-dashboard.html}).
+explorable results dashboard (\url{https://samch93.github.io/brar/}).
 
 Across all simulations, we observed a trade-off between patient benefit and
 parameter estimation / hypothesis testing operating characteristics. Some
@@ -2323,7 +2322,7 @@ highest rate of such non-convergence was in \Sexpr{round(100 -
   100*maxNC[,"meanconvergence"], 1)}\% of the $n$ allocations in a condition
 with 3 treatment groups. No other forms of missingness were observed. Figures
 and tables with per-condition-method non-convergence rates are available at
-\url{https://brar-42c2c0.pages.uzh.ch/simulation-dashboard.html}.
+\url{https://samch93.github.io/brar/}.
 
 \paragraph{Rate of successes and extreme randomization probabilities}
 The mean rate of successes is shown in Figure~\ref{fig:successrate}. It was
