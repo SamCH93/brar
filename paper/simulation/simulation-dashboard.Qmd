@@ -1,0 +1,473 @@
+---
+title: "BRAR Simulation Results"
+format: 
+    dashboard:
+        theme: cosmo # sketchy
+        embed-resources: true
+        echo: false
+        warning: false
+        message: false
+        fig-height: 7
+        fig-width: 15
+        fig-align: "center"
+        fig-cap-location: top
+        fig-dpi: 320
+---
+
+```{r}
+#| label: load-packages
+#| message: false
+#| warning: false
+#| echo: false
+
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(DT)
+library(SimDesign)
+library(ggh4x)
+
+theme_dashboard <- function() {
+  ggplot2::theme_bw() + 
+  ggplot2::theme(legend.position = "top",
+                 panel.grid.minor = element_blank(),
+                 panel.grid.major.x = element_blank(),
+                 strip.background = element_rect(fill = "#00000003"))
+}
+theme_set(theme_dashboard())
+```
+
+```{r}
+#| label: load-data
+#| message: false
+#| echo: false
+
+## load data
+simres <- readRDS("brar-sim.rds")
+nsim <- unique(simres$REPLICATIONS)
+summaries <- readRDS("sim-summaries.rds") |>
+    mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
+                            labels = c("none", "[0.1,0.9]")),
+           method = ifelse(pH0 == 1, "equal", method)) |>
+    mutate(trans = case_when(
+        capping_eps == 0.5 & c == "1" ~ "none",
+        capping_eps == 0.4 & c == "1" ~ "capping",
+        capping_eps == 0.5 & c == "1/2" ~ "c=1/2",
+        capping_eps == 0.4 & c == "1/2" ~ "capping and c=1/2",
+        capping_eps == 0.5 & c == "i/(2n)" ~ "c=i/(2n)",
+        capping_eps == 0.4 & c == "i/(2n)" ~ "capping and c=i/(2n)"
+                             ),
+        trans = factor(trans, levels = c("none", "capping", "c=1/2", 
+                                         "capping and c=1/2","c=i/(2n)", 
+                                         "capping and c=i/(2n)"))) |>
+    mutate(method = factor(method, levels = c("exact", "normal", "equal"),
+                           labels = c("Exact BRAR", "Normal BRAR",
+                                      "Equal Randomization"))) |>
+    mutate(Klab = paste0("italic(K) == ", K),
+           nlab = paste0("italic(n) == ", n),
+           burninlab = paste0("'Burn-in' == ", burnin),
+           rd1lab = paste0("'RD'[1] == ", pt1 - pc))
+
+## plot parameters
+dodge_width <- 0.2
+errorbar_width <- 0
+errorbar_alpha <- 0.8
+cols <- c("Exact BRAR" = "#0072B2",
+          "Normal BRAR" = "#D55E00",
+          "Equal Randomization" = "#000000")
+shapes <- c("none" = 19, 
+            "capping" = 2, # 17, 
+            "c=1/2" = 0, # 15, 
+            "capping and c=1/2" = 5, # 18,
+            "c=i/(2n)" = 6, # 25, 
+            "capping and c=i/(2n)" = 1) #4)
+```
+
+# {.sidebar}
+
+This dashboard presents detailed results from the simulation study reported in Pawel and Held (2025, <https://github.com/SamCH93/brar>). Below is a brief description of the design and analysis of the study, following the ADEMP reporting structure (Morris et al., 2019, <https://doi.org/10.1002/sim.8086>).
+
+### Aims
+
+To investigate the design characteristics of different BRAR (Bayesian Response Adaptive Randomization) methods.
+
+### Data-generating mechanism
+
+In each repetition, a data set with $n$ binary outcomes is simulated. Adaptive randomization is performed: A patient $i$ is randomly allocated to the control group or one of the $K$ treatment groups based on randomization probabilities computed from the $1, \dots, i -1$ preceding outcomes. Depending on the allocation, an outcome is either simulated from a Bernoulli distribution with probability $\theta_C$ in the control group, $\theta_1$ in the first treatment group, and $\theta_2$ for the remaining treatment groups (only present if $K > 1$). 
+
+Parameters are chosen similar to a previous simulation studies (Robertson et al., 2023, <https://doi.org/10.1214/22-STS865>). We vary the sample size $n \in \{200, 654\}$ to represent low and high powered studies, the number of treatment groups $K \in \{1, 2, 3\}$, and probability in the first treatment group $\theta_1 \in \{0.25, 0.35, 0.45\}$. The probability in the control group and the remaining groups is always fixed at $\theta_C = 0.25$ and $\theta_2 = \theta_3 = 0.3$, respectively. All these parameters are varied fully-factorially, leading to $2 \times 3 \times 3 = 18$ parameter conditions. 
+
+Since treatment allocation determines from which true probability an outcome is simulated, data generation is directly influenced by the RAR methods described below. These come with additional parameters that are, however, considered as method tuning-/hyper-parameters rather than true underlying parameters.
+
+### Estimands and other targets
+
+The primary targets of interest are the design characteristics of the compared BRAR methods in terms of patient benefit, parameter estimation, and hypothesis testing. For the latter two, the estimand of interest is the risk difference $\text{RD}_1 = \theta_1 - \theta_C$ and the corresponding targeted null hypothesis is $\text{RD}_1 = 0$.
+
+### Methods
+
+We consider the BRAR methods described in Pawel and Held (2025, <https://github.com/SamCH93/brar>). These methods introduce a point hypothesis $H_0$ postulating that all treatments are equally effective as the control. The prior probability of $H_0$ is a tuning parameter and controls the variability of the randomization probabilities. Setting $\Pr(H_0) = 1$ produces equal randomization, whereas $\Pr(H_0) = 1$ produces Thompson sampling. We will consider values $\Pr(H_0) \in \{0, 0.25, 0.5, 0.75, 1\}$, as well as the normal approximation and exact binomial version of BRAR. For approximate normal BRAR, a normal prior with mean 0, variance 1, and in case of $K > 1$ a correlation of 1/2 are considered, whereas independent uniform priors are assigned for binomial BRAR. Log odds ratios along with their covariance are estimated with logistic regression and then used as inputs for the normal BRAR method, while the exact method used counts and sample sizes only. In case a method fails to converge, equal randomization is applied.
+
+We also consider some modifications of these methods: In some conditions, a "burn-in" phase is carried out during which patients are always randomized with equal probability $1/(K + 1)$ to each group. For Thompson sampling ($\Pr(H_0) = 0$), we also consider two more modifications: (i) conditions with "capping" of randomization probabilities to $[0.1, 0.9]$, that is, to set randomization probabilities to either 0.1 or 0.9 if they are outside this interval, (ii) conditions with power transformations of randomization probabilities, i.e., if $\pi_k$ is the randomization probability of group $k$, we take $\pi_k^* = \pi_k^c / \sum_{j \in \{C,1,\dots,K\}} \pi_j^c$. After capping has been performed, randomization probabilities are re-normalized to sum to one (Wathen and Thall, 2017, <https://doi.org/10.1177/1740774517692302>). This re-normalization is only performed for randomization probabilities greater than 0.1, as these randomization probability would otherwise be reduced again to probabilities less than 0.1. In case, a re-normalized probability becomes less than 0.1, it is also capped at 0.1 and second re-normalization performed. For equal randomization ($\Pr(H_0) = 1$), no burn-in, capping, or power transformation conditions are simulated as these manipulations have no effect on equal randomization.
+
+### Performance measures
+
+Different performance measures were used
+
+#### Patient benefit
+
+- The mean rate of successes per study
+- The mean rate of allocations to treatment group 1 (the best group in all conditions where $\theta_1 > \theta_C$)
+- The mean sample size difference between treatment group 1 and the average sample size in the remaining groups
+- The rate of simulations with 10% sample size imbalance in favor of inferior treatments, i.e., $S_{0.1} = \Pr(\frac{n - n_1}{K} - n_1 > 0.1n)$. For $K= 1$, this reduces to the $S_{0.1}$ measure from Robertson et al. (2023, <https://doi.org/10.1214/22-STS865>), which in turn was inspired by the performance evaluation in the simulation study from Thall, Fox, and Wathen (2015, <https://doi.org/10.1093/annonc/mdv238>).
+- The rate of simulations with extreme randomization probabilities (less than 0.1 or greater than 0.9).
+
+#### Parameter estimation performance
+
+- Empirical bias of the estimate of the risk difference between the first treatment group and the control group
+- Empirical coverage of the 95% Wald confidence intervals of the risk difference between the first treatment group and the control group
+
+#### Hypothesis testing performance
+
+- Empirical type I error rate and power related to the Wald test regarding the risk difference between the first treatment group and the control group.
+
+Each condition was simulated `r nsim` times. This ensures a MCSE (Monte Carlo Standard Error) for the Type I error rate and power of at most `r 100*sqrt(0.5^2/nsim)`%. MCSEs were calculated using the formulae from Siepe et al. (2024, <https://doi.org/10.1037/met0000695>) and are provided for all performance measures in the corresponding Figures and Tables.
+
+### Computational aspects
+
+```{r}
+si <- readRDS("sessioninfo-server.rds")
+```
+
+The simulation study was run on a server running `r si$running` and `r si$R.version$version.string`. The SimDesign R package was used to organize and run the simulation study (<https://CRAN.R-project.org/package=SimDesign>). The brar package was used to perform BRAR. SessionInfo outputs with more computational information are available under the "Reproducibilty" tab. Code and data to reproduce this simulation study is available at <https://github.com/SamCH93/brar>. The brar package can also be installed from the repository and will be submitted to CRAN in the near future.
+
+### Citation
+
+Cite this dashboard as 
+
+> Pawel, S., Held, L. (2025). Results from Simulation Study on Point Null Bayesian Response Adaptive Randomization Methods. <https://github.com/SamCH93/brar> 
+
+
+# Patient Benefit
+
+## Plots {.tabset}
+
+
+```{r}
+#| title: "Rate of successes"
+#| fig-cap: "Mean rate of successes (i.e., the number of successes in a study divided by its sample size averaged over all simulations). Error bars denote MCSEs (Monte Carlo Standard Errors)."
+ggplot(data = summaries,
+       aes(x = pH0, y = PS, col = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    # geom_hline(aes(yintercept = pt1), lty = 2, alpha = 0.5) +
+    # geom_hline(aes(yintercept = (pt1 + pc)/2), lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = PS - PS_mcse, ymax = PS + PS_mcse),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"), y = "Mean rate of successes",
+         color = "Method", shape = "Modifications")
+```
+
+```{r}
+#| title: Allocations to treatment group 1
+#| fig-cap: "Rate of allocations to treatment group 1 averaged across simulations. Error bars denote MCSEs (Monte Carlo Standard Errors). Treatment group 1 is the 'best' treatment group in all conditions apart from the conditions with $\\text{RD}_1 = \\theta_1 - \\theta_C = 0$, where the remaining treatments are the most benefitial."
+ggplot(data = summaries,
+       aes(x = pH0, y = PE1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(aes(yintercept = 1/(K + 1)), lty = 2, alpha = 0.3) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = PE1 - PE1_mcse, ymax = PE1 + PE1_mcse),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = "Mean rate of allocations to treatment 1",
+         color = "Method", shape = "Modifications")
+```
+
+```{r}
+#| title: Sample size difference
+#| fig-cap: "Mean difference in sample size between treatment group 1 and average sample size in remaining groups (control and other treatments). Error bars indicate 2.5% and 97.5% quantiles."
+ggplot(data = summaries,
+       aes(x = pH0, y = EN1diff, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(yintercept = 0, lty = 2, alpha = 0.3) + 
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = EN1diffL, ymax = EN1diffU),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = "Mean sample size difference",
+         color = "Method", shape = "Modifications")
+```
+
+
+```{r}
+#| title: Sample size imbalance
+#| fig-cap: "Proportion of simulations with more than 10% of the sample size randomized to other groups than treatment group 1. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+ggplot(data = filter(summaries, pt1 > pc),
+       aes(x = pH0, y = S01, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = S01 - S01_mcse, ymax = S01 + S01_mcse),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = "Proportion of sample size differences more than 10%",
+         color = "Method", shape = "Modifications")
+```
+
+```{r}
+#| title: Extreme randomization probabilities
+#| fig-cap: "Mean proportion of randomization probabilities either less than 0.1 or greater than 0.9. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+ggplot(data = summaries,
+       aes(x = pH0, y = PExtreme, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = PExtreme - PExtreme_mcse,
+                      ymax = PExtreme + PExtreme_mcse),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = "Mean proportion of extreme randomization probabilities",
+         color = "Method", shape = "Modifications")
+```
+
+# Parameter Estimation
+
+## Plots {.tabset}
+
+
+```{r}
+#| title: Bias
+#| fig-cap: "Empirical bias of the estimate of the risk difference $\\text{RD}_1$ between the first treatment group and the control group. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+ggplot(data = summaries,
+       aes(x = pH0, y = biasRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(yintercept = 0, lty = 2, alpha = 0.3) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = biasRD1 - biasRD1_mcse, ymax = biasRD1 + biasRD1_mcse),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
+         y = bquote("Bias (RD"[1] * ")"), 
+         shape = "Modifications", color = "Method")
+```
+
+```{r}
+#| title: Coverage
+#| fig-cap: "Empirical coverage of the 95% Wald confidence interval for the risk difference $\\text{RD}_1$ between the first treatment group and the control group. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+ggplot(data = summaries,
+       aes(x = pH0, y = covRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = covRD1 - covRD1_mcse, ymax = covRD1 + covRD1_mcse),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
+         y = bquote("95% CI Coverage (RD"[1] * ")"),
+         shape = "Modifications", color = "Method")
+```
+
+
+# Hypothesis Testing
+
+## Plots {.tabset}
+
+```{r}
+#| title: Type I error rate
+#| fig-cap: "Empirical type I error rate of the Wald test of $\\text{RD}_1 = 0$. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+ggplot(data = filter(summaries, pt1 == pc),
+       aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(yintercept = 0.025, lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = rrRD1 - rrRD1_mcse, ymax = rrRD1 + rrRD1_mcse),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
+    expand_limits(y = 0) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
+         y = bquote("Type I error rate (RD"[1] == 0 * ")"),
+         shape = "Modifications", color = "Method")
+```
+
+```{r}
+#| title: Power
+#| fig-cap: "Empirical power of the Wald test of $\text{RD}_1 = 0$. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+ggplot(data = filter(summaries, pt1 > pc),
+       aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    ## geom_hline(yintercept = 0.8, lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_errorbar(aes(ymin = rrRD1 - rrRD1_mcse, ymax = rrRD1 + rrRD1_mcse),
+                  width = errorbar_width, alpha = errorbar_alpha,
+                  position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
+         y = bquote("Power (RD"[1] == 0 * ")"),
+         shape = "Modifications", color = "Method")
+```
+
+# Convergence
+
+```{r}
+#| title: Mean convergence
+#| fig-cap: "Mean convergence rate within a study averaged across simulations."
+
+## SimExtract(simres, "errors")
+## SimExtract(simres, "warnings")
+ggplot(data = summaries,
+       aes(x = pH0, y = meanconvergence, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
+         y = "Mean convergence",
+         shape = "Modifications", color = "Method")
+```
+
+
+# Condition-method-level data
+
+```{r}
+#| echo: false
+summaries |>
+    mutate_at(c("pc", "pt1", "pt2", "burnin", "n", "K", "pH0", "c"), factor) |>
+    mutate_at(c("ENS", "ENS_sd", "EN1diff"), 
+              function(x) round(x, 1)) |>
+    mutate_at(c("ENS_mcse", "PS", "PBest", "PE1", "biasRD1", "covRD1", "rrRD1"), function(x) round(x, 2)) |>
+    mutate_at(c("PS_mcse", "PBest_mcse", "PE1_mcse", "biasRD1_mcse",
+                "covRD1_mcse", "rrRD1_mcse", "meanconvergence", "S01",
+                "S01_mcse", "PExtreme", "PExtreme_mcse"), 
+              function(x) round(x, 4)) |>
+    select("Method" = method,
+           "Pr(H0)" = pH0,
+           "Capping" = capping,
+           "Power transformation c" = c,
+           "Burn-in" = burnin,
+           "n" = n, 
+           "p (control group)" = pc,
+           "p (treatment group 1)" = pt1,
+           "p (remaining treatment groups)" = pt2,
+           "K (number of treatment groups)" = K,
+           "ENS (Expected Number of Successes)" = ENS,
+           "ENS MCSE" = ENS_mcse,
+           "ENS SD" = ENS_sd,
+           "PS (Proportion of successes)" = PS,
+           "PS MCSE" = PS_mcse,
+           "PRT1 (Proportion Randomized to Treatment 1)" = PE1,
+           "PRT1 MCSE" = PE1_mcse,
+           "END1 (Mean sample size difference to Treatment 1)" = EN1diff,
+           "S01 (Sample size imbalance metric)" = S01,
+           "S01 MCSE" = S01_mcse,
+           "PExtreme (Proportion of extreme probabilities)" = PExtreme,
+           "PExtreme MSE" = PExtreme_mcse,
+           "Bias RD1" = biasRD1,
+           "Bias RD1 MCSE" = biasRD1_mcse,
+           "Coverage RD1" = covRD1,
+           "Coverage RD1 MCSE" = covRD1_mcse,
+           "Rejection Rate RD1" = rrRD1,
+           "Rejection Rate RD1 MCSE" = rrRD1_mcse,
+           "Mean convergence" = meanconvergence
+           ) |>
+    datatable(filter = "top")
+```
+
+# Method-aggregated data
+
+```{r}
+#| echo: false
+sumFun <- function(x, digits = 2) {
+    paste0(round(median(x), digits), " (", round(min(x), digits), ",", 
+           round(max(x), digits), ")")
+} 
+summaries |>
+    mutate_at(c("pc", "pt1", "pt2", "burnin", "n", "K", "pH0", "c"), factor) |>
+    group_by(method, pH0, capping, c, burnin) |>
+    summarise("Median ENS (Min, Max)" = sumFun(ENS, digits = 1),
+              "Median PS (Min, Max)" = sumFun(PS, digits = 3),
+              "Median PRT1 (Min, Max)" = sumFun(PE1, digits = 3),
+              "Median END1 (Min, Max)" = sumFun(PE1, digits = 1),
+              "Median S01 (Min, Max)" = sumFun(S01, digits = 1),
+              "Median PExtreme (Min, Max)" = sumFun(PExtreme, digits = 3),
+              "Median Bias RD1 (Min, Max)" = sumFun(biasRD1, digits = 3),
+              "Median Coverage RD1 (Min, Max)" = sumFun(covRD1, digits = 3)) |>
+    rename("Method" = method,
+           "Pr(H0)" = pH0,
+           "Capping" = capping,
+           "Power transformation c" = c,
+           "Burn-in" = burnin) |>
+    datatable(filter = "top")
+```
+
+# Reproducibility
+
+Below information on the computational environment from the server where the simulation study was run.
+    
+## SessionInfos {.tabset}
+```{r}
+#| title: utils::sessionInfo
+si
+```
+
+```{r}
+#| title: sessioninfo::session_info
+simres <- readRDS("brar-sim.rds")
+attributes(simres)$extra_info$sessionInfo
+```
