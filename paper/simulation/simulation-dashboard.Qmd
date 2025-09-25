@@ -154,17 +154,17 @@ Cite this dashboard as
 
 ```{r}
 #| title: "Rate of successes"
-#| fig-cap: "Mean rate of successes (i.e., the number of successes in a study divided by its sample size averaged over all simulations). Error bars denote MCSEs (Monte Carlo Standard Errors)."
+#| fig-cap: !expr paste0("Mean rate of successes (i.e., the number of successes in a study divided by its sample size averaged over all simulations). The maximum MCSE is ", signif(100*max(summaries[,"PS_mcse"]), 2), "%.")
 ggplot(data = summaries,
        aes(x = pH0, y = PS, col = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
-    # geom_hline(aes(yintercept = pt1), lty = 2, alpha = 0.5) +
-    # geom_hline(aes(yintercept = (pt1 + pc)/2), lty = 2, alpha = 0.5) +
+    ## geom_hline(aes(yintercept = pt1), lty = 2, alpha = 0.5) +
+    ## geom_hline(aes(yintercept = (pt1 + pc)/2), lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    geom_errorbar(aes(ymin = PS - PS_mcse, ymax = PS + PS_mcse),
-                  width = errorbar_width, alpha = errorbar_alpha,
-                  position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = PS - PS_mcse, ymax = PS + PS_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_y_continuous(labels = scales::percent) +
@@ -176,16 +176,16 @@ ggplot(data = summaries,
 
 ```{r}
 #| title: Allocations to treatment group 1
-#| fig-cap: "Rate of allocations to treatment group 1 averaged across simulations. Error bars denote MCSEs (Monte Carlo Standard Errors). Treatment group 1 is the 'best' treatment group in all conditions apart from the conditions with $\\text{RD}_1 = \\theta_1 - \\theta_C = 0$, where the remaining treatments are the most benefitial."
+#| fig-cap: !expr paste0("Rate of allocations to treatment group 1 averaged across simulations. Treatment group 1 is the 'best' treatment group in all conditions apart from the conditions with $\\text{RD}_1 = \\theta_1 - \\theta_C = 0$, where the remaining treatments are the most benefitial. The maximum MCSE is ", signif(100*max(summaries[,"PE1_mcse"]), 2), "%.")
 ggplot(data = summaries,
        aes(x = pH0, y = PE1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
     geom_hline(aes(yintercept = 1/(K + 1)), lty = 2, alpha = 0.3) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    geom_errorbar(aes(ymin = PE1 - PE1_mcse, ymax = PE1 + PE1_mcse),
-                  width = errorbar_width, alpha = errorbar_alpha,
-                  position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = PE1 - PE1_mcse, ymax = PE1 + PE1_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
@@ -220,15 +220,15 @@ ggplot(data = summaries,
 
 ```{r}
 #| title: Sample size imbalance
-#| fig-cap: "Proportion of simulations with more than 10% of the sample size randomized to other groups than treatment group 1. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+#| fig-cap: !expr paste0("Proportion of simulations with more than 10% of the sample size randomized to other groups than treatment group 1. The maximum MCSE is ", signif(100*max(summaries[,"S01_mcse"]), 2), "%.")
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = S01, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    geom_errorbar(aes(ymin = S01 - S01_mcse, ymax = S01 + S01_mcse),
-                  width = errorbar_width, alpha = errorbar_alpha,
-                  position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = S01 - S01_mcse, ymax = S01 + S01_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_y_continuous(labels = scales::percent) +
@@ -241,16 +241,16 @@ ggplot(data = filter(summaries, pt1 > pc),
 
 ```{r}
 #| title: Extreme randomization probabilities
-#| fig-cap: "Mean proportion of randomization probabilities either less than 0.1 or greater than 0.9. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+#| fig-cap: !expr paste0("Mean proportion of randomization probabilities either less than 0.1 or greater than 0.9. The maximum MCSE is ", signif(100*max(summaries[,"PExtreme_mcse"]), 2), "%.")
 ggplot(data = summaries,
        aes(x = pH0, y = PExtreme, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    geom_errorbar(aes(ymin = PExtreme - PExtreme_mcse,
-                      ymax = PExtreme + PExtreme_mcse),
-                  width = errorbar_width, alpha = errorbar_alpha,
-                  position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = PExtreme - PExtreme_mcse,
+    ##                   ymax = PExtreme + PExtreme_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_y_continuous(labels = scales::percent) +
@@ -268,16 +268,16 @@ ggplot(data = summaries,
 
 ```{r}
 #| title: Bias
-#| fig-cap: "Empirical bias of the estimate of the risk difference $\\text{RD}_1$ between the first treatment group and the control group. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+#| fig-cap: !expr paste0("Empirical bias of the estimate of the risk difference $\\text{RD}_1$ between the first treatment group and the control group. The maximum MCSE is ", signif(max(summaries[,"biasRD1_mcse"]), 2), ".")
 ggplot(data = summaries,
        aes(x = pH0, y = biasRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
     geom_hline(yintercept = 0, lty = 2, alpha = 0.3) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    geom_errorbar(aes(ymin = biasRD1 - biasRD1_mcse, ymax = biasRD1 + biasRD1_mcse),
-                  width = errorbar_width, alpha = errorbar_alpha,
-                  position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = biasRD1 - biasRD1_mcse, ymax = biasRD1 + biasRD1_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_color_manual(values = cols) +
@@ -289,16 +289,16 @@ ggplot(data = summaries,
 
 ```{r}
 #| title: Coverage
-#| fig-cap: "Empirical coverage of the 95% Wald confidence interval for the risk difference $\\text{RD}_1$ between the first treatment group and the control group. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+#| fig-cap: !expr paste0("Empirical coverage of the 95% Wald confidence interval for the risk difference $\\text{RD}_1$ between the first treatment group and the control group. The maximum MCSE is ", signif(100*max(summaries[,"covRD1_mcse"]), 2), "%.")
 ggplot(data = summaries,
        aes(x = pH0, y = covRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
     geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    geom_errorbar(aes(ymin = covRD1 - covRD1_mcse, ymax = covRD1 + covRD1_mcse),
-                  width = errorbar_width, alpha = errorbar_alpha,
-                  position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = covRD1 - covRD1_mcse, ymax = covRD1 + covRD1_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_y_continuous(labels = scales::percent) +
@@ -339,7 +339,7 @@ ggplot(data = filter(summaries, pt1 == pc),
 
 ```{r}
 #| title: Power
-#| fig-cap: "Empirical power of the Wald test of $\text{RD}_1 = 0$. Error bars denote MCSEs (Monte Carlo Standard Errors)."
+#| fig-cap: !expr paste0("Empirical power of the Wald test of $\text{RD}_1 = 0$. The maximum MCSE is ", signif(100*max(filter(summaries, pt1 > pc)[,"rrRD1_mcse"]), 2), "%.")
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
