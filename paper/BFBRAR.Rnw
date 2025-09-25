@@ -1,4 +1,4 @@
-\documentclass[a4paper, 11pt]{article}
+\documentclass[letter, 12pt]{article}
 \usepackage{amsmath, amssymb} % math
 \usepackage{array} % math
 \usepackage{doi} % automatic doi-links
@@ -34,7 +34,7 @@
 }
 
 %% title, authors, affiliations, mail
-\title{\vspace{-3em} \textbf{\textsf{
+\title{\vspace{-4em} \textbf{\textsf{
       Bayesian Response Adaptive Randomization \\ with Point~Null Bayesian Hypothesis Testing
 }}}
 \author{
@@ -103,32 +103,32 @@ col3 <- "#009E73"
 \maketitle
 \end{onehalfspacing}
 
-%% should be less than 250 words
+\vspace{-1em}
+
+%% should be less than 225 words
 \begin{abstract}
-  \noindent Response adaptive randomization methods use accumulated data to
-  adapt randomization probabilities in order to increase the chance of
-  allocating patients to more effective treatments. A popular approach is
-  Thompson sampling, which randomizes patients proportionally to the Bayesian
-  posterior probability that each treatment is the most effective. However, a
-  common problem is that these methods can be highly variable in the early
-  stages of a study, potentially leading to an increased risk of randomizing
-  patients to less effective treatments. We propose a principled approach based
-  on Bayesian hypothesis testing that addresses this issue. Specifically, we
-  introduce a point null hypothesis that postulates equal effectiveness of
-  treatments. This induces shrinkage toward equal randomization probabilities,
-  the amount of which is controlled by the prior probability of the null
-  hypothesis. Equal randomization and Thompson sampling correspond to special
-  cases where the prior probability is set to one or zero, respectively.
-  Simulated and real-world examples illustrate that this approach provides
-  experimenters with a principled approach to balancing highly variable Thompson
-  sampling with static equal randomization. A simulation study demonstrates that
-  the method has comparable statistical properties to Thompson sampling with ad
-  hoc modifications such as power transformation and probability capping. We
-  implement the method in the free and open-source R package \texttt{brar},
-  enabling experiments to easily perform point null Bayesian response adaptive
-  randomization and support more effective randomization of patients. \\
+  \noindent Response adaptive randomization (RAR) methods use accumulated data
+  to adapt randomization probabilities, aiming to increase the chance of
+  allocating patients to effective treatments. A popular RAR method is Thompson
+  sampling, which randomizes patients proportionally to the Bayesian posterior
+  probability that each treatment is the most effective. However, its high
+  variability early in a trial can actually also increase the risk of assigning
+  patients to inferior treatments. We propose a principled method based on
+  Bayesian hypothesis testing to mitigate this issue. Specifically, we introduce
+  a point null hypothesis that postulates equal effectiveness of treatments.
+  This induces shrinkage toward equal randomization probabilities, with the
+  degree of shrinkage controlled by the prior probability of the null
+  hypothesis. Equal randomization and Thompson sampling arise as special cases
+  when the prior probability is set to one or zero, respectively. Simulated and
+  real-world examples illustrate that the proposed method balances highly
+  variable Thompson sampling with static equal randomization. A simulation study
+  demonstrates that the method has comparable statistical properties to Thompson
+  sampling with common ad hoc modifications such as power transformation and
+  probability capping. We implement the method in the open-source R package
+  \texttt{brar}, enabling experiments to easily perform point null Bayesian RAR
+  and support more effective randomization of patients. \\
   \noindent \textit{Keywords}: Adaptive trials, A/B testing, Bayes factor,
-  Bayesian model averaging, sharp null hypothesis
+  Bayesian model averaging, sharp null hypothesis, spike-and-slab prior
 \end{abstract}
 
 \section{Introduction}
@@ -1517,7 +1517,7 @@ ECMO data.
 
 
 \begin{figure}[!htb]
-<< "ECMO-analysis", fig.height = 6.3 >>=
+<< "ECMO-analysis", fig.height = 6 >>=
 ## TODO implement randomized play the winner method as comparison
 rpw <- function(y1, y0, a = 1, b = 1, g = 1) {
     balls1 <- a + b*y1
@@ -1575,7 +1575,7 @@ plt1 <- ggplot(data = subset(ecmoDF, !is.na(pH0)), #& method != "Normal"),
        aes(x = ntotal, y = prand, linetype = method,
            shape = method)) +
     labs(x = "Total sample size",
-         y = "Probability to randomize to ECMO group",
+         y = "Probability to randomize to ECMO",
          color = bquote("Pr(" * italic(H)[0] * ")"),
          shape = "", linetype = "") +
     geom_hline(yintercept = 0.5, lty = 2, alpha = 0.5) +
@@ -1680,7 +1680,8 @@ parameter estimation / hypothesis testing operating characteristics. Some
 methods performed better in terms of patient benefit but had worse bias,
 coverage, type I error rate, and power while others performed better in terms of
 bias, coverage, type I error rate, and power but had worse patient benefit. This
-trade-off is well described in the RAR literature \citep{Hu2003, Robertson2023}.
+trade-off is well described in the RAR literature \citep{Hu2003, Zhang2005,
+  Williamson2019, Robertson2023}.
 
 The main result of the simulation study regarding the newly proposed method was
 that, under most conditions, point null Bayesian RAR with a high prior

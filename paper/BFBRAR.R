@@ -469,7 +469,7 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac,
 
 
 
-## ----"ECMO-analysis", fig.height = 6.3----------------------------------------
+## ----"ECMO-analysis", fig.height = 6------------------------------------------
 ## TODO implement randomized play the winner method as comparison
 rpw <- function(y1, y0, a = 1, b = 1, g = 1) {
     balls1 <- a + b*y1
@@ -527,7 +527,7 @@ plt1 <- ggplot(data = subset(ecmoDF, !is.na(pH0)), #& method != "Normal"),
        aes(x = ntotal, y = prand, linetype = method,
            shape = method)) +
     labs(x = "Total sample size",
-         y = "Probability to randomize to ECMO group",
+         y = "Probability to randomize to ECMO",
          color = bquote("Pr(" * italic(H)[0] * ")"),
          shape = "", linetype = "") +
     geom_hline(yintercept = 0.5, lty = 2, alpha = 0.5) +
