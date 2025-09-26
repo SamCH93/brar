@@ -31,7 +31,7 @@ col2 <- "#0072B2"
 col3 <- "#009E73"
 
 
-## ----"ternary-plot", fig.height = 3, fig.width = 3----------------------------
+## ----"ternary-plot", fig.height = 3.5, fig.width = 3.5------------------------
 ## simplex grid
 x <- seq(0, 1, length.out = 20)
 df <- na.omit(do.call("rbind", lapply(X = x, FUN = function(pp) {
@@ -64,7 +64,7 @@ PlotTools::SpectrumLegend("topleft", palette = colpal,
                           bty = "n", xpd = NA, title = bquote(pi), cex = 0.7, lwd = 15)
 
 
-## ----"spike-and-slab", fig.height = 3, fig.width = 4--------------------------
+## ----"spike-and-slab", fig.height = 2.75, fig.width = 4-----------------------
 par(mar = c(4, 4, 0.5, 0.1))
 tseqn <- seq(-3, 0, length.out = 500)
 tseqp <- seq(0, 3, length.out = 500)
@@ -638,13 +638,20 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
 ## SimExtract(simres, what = "warnings")
 ## SimExtract(simres, what = "errors")
 
-
 ## ## compare to results from Robertson et al. (2023)
 ## summaries |>
 ##     filter(K == 1, pc == 0.25, pt1 == 0.35, capping_eps == 0.5, burnin == 0,
-##            c == "1", pH0 %in% c(0, 1), method == "exact") |>
+##            c == "1", pH0 %in% c(0, 1), method %in% c("Exact BRAR",
+##                                                      "Equal Randomization")) |>
 ##     select(n, pH0, method, EN1diff, EN1diffL, EN1diffU, S01, ENS, ENS_sd) |>
 ##     arrange(-pH0)
+## #> # A tibble: 4 × 9
+## #>       n   pH0 method              EN1diff EN1diffL EN1diffU    S01   ENS ENS_sd
+## #>   <dbl> <dbl> <fct>                 <dbl>    <dbl>    <dbl>  <dbl> <dbl>  <dbl>
+## #> 1   200     1 Equal Randomization  -0.01       -28       28 0.0683  60.0   6.48
+## #> 2   654     1 Equal Randomization  -0.288      -50       50 0.0058 196.   11.7
+## #> 3   200     0 Exact BRAR           96.6       -116      182 0.0929  64.8   7.82
+## #> 4   654     0 Exact BRAR          469.          30      628 0.0171 220.   14.9
 
 ## ## ER (n = 200): ENdiff = 0 (-28, 28), S_01 = 0.069, ENS = 60 (6.4)
 ## ## -> corresponds to pH0 = 1
@@ -654,9 +661,6 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
 ## ## -> rougly corresponds to pH0 = 0
 ## ## TS (n = 654): ENdiff = 461 (-356, 640), S_01 = 0.042, ENS = 220 (17.5)
 ## ## -> rougly corresponds to pH0 = 0
-
-## TODO create RADAR/spider/star chart that shows multiple performance measures
-## at the same time?
 
 ## plot parameters
 theme_dashboard <- function() {

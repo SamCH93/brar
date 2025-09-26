@@ -2,7 +2,6 @@
 \usepackage{amsmath, amssymb} % math
 \usepackage{array} % math
 \usepackage{doi} % automatic doi-links
-%% \usepackage[square,numbers,sort&compress]{natbib} % bibliography
 \usepackage[round]{natbib} % bibliography
 \usepackage{multirow} % multicolumn and multirow
 \usepackage{booktabs} % nicer tables
@@ -142,11 +141,6 @@ treatment is the most effective. RAR methods are attractive because they
 naturally balance gathering information on treatment effectiveness and assigning
 subjects to effective treatments.
 
-%% TODO mention controversy and disconnect to practice
-%% In many clinical trial settings, RAR methods are not applicable. For example,
-%% they could compromise blinding, or outcomes such as death may only be observed
-%% after long follow-up periods, by which time recruitment and randomized
-%% allocation will already have finished. Even when RAR is in principle applicable,
 Despite its benefits, there are also various challenges with Thompson sampling.
 For example, the method can exhibit high variability, particularly in the early
 stages of a study when posterior uncertainty is high \citep{Thall2015}. This can
@@ -289,7 +283,7 @@ probability $\pi$ shrinks towards 50\% as the posterior probability of the null
 hypothesis $\Pr(H_0 \mid y)$ increases.
 
 \begin{figure}[!htb]
-<< "ternary-plot", fig.height = 3, fig.width = 3 >>=
+<< "ternary-plot", fig.height = 3.5, fig.width = 3.5 >>=
 ## simplex grid
 x <- seq(0, 1, length.out = 20)
 df <- na.omit(do.call("rbind", lapply(X = x, FUN = function(pp) {
@@ -346,7 +340,6 @@ Thompson sampling and equal randomization in a coherent Bayesian way.
 
 \subsection{More than two groups}
 \label{sec:multiple-treatments}
-%% There may be more than just one treatment group.
 Suppose there are $K > 1$ treatment groups in addition to the control group. In
 this case, we may modify the procedure and consider the hypotheses:
 \begin{align*}
@@ -428,7 +421,7 @@ Averaging the prior over the three hypotheses leads to a spike-and-slab prior,
 as illustrated in Figure~\ref{fig:spike-slab}.
 
 \begin{figure}[!htb]
-<< "spike-and-slab", fig.height = 3, fig.width = 4 >>=
+<< "spike-and-slab", fig.height = 2.75, fig.width = 4 >>=
 par(mar = c(4, 4, 0.5, 0.1))
 tseqn <- seq(-3, 0, length.out = 500)
 tseqp <- seq(0, 3, length.out = 500)
@@ -516,7 +509,6 @@ with posterior mean and variance
   &\text{and}&
   &\tau_*^2 = \frac{1}{1/\sigma^2 + 1/\tau^2}.&
 \end{align*}
-%% see Appendix~TODO.
 Taking ratios of marginal likelihoods produces the Bayes factors
 \begin{align*}
   %% \mathrm{BF}_{0+}(\hat{\theta})
@@ -560,7 +552,7 @@ to
 \begin{align}
   \label{eq:prand-normal2}
   \pi
-  &= \frac{\Pr(H_0 \mid y)}{2} + \Pr(H_{+} \mid y) \nonumber \\
+  %% &= \frac{\Pr(H_0 \mid y)}{2} + \Pr(H_{+} \mid y) \nonumber \\
   &= \left(
   1 + \frac{1 - \Pr(H_0)}{\Pr(H_0)} \, \times \, \exp\left[-\frac{1}{2}\left\{
     \frac{(\hat{\theta} - \mu)^2}{\sigma^2 + \tau^2} - \frac{\hat{\theta}^2}{\sigma^2}\right\}\right] \, \bigg / \,
@@ -797,7 +789,6 @@ outcomes with a shared control group and equal allocation, mean difference
 effect estimates are correlated by a factor 1/2 due to the common control group
 for all treatments.
 
-%% The truncated prior is therefore prior
 As in the two-group case (Section~\ref{sec:normal2}), the normal-normal
 conjugate framework allows us to derive marginal likelihoods
 %% (and consequently Bayes factors, posterior probabilities, and randomization
@@ -1027,263 +1018,7 @@ probabilities $\Pr(H_0) > 0$.
 We will now consider the setting with binary outcomes, as such outcomes
 frequently occur in applications of Bayesian RAR (e.g., in clincial trials or
 A/B testing settings).
-%%
-%% \subsection{Two group comparisons}
-%% Assume that the data are given by $y = \{y_1, y_2\}$, where $y_1$ and $y_2$
-%% denote the number of successes in two groups with $n_1$ and $n_2$ trials. For
-%% example, the first could come from a control group and the second from a
-%% treatment group. Both are assumed to be binomially distributed
-%% \begin{align*}
-%%   &Y_1 \mid \theta_1 \sim \mathrm{Bin}(n_1, \theta_1)& &\text{and}&
-%%   &Y_2 \mid \theta_2 \sim \mathrm{Bin}(n_2, \theta_2),&
-%% \end{align*}
-%% and we are interested in the following hypotheses related to the probabilities
-%% $\theta_1$ and $\theta_2$
-%% \begin{align*}
-%%   &H_{-} \colon \theta_2 < \theta_1&
-%%   &\text{versus}&
-%%   &H_{0} \colon \theta_2 = \theta_1&
-%%   &\text{versus}&
-%%   &H_{+} \colon \theta_2 > \theta_1.&
-%% \end{align*}
-%% %% see Figure~\ref{fig:binary-hypotheses} for an illustration.
-%%
-%% %% Given two observed number of successes $y_1$ and $y_2$, w
-%% %% posterior probability that the probability in the second group $\theta_2$ is
-%% %% larger than the probability in the first group $\theta_1$, i.e.,
-%% %% \begin{align}
-%% %%   \Pr(\theta_2 > \theta_1 \mid y_1, y_2).
-%% %%   \label{eq:pt2greatert1}
-%% %% \end{align}
-%% %% In Bayesian adaptive randomization, this probability, is used for randomizing
-%% %% future patients to group two. Typically, one assumes independent beta priors for
-%% %% $\theta_1$ and $\theta_2$ (e.g., uniform priors) and then
-%% %% computes~\eqref{eq:pt2greatert1}. However, this can be unstable at the start of
-%% %% the study when only few observations are available, which increases the risk
-%% %% that patients are erronously randomized to the less effective (or more harmful)
-%% %% group.
-%%
-%% %% Here, we will address this by considering the point null hypothesis $H_0 \colon
-%% %% \theta_2 = \theta_1$ with some positive prior probability, e.g., $\Pr(H_0) =
-%% %% 1/2$, and a prior density assigned to $\theta_1$. In addition, we consider the
-%% %% two hypotheses $H_{-} \colon \theta_2 < \theta_1$ and $H_{+} \colon \theta_2 >
-%% %% \theta_1$ with prior probabilities $\Pr(H_{-}) + \Pr(H_{+}) = 1 - \Pr(H_0)$,
-%% %% e.g., $\Pr(H_{-}) = \Pr(H_{+}) = 1/4$, and prior densities assigned to
-%% %% $\theta_1$ and $\theta_2$.
-%%
-%% %% \begin{figure}[!htb]
-%% %% << "hypotheses-plot", fig.width = 3, fig.asp = 1, fig.align = "center" >>=
-%% %% par(mar = c(3, 3, 3, 3))
-%% %% tseq <- seq(0, 1)
-%% %% plot(tseq, tseq, lwd = 1.5, type = "l", xlab = "", ylab = "", pty = "s",
-%% %%      xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n")
-%% %% axis(side = 1, at = c(0, 1), line = -0.7, tick = FALSE, cex.axis = 0.8)
-%% %% axis(side = 2, at = c(0, 1), las = 1, line = -0.5, tick = FALSE, cex.axis = 0.8)
-%% %% mtext(text = bquote(theta[1]), side = 1, line = 1.5, cex = 1.25)
-%% %% mtext(text = bquote(theta[2]), side = 2, line = 1.5, cex = 1.25)
-%% %% polygon(x = c(tseq, 1), y = c(tseq, 0), density = 10, angle = 135, border = NA,
-%% %%         col = adjustcolor(col = col1, alpha = 0.3), lty = 2, lwd = 1)
-%% %% polygon(x = c(tseq, 0), y = c(tseq, 1), density = 10, angle = 45, border = NA,
-%% %%         col = adjustcolor(col = col2, alpha = 0.3), lty = 2, lwd = 1)
-%% %% text(x = 0.5, y = 0.5, labels = bquote(italic(H)[0]), cex = 1.5)
-%% %% text(x = 0.25, y = 0.75, labels = bquote(italic(H)["+"]), cex = 1.5,
-%% %%      col = col2)
-%% %% text(x = 0.75, y = 0.25, labels = bquote(italic(H)["-"]), cex = 1.5, col = col1)
-%% %% @
-%% %% \caption{Schematic illustration of hypotheses regarding two probability
-%% %%   parameters $\theta_1$ and $\theta_2$.}
-%% %% \label{fig:binary-hypotheses}
-%% %% \end{figure}
-%%
-%% Under the previously considered approximate normal framework, these hypotheses
-%% may be translated into hypotheses related to the log odds ratio $\theta = \log
-%% \{\theta_1 (1 - \theta_2)\}/\{(1 - \theta_1)\theta_2\}$, which can be estimated
-%% with logistic regression or other methods (we will provide a comparison with
-%% this approach below). However, such normal approximations can be inaccurate for
-%% small sample sizes and/or extreme probabilities close to zero/one. We may
-%% therefore compute randomization probabilities via the exact binomial
-%% distribution of the data.
-%%
-%% %% The posterior probability of a hypothesis $H_{i}$
-%% %% with $i \in \{-, 0, +\} $ is then given by
-%% %% \begin{align}
-%% %%   \Pr(H_i \mid y_1, y_2)
-%% %%   &= \frac{\Pr(y_1, y_2 \mid H_{i}) \, \Pr(H_{i})}{\sum_{i \in \{-, 0, +\}} \, \Pr(y_1, y_2 \mid H_{i}) \, \Pr(H_i)}
-%% %%   \label{eq:pt2greatert1-point} \\
-%% %%   &= \left\{\mathrm{BF}_{-i}(y_1, y_2)\frac{\Pr(H_{-})}{\Pr(H_i)} + \mathrm{BF}_{0i}(y_1, y_2)\frac{\Pr(H_{0})}{\Pr(H_i)} + \mathrm{BF}_{-+}(y_1, y_2)\frac{\Pr(H_{-})}{\Pr(H_i)} \right\}^{-1}
-%% %% \end{align}
-%% %% where the marginal likelihood under the null hypothesis is
-%% %% \begin{align*}
-%% %%   \Pr(y_1, y_2 \mid H_0) = \int_0^1 \mathrm{Bin}(y_1 \mid n_1, \theta_1) \, \mathrm{Bin}(y_2 \mid n_2, \theta_1) \, p(\theta_1 \mid H_0) \, \mathrm{d} \theta
-%% %% \end{align*}
-%% %% while for the other two hypotheses it is
-%% %% \begin{align*}
-%% %%   \Pr(y_1, y_2 \mid H_i) = \int_0^1 \int_0^1 \mathrm{Bin}(y_1 \mid n_1, \theta) \,
-%% %%   \mathrm{Bin}(y_2 \mid n_2, \theta) \, p(\theta_1, \theta_2 \mid H_i) \, \mathrm{d}
-%% %%   \theta_1 \, \mathrm{d}\theta_2.
-%% %% \end{align*}
-%% %% with $\mathrm{Bin}(\cdot \mid n, \theta)$ the binomial probability mass function
-%% %% and $\mathrm{BF}_{ij} = \Pr(y_1, y_2 \mid H_i)/\Pr(y_1, y_2 \mid H_j)$ the Bayes
-%% %% factor contrasting the data under one hypothesis verus another.
-%%
-%% %% The probability to randomize a participant to group 2 can then be defined as
-%% %% \begin{align*}
-%% %%   \pi = \frac{\Pr(H_0 \mid y_1, y_2)}{2} + \Pr(H_{+} \mid y_1, y_2),
-%% %% \end{align*}
-%% %% while the probability to randomize to group 1 is consequently
-%% %% \begin{align*}
-%% %%   1 - \pi = \frac{\Pr(H_0 \mid y_1, y_2)}{2}  + \Pr(H_{-} \mid y_1, y_2).
-%% %% \end{align*}
-%% %% This scheme reduces to ordinary Bayesian adaptive randomization when the prior
-%% %% probability of $H_0$ is set to zero, but induces shrinkage toward randomization
-%% %% probabilities of $\pi = 1/2$ otherwise. It can be motivated as Bayesian
-%% %% hypothesis averaged randomization probability where the hypothesis-specific
-%% %% randomization probabilities are $1/2$, $1$, and $0$ under $H_0$, $H_{+}$, and
-%% %% $H_{-}$, respectively
-%%
-%% 
-%% To compute posterior and randomization probabilities, it is necessary to compute
-%% the marginal likelihood of the observed data $y$ under the different hypotheses.
-%% The null hypothesis $H_0 \colon \theta_1 = \theta_2$ is no longer a simple
-%% hypothesis but requires specification of a prior for the common probability
-%% $\theta_1$. Assuming a beta prior $\theta_1 \mid H_0 \sim \mathrm{Beta}(a_0,
-%% b_0)$, the marginal likelihood is
-%% \begin{align*}
-%%   \Pr(y \mid H_0) =
-%%   \binom{n_1}{y_1} \binom{n_2}{y_2} \times \frac{\mathrm{B}(a_0 + y_1 + y_2, b_0 + n_1 + n_2 - y_1 - y_2)}{\mathrm{B}(a_0, b_0)}
-%% \end{align*}
-%% with $\mathrm{B}(a, b) = \int_0^1 t^{a-1} (1-t)^{b-1}\mathrm{d}t$ the beta
-%% function. Under $H_{-}$ and $H_{+}$, it is natural to assume two independent
-%% beta priors $\theta_1 \sim \mathrm{Beta}(a_{1}, b_1)$ and $\theta_2 \sim
-%% \mathrm{Beta}(a_2, b_2)$, and truncate them to the corresponding space of the
-%% hypothesis. This leads to the marginal likelihoods
-%% \begin{align*}
-%%  \Pr(y\mid H_{-}) =&
-%%   %% \frac{\binom{n_1}{y_1} \, \binom{n_2}{y_2} \,
-%%   %% \int_0^1 \int_0^{\theta_1} \theta_1^{a_1 + y_1 - 1}(1 - \theta_1)^{b_1 + n_1 - y_1 - 1}
-%%   %% \theta_2^{a_2 + y_2 - 1}(1 - \theta_2)^{b_2 + n_2 - y_2 - 1} / \mathrm{pBeta}(\theta_1 \mid a_2, b_2)
-%%   %% \mathrm{d}\theta_2\, \mathrm{d}\theta_1}{\mathrm{B}(a_1, b_1) \, \mathrm{B}(a_2, b_2)}
-%%   %% \frac{\binom{n_1}{y_1} \, \binom{n_2}{y_2} \, \mathrm{B}(a_2 + y_2, b_2 + n_2 - y_2)}{\mathrm{B}(a_1, b_1) \, \mathrm{B}(a_2, b_2) \, K_{-}}
-%%   %% \int_0^1 \theta_1^{a_1 + y_1 - 1}(1 - \theta_1)^{b_1 + n_1 - y_1 - 1}
-%%   %%  I_{\theta_1}(a_2 + y_2, b_2 + n_2 - y_2)
-%%   %%  \mathrm{d}\theta_1
-%%   \binom{n_1}{y_1} \binom{n_2}{y_2} \times \frac{\mathrm{B}(a_1 + y_1, b_1 + n_1 - y_1)}{\mathrm{B}(a_1, b_1)} \times \frac{\mathrm{B}(a_2 + y_2, b_2 + n_2 - y_2)}{\mathrm{B}(a_2, b_2)} \\
-%%   &\times \frac{Q(a_1 + y_1,b_1 + n_1 - y_1,a_2 + y_2,b_2 + n_2 - y_2)}{Q(a_1,b_1,a_2,b_2)} \\
-%%   \Pr(y \mid H_{+})
-%%   =& \binom{n_1}{y_1} \binom{n_2}{y_2} \times \frac{\mathrm{B}(a_1 + y_1, b_1 + n_1 - y_1)}{\mathrm{B}(a_1, b_1)} \times \frac{\mathrm{B}(a_2 + y_2, b_2 + n_2 - y_2)}{\mathrm{B}(a_2, b_2)} \\
-%%   &\times \frac{1 - Q(a_1 + y_1,b_1 + n_1 - y_1,a_2 + y_2,b_2 + n_2 - y_2)}{1 - Q(a_1,b_1,a_2,b_2)}
-%% \end{align*}
-%% with $Q(a_1, b_1, a_2, b_2) = \Pr(\theta_1 > \theta_2) = \{\int_0^1 t^{a_1 -
-%%   1}(1 - t)^{b_1-1} I_{t}(a_2, b_2) \,\mathrm{d}t\}/\mathrm{B}(a_1, b_1)$ where
-%% $I_{x}(a, b) = \{\int_0^x t^{a - 1}(1 - t)^{b-1} \, \mathrm{d}t\}/\mathrm{B}(a,
-%% b)$ is the regularized incomplete beta function, which is also the cumulative
-%% distribution function of the beta distribution. Computation of $Q(a_1, b_1, a_2,
-%% b_2)$ via numerical integration is efficient, yet for positive integer
-%% arguments, it can also alternatively be computed from the $p$-value from
-%% Fisher's exact test for a certainly modified $2\times 2$ table
-%% \citep{Altham1969, Howard1998}.
-%%
-%%
-%% For a specified prior probability of the null hypotheses $\Pr(H_0)$, we may
-%% again distribute the remaining prior probability among $H_{-}$ and $H_{+}$ as
-%% $\Pr(H_{-}) = \{1 - \Pr(H_0)\}Q(a_1,b_1,a_2,b_2)$ and $\Pr(H_{+}) = \{1 -
-%% \Pr(H_0)\}\{1 - Q(a_1,b_1,a_2,b_2)\}$ to ensure that the averaged prior is again
-%% the beta prior that was truncated in the first place. Plugging these marginal
-%% likelihoods and prior probabilities into equation~\eqref{eq:posterior} produces
-%% posterior probabilities, which in turn can be used for obtaining randomization
-%% probabilities. Similarly, ratios of marginal likelihoods can be taken to obtain
-%% Bayes factors for monitoring accumulating evidence.
-%%
-%% \begin{figure}[!htb]
-%% << "example-binary", fig.height = 5, cache = TRUE >>=
-%% ## priors
-%% pm <- 0
-%% psd <- sqrt(1)
-%% a0 <- b0 <- a1 <- b1 <- a2 <- b2 <- 1
-%% pH0seq <- c(0, 1, 0.5) #seq(0, 1, 0.25)
-%%
-%% ## show evolution of posterior and randomization probabilities but without
-%% ## adaptive randomization
-%% set.seed(42)
-%% n <- 200
-%% grid <- expand.grid(p1 = c(0.05, 0.1, 0.15),
-%%                     p2 = c(0.05, 0.1, 0.15))
-%% plotDF <- do.call("rbind", lapply(X = seq(1, nrow(grid)), FUN = function(i) {
-%%     y1 <- rbinom(n = n, size = 1, prob = grid$p1[i])
-%%     y2 <- rbinom(n = n, size = 1, prob = grid$p2[i])
-%%     y1cum <- cumsum(y1)
-%%     y2cum <- cumsum(y2)
-%%     res <- do.call("rbind", lapply(X = seq_along(y1cum), FUN = function(j) {
-%%         a <- y2cum[j] + 0.5
-%%         b <- y1cum[j] + 0.5
-%%         c <- j - y2cum[j] + 0.5
-%%         d <- j - y1cum[j] + 0.5
-%%         logOR <- log(a*d/b/c)
-%%         selogOR <- sqrt(1/a + 1/b + 1/c + 1/d)
-%%         data <- data.frame(y1 = y1cum[j], y2 = y2cum[j], n1 = j, n2 = j)
-%%         do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
-%%             res <- brar_binomial(y = c(y1cum[j], y2cum[j]), n = c(j, j),
-%%                                  pH0 = pH0, a0 = a0, b0 = b0, a = c(a1, a2),
-%%                                  b = c(b1, b2))
-%%             resnorm <- brar_normal(estimate = logOR, sigma = selogOR^2, pm = pm,
-%%                                    psigma = psd^2, pH0 = pH0)
-%%             rbind(data.frame(data, pH0 = pH0, t(res$posterior),
-%%                              prand = res$prand[2], method = "exact"),
-%%                   data.frame(data, pH0 = pH0, t(resnorm$posterior),
-%%                              prand = resnorm$prand[2],
-%%                              method = "normal approximation"))
-%%         }))
-%%     }))
-%%     data.frame(p1 = grid$p1[i], p2 = grid$p2[i], res)
-%% }))
-%%
-%% ggplot(data = plotDF, #filter(plotDF, method != "exact"),
-%%        aes(x = n1, y = prand, color = factor(pH0, ordered = TRUE),
-%%            lty = method)) +
-%%     facet_grid(p1 ~ p2, labeller = label_bquote(rows = theta[1] == .(p1),
-%%                                                 cols = theta[2] == .(p2))) +
-%%     labs(x = "Sample size per group",
-%%          y = "Probability to randomize to group 2",
-%%          color = bquote("Pr(" * italic(H)[0] * ")"),
-%%          linetype = "Method") +
-%%     ## geom_hline(yintercept = 0.5, lty = 2, alpha = 0.5) +
-%%     geom_step(alpha = 0.9) +
-%%     scale_y_continuous(labels = scales::percent) +
-%%     theme_bw() +
-%%     theme(panel.grid.minor = element_blank(),
-%%           strip.background = element_rect(fill = "#00000003"),
-%%           legend.position = "top")
-%% @
-%% \caption{Evolution of BRAR randomization probabilities for 9 simulated data
-%%   sequences with underlying probabilities of $\theta_1$ and $\theta_2$. In each
-%%   step one observation from group 1 and another one from group 2 are generated
-%%   based on which randomization probabilities are computed.}
-%% \label{fig:simulation-example-binary}
-%% \end{figure}
-%%
-%% Figure~\ref{fig:simulation-example-binary} shows an example of adaptive
-%% randomization probabilities for simulated data with true probabilities
-%% $\theta_1$ and $\theta_2$ as indicated in the plot panels. In addition to the
-%% probabilities computed via the exact distribution with uniform priors assigned
-%% to probabilities ($a_0 = b_0 = a_1 = b_1 = a_2 = b_2 = 1$), randomization
-%% probabilities computed via a normal approximation to the log odds ratio
-%% (computed with a Yates' correction to avoid issues with zero cells) based on the
-%% methods from Section~\ref{sec:normal} and prior $\theta \sim \mathrm{N}(0,
-%% \Sexpr{psd^2})$ are also provided (dashed lines). We can see that the normal
-%% approximation is often relatively close to the exact method, even though the true
-%% probabilities from which the data are simulated are rather small. Furthermore,
-%% we can see that when the true probabilities are the same (panels on the
-%% diagonal), the adaptive randomization probabilities with $\Pr(H_0) = 0.5$
-%% remains considerably closer to 50\% compared to Thompson sampling ($\Pr(H_0) =
-%% 0$) which more erratically meanders around this value. The larger the difference
-%% between $\theta_1$ and $\theta_2$, the more extreme the randomization
-%% probabilities tend to become. For example, when $\theta_2 = 0.15$ and $\theta_1
-%% = 0.05$ (top-right panel), adaptive randomization probabilities converge to
-%% values close $100\%$, although the probabilities based on $\Pr(H_0) = 1/2$
-%% remain somewhat closer to $50\%$.
-%%
-%%
-%% \subsection{More than two groups}
+
 Suppose that we observe data of the form $y = \{y_C, y_1, \dots, y_{K}, n_C,
 n_1, \dots, n_{K}\}$ where $y_i$ denotes the number of successes out of $n_i$
 trials in group $i \in \{C, 1, \dots, K\}$ coming from a control group (index
@@ -1650,11 +1385,6 @@ From a Bayesian perspective, stopping the trial seems thus a sensible decision
 if the prior probability of equal effects was low. Conversely, more evidence
 would have been needed if the prior probability had been higher.
 
-%% In sum, the reanalysis of the ECMO trial showed that the proposed method could
-%% have produced both lower but also higher randomization probabilities than the
-%% RPW method. These could be augmented with posterior probabilities that that are
-%% inherently coherent with
-
 
 \section{Simulation study}
 \label{sec:simulation}
@@ -1704,9 +1434,6 @@ comparable to those from less extreme modifications of Thompson sampling, such
 as a power transformation with $c = 1/2$. In sum, the simulation study
 demonstrated that point null Bayesian RAR has comparable statistical properties
 to Thompson sampling with ad hoc modifications.
-%% The normal and exact version of point null Bayesian RAR performed relatively
-%% similar with some minor differences in some conditions and perfomance
-%% measures.
 
 \section{Discussion}
 \label{sec:discussion}
@@ -1783,7 +1510,6 @@ packages.
 % Reset line spacing to 1.5 from here on
 %% {\small
 \bibliographystyle{apalikedoiurl}
-%% \bibliographystyle{wileyNJD-AMA}
 \bibliography{bibliography}
 %% }
 
@@ -2068,13 +1794,20 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
 ## SimExtract(simres, what = "warnings")
 ## SimExtract(simres, what = "errors")
 
-
 ## ## compare to results from Robertson et al. (2023)
 ## summaries |>
 ##     filter(K == 1, pc == 0.25, pt1 == 0.35, capping_eps == 0.5, burnin == 0,
-##            c == "1", pH0 %in% c(0, 1), method == "exact") |>
+##            c == "1", pH0 %in% c(0, 1), method %in% c("Exact BRAR",
+##                                                      "Equal Randomization")) |>
 ##     select(n, pH0, method, EN1diff, EN1diffL, EN1diffU, S01, ENS, ENS_sd) |>
 ##     arrange(-pH0)
+## #> # A tibble: 4 × 9
+## #>       n   pH0 method              EN1diff EN1diffL EN1diffU    S01   ENS ENS_sd
+## #>   <dbl> <dbl> <fct>                 <dbl>    <dbl>    <dbl>  <dbl> <dbl>  <dbl>
+## #> 1   200     1 Equal Randomization  -0.01       -28       28 0.0683  60.0   6.48
+## #> 2   654     1 Equal Randomization  -0.288      -50       50 0.0058 196.   11.7
+## #> 3   200     0 Exact BRAR           96.6       -116      182 0.0929  64.8   7.82
+## #> 4   654     0 Exact BRAR          469.          30      628 0.0171 220.   14.9
 
 ## ## ER (n = 200): ENdiff = 0 (-28, 28), S_01 = 0.069, ENS = 60 (6.4)
 ## ## -> corresponds to pH0 = 1
@@ -2084,9 +1817,6 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
 ## ## -> rougly corresponds to pH0 = 0
 ## ## TS (n = 654): ENdiff = 461 (-356, 640), S_01 = 0.042, ENS = 220 (17.5)
 ## ## -> rougly corresponds to pH0 = 0
-
-## TODO create RADAR/spider/star chart that shows multiple performance measures
-## at the same time?
 
 ## plot parameters
 theme_dashboard <- function() {
@@ -2114,8 +1844,6 @@ shapes <- c("none" = 19,
 maxNC <- summaries |>
     slice_min(order_by = meanconvergence)
 @
-
-
 
 \afterpage{
 \begin{landscape}
