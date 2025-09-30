@@ -50,18 +50,28 @@ par(mar = c(0, 0, 0, 0))
 ncols <- 250
 colpal <- hcl.colors(n = ncols, palette = "Blue-Red 2", alpha = 0.99, rev = TRUE)
 df$col <- colpal[ceiling(df$prand*(ncols - 1) + 1)]
+example <- c(0.3, 0.5, 0.2)
+pexample <- example[2]/2 + example[3]
+examplecol <- colpal[ceiling(pexample*(ncols - 1) + 1)]
 TernaryPlot(alab = bquote("Pr(" * italic(H["-"]) ~ "|" ~ italic(y) * ")" %->% ""),
-            blab = bquote("Pr(" * italic(H[0]) ~ "|" ~ italic(y) * ")"  %->% ""),
+            blab = bquote("Pr(" * italic(H["0"]) ~ "|" ~ italic(y) * ")"  %->% ""),
             clab = bquote("" %<-% "Pr(" * italic(H["+"]) ~ "|" ~ italic(y) * ")"),
             grid.lines = 5, grid.minor.lines = 1,
-            axis.labels = list(paste0(seq(0, 100, 20), "%"),
-                               paste0(seq(0, 100, 20), "%"),
-                               paste0(seq(0, 100, 20), "%")),
-            axis.cex = 0.6, lab.cex = 0.8, padding = 0.1)
-TernaryPoints(df[, c("pm", "p0", "pp")], pch = 20, col = df$col, cex = 1)
+            axis.labels = list(paste0(seq(0, 1, 0.2), ""),
+                               ## shift H0 and H+ labels to align with ticks
+                               paste0(seq(0, 1, 0.2), "\n"),
+                               paste0("\n \n", seq(0, 1, 0.2))),
+            ## axis.labels = list(paste0(seq(0, 100, 20), "%"),
+            ##                    ## shift H0 and H+ labels to align with ticks
+            ##                    paste0(seq(0, 100, 20), "% \n"),
+            ##                    paste0("\n \n", seq(0, 100, 20), "%")),
+            axis.cex = 0.75, lab.cex = 1, padding = 0.1)
+TernaryPoints(df[, c("pm", "p0", "pp")], pch = 20, col = df$col, cex = 1.25)
+TernaryPoints(example, pch = 8, col = 1, cex = 1.25, lwd = 1.5)
 PlotTools::SpectrumLegend("topleft", palette = colpal,
                           legend = paste0(seq(from = 100, to = 0, length.out = 5), "%"),
-                          bty = "n", xpd = NA, title = bquote(pi), cex = 0.7, lwd = 15)
+                          bty = "n", xpd = NA, title = bquote(pi), cex = 0.8,
+                          lwd = 15)
 
 
 ## ----"spike-and-slab", fig.height = 2.75, fig.width = 4-----------------------
@@ -203,7 +213,7 @@ sigma <- tau^2*matrix(c(1, rho,
 pH0 <- 0.5
 dens <- matrix(t(apply(X = expand.grid(tseq, tseq), 1, FUN = function(x) {
     ## dnorm(x[1], mu[1], tau)*dnorm(x[2], mu[2], tau)
-    dmvnorm(x = x, mean = mu, sigma = sigma)
+    dmvnorm(x = x, mean = mu, sigma = sigma)*(1 - pH0)
 })), nrow = ngrid)*(1 - pH0)
 densn <- densp1 <- densp2 <- dens
 densn[tseq > 0,] <- NaN
@@ -470,7 +480,7 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac,
 
 
 ## ----"ECMO-analysis", fig.height = 6------------------------------------------
-## TODO implement randomized play the winner method as comparison
+## randomized play the winner RAR
 rpw <- function(y1, y0, a = 1, b = 1, g = 1) {
     balls1 <- a + b*y1
     balls0 <- a + g*y0
@@ -544,7 +554,7 @@ plt1 <- ggplot(data = subset(ecmoDF, !is.na(pH0)), #& method != "Normal"),
 plt2 <- ggplot(data = ecmoDF,
                aes(x = ntotal, y = H.1, linetype = method, shape = method)) +
     labs(x = "Total sample size",
-         y = bquote("Pr(" * italic(H["+"]) ~ "| data)"),
+         y = bquote("Pr(" * italic(H["+"]) ~ "|" ~ italic(y) * ")"),
          color = bquote("Pr(" * italic(H)[0] * ")"),
          shape = "", linetype = "") +
     geom_step(aes(color = pH0lab), alpha = 0.5) +
@@ -559,7 +569,7 @@ ggarrange(plt1, plt2, ncol = 1, common.legend = TRUE, legend = "right")
 
 ## ----"posterior-probabilities-ECMO"-------------------------------------------
 post0 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0)$H.1
-post75 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0.75)$H.1
+post5 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0.5)$H.1
 
 
 ## ----"brar-package-demonstration", echo = TRUE--------------------------------
@@ -593,24 +603,16 @@ brar_normal(estimate = estimate, sigma = sigma, pm = pm, psigma = psigma,
             pH0 = 0.5)
 
 
-## -----------------------------------------------------------------------------
+## ----"load-sim-data"----------------------------------------------------------
 simres <- readRDS("simulation/brar-sim.rds")
 nsim <- unique(simres$REPLICATIONS)
 
 
-## -----------------------------------------------------------------------------
+## ----"load-sim-session-info"--------------------------------------------------
 si <- readRDS("simulation/sessioninfo-server.rds")
 
 
-## ----"simulation-data"--------------------------------------------------------
-## simulation looking at
-## - testing: T1E, Power
-## - estimation: Bias, variance
-## - ethical/patient: Expected number of treatment successes (ENS) / failures (ENF), proportion of patient allocated to best arm
-
-## load results with
-simres <- readRDS("simulation/brar-sim.rds")
-nsim <- unique(simres$REPLICATIONS)
+## ----"preprare-simulation-data"-----------------------------------------------
 summaries <- readRDS("simulation/sim-summaries.rds") |>
     mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
                             labels = c("none", "[0.1,0.9]")),
@@ -684,7 +686,7 @@ shapes <- c("none" = 19,
             "capping and c=i/(2n)" = 1)
 
 
-## ----"convergence"------------------------------------------------------------
+## ----"minimum-convergence"----------------------------------------------------
 maxNC <- summaries |>
     slice_min(order_by = meanconvergence)
 
