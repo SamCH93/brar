@@ -3,13 +3,13 @@ FILE=bfbrar
 all: docker
 .PHONY: all dbuild docker
 
-## build docker image (requires root access for docker)
+## build Docker image (requires root access for Docker)
 dbuild: Dockerfile
 	docker build \
     -t $(FILE) .
 
-## run RStudio in docker container
-docker: dbuild
+## run RStudio in Docker container
+docker-rstudio: dbuild
 	echo "open RStudio Server at http://localhost:8787"
 	docker run \
     --rm \
@@ -28,3 +28,16 @@ docker: dbuild
 ##  -p 8787:8787 : map port 8787 of container to port 8787 of host
 ##  -v /$(CURDIR):/home/rstudio/paper : mount current directory into container
 ##  $(FILE) : run the $(FILE) image
+
+## generate tex from Docker container and compile outside to PDF
+docker-paper: dbuild
+	docker run \
+	--rm \
+	--user rstudio \
+	-e USERID=$(id -u) \
+	-e GROUPID=$(id -g) \
+	-v $(CURDIR)/paper:/home/rstudio/paper \
+	-w /home/rstudio/paper \
+	$(FILE) \
+	make tex
+	cd paper && make pdf
