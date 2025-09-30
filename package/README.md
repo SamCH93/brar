@@ -1,7 +1,6 @@
 # brar
 
-The **brar** R package provides functions to perform Bayesian adaptive
-randomization ....
+The **brar** R package implements Bayesian response adaptive randomization methods based on point null Bayesian hypothesis testing for multi-arm settings.
 
 ## Installation
 
