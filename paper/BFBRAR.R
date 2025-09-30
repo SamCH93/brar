@@ -572,7 +572,7 @@ post0 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0)$H.1
 post5 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0.5)$H.1
 
 
-## ----"brar-package-demonstration", echo = TRUE--------------------------------
+## ----"brar-package-demonstration", echo = TRUE, size = "small"----------------
 library(brar) # load package
 
 ## observed successes and trials in control and 3 treatment groups

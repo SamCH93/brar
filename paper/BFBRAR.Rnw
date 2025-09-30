@@ -34,7 +34,13 @@
 
 %% title, authors, affiliations, mail
 \title{\vspace{-4em} \textbf{\textsf{
-      Bayesian Response Adaptive Randomization \\ with Point~Null Bayesian Hypothesis Testing
+      Stabilizing Thompson Sampling with Point Null Bayesian Response Adaptive Randomization
+      %% some potential titles
+      %% Bayesian Response Adaptive Randomization \\ with Point~Null Bayesian Hypothesis Testing
+      %% A Bayesian Hypothesis Testing Framework for Response Adaptive Randomization
+      %% Point Null Bayesian Response Adaptive Randomization
+      %% Stabilizing Bayesian Response Adaptive Randomization with Point Null Hypotheses
+      %% Reducing Variability in Bayesian Response Adaptive Randomization through Point Null Testing
 }}}
 \author{
   Samuel Pawel \orcidlink{0000-0003-2779-320X}
@@ -107,7 +113,7 @@ col3 <- "#009E73"
 %% should be less than 225 words
 \begin{abstract}
   \noindent Response adaptive randomization (RAR) methods use accumulated data
-  to adapt randomization probabilities, aiming to increase the chance of
+  to adapt randomization probabilities, aiming to increase the probability of
   allocating patients to effective treatments. A popular RAR method is Thompson
   sampling, which randomizes patients proportionally to the Bayesian posterior
   probability that each treatment is the most effective. However, its high
@@ -125,7 +131,7 @@ col3 <- "#009E73"
   sampling and has comparable statistical properties to Thompson sampling with
   common ad hoc modifications such as power transformation and probability
   capping. We implement the method in the open-source R package \texttt{brar},
-  enabling experiments to easily perform point null Bayesian RAR and support
+  enabling experimenters to easily perform point null Bayesian RAR and support
   more effective randomization of patients. \\
   \noindent \textit{Keywords}: Adaptive trials, A/B testing, Bayes factor,
   Bayesian model averaging, sharp null hypothesis, spike-and-slab prior
@@ -138,7 +144,7 @@ patients or animals) to treatments in a manner that is informed by accumulating
 data \citep{Thall2007, berry2010bayesian, Grieve2016a, Robertson2023}. A popular
 approach is Thompson sampling \citep{Thompson1933}, which randomizes
 participants proportionally to the Bayesian posterior probability that each
-treatment is the most effective. RAR methods are attractive because they
+treatment is the most effective. Such RAR methods are attractive because they
 naturally balance gathering information on treatment effectiveness and assigning
 subjects to effective treatments.
 
@@ -182,13 +188,13 @@ to consider a point null hypothesis postulating that treatments are equally
 effective. This is equivalent to using a ``spike-and-slab'' prior
 \citep{Raftery1997}, also known as ``lump-and-smear'' prior, which is a mixture
 of a point mass at equal effectiveness and a probability density elsewhere
-\citep[Section~5.5.4]{Spiegelhalter2004}. The prior probability of the point
+\citep[Section~5.5.4]{Spiegelhalter2004b}. The prior probability of the point
 null hypothesis determines the mixture weight. As we will show, setting this
 prior probability to zero produces equal randomization, whereas setting it to
 one produces Thompson sampling. The proposed method thus interpolates between
 equal randomization and Thompson sampling in a coherent Bayesian way. As a
 by-product, posterior probabilities and Bayes factors are also obtained. These
-can be used to monitor evidence of the effectiveness of each treatment, in a
+can be used to monitor evidence of the effectiveness of each treatment in a
 manner that is aligned with the randomization probabilities.
 
 In the following Section~\ref{sec:general-theory} we introduce the general idea
@@ -204,11 +210,11 @@ package \texttt{brar} for performing point null Bayesian RAR.
 
 \section{Point null Bayesian RAR}
 \label{sec:general-theory}
-We will now explain the general idea of point null Bayesian RAR, without going
-into specifics such as data distribution or computation (these will follow in
-the subsequent sections). Throughout we will assume that we have observed data
-$y$ and we want to use these to randomize a future experimental unit. We start
-with the basic but important setting of one control and one treatment group, and
+We next explain the general idea of point null Bayesian RAR, without going into
+specifics such as data distribution or computation (these will follow in the
+subsequent sections). Throughout we will assume that we have observed data $y$
+and we want to use these to randomize a future experimental unit. We start with
+the basic but important setting of one control and one treatment group, and
 extend it afterwards to multiple treatment groups.
 
 \subsection{Two group comparisons}
@@ -226,9 +232,9 @@ How exactly these statements are translated into statistical hypotheses related
 to parameters depends on the type of data and model used, but often relates to
 an effect size parameter being less, equal, or greater than zero. There may also
 be situations where there is no control group but only two competing treatments.
-In this case, the methods detailed here are still applicable but with the
-control group replaced by a reference group (the choice of the reference may be
-somewhat arbitrary).
+In this case, the method detailed here is still applicable but with the control
+group replaced by a reference group (the choice of the reference may be somewhat
+arbitrary).
 
 The Bayesian posterior probability of a hypothesis $H_i \in \{H_{-}, H_0,
 H_{+}\}$ can then be calculated by
@@ -277,10 +283,10 @@ while the probability to randomize to the control group is consequently
 Figure~\ref{fig:ternary} shows such randomization probabilities for different
 combinations of posterior probabilities. We can see that the randomization
 probability $\pi$ shrinks towards 50\% as the posterior probability of the null
-hypothesis $\Pr(H_0 \mid y)$ increases. For example, if $\Pr(H_0 \mid y) = 0.5$,
-$\Pr(H_{-} \mid y) = 0.3$, and $\Pr(H_{+} \mid y) = 0.2$ as indicated by the
-black asterisk in Figure~\ref{fig:ternary}, the probability to randomize to the
-treatment group is $\pi = 0.2 + 0.5/2 = 45\%$.
+hypothesis $\Pr(H_0 \mid y)$ increases. For example, if $\Pr(H_{+} \mid y) =
+0.2$, $\Pr(H_{-} \mid y) = 0.3$, and $\Pr(H_0 \mid y) = 0.5$, as indicated by
+the black asterisk in Figure~\ref{fig:ternary}, the probability to randomize to
+the treatment group is $\pi = 0.2 + 0.5/2 = 45\%$.
 
 \begin{figure}[!htb]
 << "ternary-plot", fig.height = 3.5, fig.width = 3.5 >>=
@@ -340,8 +346,10 @@ are $0\%$, $50\%$, and $100\%$, under $H_{-}$, $H_{0}$, and $H_{+}$,
 respectively. That is, if we would know that $H_{+}$ or $H_{-}$ is true, we
 should assign the next patient to the treatment or control group, respectively,
 with probability one to maximize utility (patient benefit). On the other hand,
-if we knew that $H_{0}$ is true, randomizing assignment with probability 50\% is
-sensible.
+if we knew that $H_{0}$ is true, then randomizing the assignment with $\pi =
+50\%$ seems sensible.
+%% , though other choices might also be possible, as we will discuss further in
+%% Section~\ref{sec:multiple-treatments}.
 
 Interestingly, the randomization scheme~\eqref{eq:prand} reduces to Thompson
 sampling when the prior probability of $H_0$ is set to zero since then $\Pr(H_0
@@ -412,17 +420,17 @@ $1 - \sum_{i = 1}^K \pi_i = \sqrt{K}/(K + \sqrt{K})$ for control.
 
 \section{Point null Bayesian RAR under approximate normality}
 \label{sec:normal}
-We will now expand on the previously mentioned concept of point null Bayesian
-RAR in a setting where the data are summarized by an asymptotically normally
-distributed effect estimate. This does not mean that the raw data (e.g., a
-vector of outcomes and a matrix of covariates), from which the estimate is
-computed, must be normally distributed. For instance, the regression
-coefficients from generalized linear models estimated using maximum likelihood
-satisfy asymptotic normality. This is useful because it allows us to efficiently
-compute posterior and randomization probabilities without the need for
-simulation. Although this framework is widely applicable, improvements may be
-possible by considering the exact distribution of the data. This will be
-detailed for binary outcomes in Section~\ref{sec:binary}.
+We will expand on point null Bayesian RAR in the setting where the data are
+summarized by an asymptotically normally distributed effect estimate. This does
+not mean that the raw data (e.g., a vector of outcomes and a matrix of
+covariates), from which the estimate is computed, need to be normally
+distributed. For instance, the regression coefficients from generalized linear
+models estimated using maximum likelihood satisfy asymptotic normality. This is
+useful because it allows us to efficiently compute posterior and randomization
+probabilities without the need for simulation. Although this framework is widely
+applicable, improvements may be possible by considering the exact distribution
+of the data. This will be detailed for binary outcomes in
+Section~\ref{sec:binary}.
 
 \subsection{Two group comparisons}
 \label{sec:normal2}
@@ -446,7 +454,7 @@ translate into:
   &H_{+} \colon \theta > 0&
 \end{align*}
 The point null hypothesis $H_0$ is a simple hypothesis with no free parameters,
-or equivalently, a point (Dirac) mass at zero. The $H_{-}$ and $H_{+}$
+or equivalently, a point (Dirac) prior at zero. The $H_{-}$ and $H_{+}$
 hypotheses are composite hypotheses and require prior distributions for the
 effect $\theta$. A natural choice is a $\theta \sim \mathrm{N}(\mu, \tau^2)$
 normal distribution whose support is truncated to the negative and positive
@@ -760,7 +768,7 @@ All hypotheses apart from $H_0$ are composite and require the specification of a
 prior distribution. In analogy to the one treatment case, we specify a
 $K$-variate normal prior $\boldsymbol{\theta} \sim
 \mathrm{N}_K(\boldsymbol{\mu}, \boldsymbol{\mathcal{T}})$ and truncate its
-support to the region of corresponding hypothesis (i.e., for hypothesis
+support to the region of corresponding hypothesis (e.g., for hypothesis
 $H_{+i}$, the space in $\mathbb{R}^K$ where the $i$th component is positive and
 larger than and all other components). Similarly, the prior hypothesis
 probabilities $\Pr(H_{+i})$ for $i=1, \dots, K$ may again be specified so that
@@ -823,12 +831,12 @@ text(x = -2.25, y = -2, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 
 Figure~\ref{fig:two-treatments-prior} illustrates such a spike-and-slab prior
 for the two treatment groups scenario ($K = 2$). Specifying a prior covariance
-matrix $\boldsymbol{\mathcal{T}}$ with uniform correlation of 1/2 ensures that
+matrix $\boldsymbol{\mathcal{T}}$ with uniform correlation of 0.5 ensures that
 the prior probabilities of all hypotheses but $H_0$ are equal, which seems a
 sensible default. This can also be motivated by the fact that for normal
 outcomes with a shared control group and equal allocation, mean difference
-effect estimates are correlated by a factor 1/2 due to the common control group
-for all treatments.
+effect estimates are correlated by 0.5 due to the common control group for all
+treatments.
 
 As in the two-group case (Section~\ref{sec:normal2}), the normal-normal
 conjugate framework allows us to derive marginal likelihoods
@@ -863,7 +871,7 @@ $H_{+i}$ is given by
 \end{align*}
 where $\boldsymbol{A}_{i,K}$ is a $K \times K$ contrast matrix that maps
 $\boldsymbol{\theta}$ to the space where the negative orthant corresponds to the
-space of hypothesis $H_{+i}$, for example, for $i = 2$ and $K = 3$, the matrix
+space of hypothesis $H_{+i}$. For example, for $i = 2$ and $K = 3$, the matrix
 is
 \begin{align*}
   \boldsymbol{A}_{2,3} =
@@ -1044,28 +1052,28 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
 Figure~\ref{fig:example-multinormal} shows sequences of randomization
 probabilities computed from simulated normal data with $K = \Sexpr{K}$ treatment
 groups. We see again that assigning a prior probability $\Pr(H_0) = 1$ leads to
-static equal randomization at $\pi_i = 1/(K+1)= \Sexpr{1/(K+1)}$, while
-assigning $\Pr(H_0) = 0$ (Thompson sampling) leads to the most variable
-randomization probabilities. Since data are simulated assuming that treatment 1
-is the most effective, randomization probabilities based on $\Pr(H_0) < 1$
-converge towards $\pi_1 = 100\%$ and toward $0\%$ for the remaining treatments.
-While convergence is the fastest for $\Pr(H_0) = 0$, this prior probability also
-accidentally produces rather high randomization probabilities for the control
-group at the start of the study, which is less pronounced for positive prior
-probabilities $\Pr(H_0) > 0$.
+static equal randomization at $\pi_i = 1/(K+1)= \Sexpr{round(100*(1/(K+1)),
+  2)}\%$, while assigning $\Pr(H_0) = 0$ (Thompson sampling) leads to the most
+variable randomization probabilities. Since data are simulated assuming that
+treatment 1 is the most effective, randomization probabilities based on
+$\Pr(H_0) < 1$ converge towards $\pi_1 = 100\%$ and toward $0\%$ for the
+remaining treatments. While convergence is the fastest for $\Pr(H_0) = 0$, this
+prior probability also accidentally produces rather high randomization
+probabilities for the control group at the start of the study, which is less
+pronounced for positive prior probabilities $\Pr(H_0) > 0$.
 
 \section{Point null Bayesian RAR for binary outcomes}
 \label{sec:binary}
-We will now consider the setting with binary outcomes, as such outcomes
-frequently occur in applications of Bayesian RAR (e.g., in clinical trials or
-A/B testing settings). Suppose that we observe data of the form $y = \{y_C, y_1,
-\dots, y_{K}, n_C, n_1, \dots, n_{K}\}$ where $y_i$ denotes the number of
-successes out of $n_i$ trials in group $i \in \{C, 1, \dots, K\}$ coming from a
-control group (index $C$) and $K$ treatment groups. All success counts are
-assumed to be binomially distributed with probabilities $\theta_C, \theta_1,
-\dots, \theta_{K}$, respectively, and higher values are assumed to indicate a
-higher benefit (e.g., a higher probability of disease recovery). The hypotheses
-of interest from Section~\ref{sec:multiple-treatments} then translate into
+We next consider the setting with binary outcomes, as such outcomes frequently
+occur in applications of Bayesian RAR (e.g., in clinical trials or A/B testing
+settings). Suppose that we observe data of the form $y = \{y_C, y_1, \dots,
+y_{K}, n_C, n_1, \dots, n_{K}\}$ where $y_i$ denotes the number of successes out
+of $n_i$ trials in group $i \in \{C, 1, \dots, K\}$ coming from a control group
+(index $C$) and $K$ treatment groups. All success counts are assumed to be
+binomially distributed with probabilities $\theta_C, \theta_1, \dots,
+\theta_{K}$, respectively, and higher values are assumed to indicate a higher
+benefit (e.g., a higher probability of disease recovery). The hypotheses of
+interest from Section~\ref{sec:multiple-treatments} then translate into
 \begin{align*}
   &H_{-} \colon \theta_C > \theta_i, ~ i \in \{1, \dots, K\} \\
   &H_0 \colon \theta_C = \theta_1 = \dots = \theta_{K} \\
@@ -1108,7 +1116,7 @@ with
   &= \Pr(\theta_i = \max\{\theta_C, \theta_1, \dots, \theta_{K}\} \mid
   a_C, a_1, \dots, a_{K}, b_C, b_1, \dots, b_{K}) \\
   &= \int_0^1 p(\theta_i \mid a_i, b_i) \times \prod_{j\in\{C,1,\dots,K\} \setminus \{i\}} \Pr(\theta_j < \theta_i  \mid a_j, b_j) \, \mathrm{d}\theta_i \\
-  &= \int_0^1 \frac{t^{a_i - 1} (1 - t)^{b_i - 1}}{\mathrm{B}(a_i, b_i)} \times \prod_{j\in\{C,1,\dots,K\} \setminus \{i\}} I_t(a_j, b_j) \, \mathrm{d}t,
+  &= \int_0^1 \frac{\theta_i^{a_i - 1} (1 - \theta_i)^{b_i - 1}}{\mathrm{B}(a_i, b_i)} \times \prod_{j\in\{C,1,\dots,K\} \setminus \{i\}} I_{\theta_i}(a_j, b_j) \, \mathrm{d}\theta_i,
 \end{align*}
 where $I_{x}(a, b) = \{\int_0^x t^{a - 1}(1 - t)^{b-1} \,
 \mathrm{d}t\}/\mathrm{B}(a, b)$ is the regularized incomplete beta function,
@@ -1399,7 +1407,7 @@ treatment. This does not happen for the exact method whose randomization
 probability increase after every additional patient, which only happens for the
 normal approximation after the second patient. Furthermore, the randomization
 probabilities differ notably between the normal and exact methods, even at the
-end of the study. This is presumably because the influence of the differing
+end of the study. This presumably happens because the influence of the differing
 priors remains relatively high after observing only 12 patients.
 
 
@@ -1421,15 +1429,14 @@ post5 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0.5)$H.1
 
 The bottom plot in Figure~\ref{fig:ECMO} shows the corresponding posterior
 probability of the ECMO treatment being effective. Depending on the prior
-probability assigned to the null hypothesis of equal effectiveness, we can see
-that the posterior probability at the end of the trial may be very high (e.g.,
-$\Pr(H_{+} \mid y) = \Sexpr{round(post0, 2)}$ for $\Pr(H_0) = 0$), or only
-moderately in favor of ECMO (e.g., $\Pr(H_{+} \mid y) = \Sexpr{round(post5,
-  2)}$ for $\Pr(H_0) = 0.5$). From a Bayesian perspective, stopping the trial
-seems thus only a sensible decision if the prior probability of equal effects
-was low. Conversely, more evidence would have been needed if the prior
-probability had been higher, for example, if the prior probability were
-$\Pr(H_0) = 0.5$, representing a priori equipoise.
+probability $\Pr(H_0)$, we can see that the posterior probability at the end of
+the trial may be very high (e.g., $\Pr(H_{+} \mid y) = \Sexpr{round(post0, 2)}$
+for $\Pr(H_0) = 0$), or only moderately favoring ECMO (e.g., $\Pr(H_{+} \mid y)
+= \Sexpr{round(post5, 2)}$ for $\Pr(H_0) = 0.5$). From a Bayesian perspective,
+stopping the trial seems thus only a sensible decision if the prior probability
+of equal effects was low. Conversely, more evidence would have been needed if
+the prior probability had been higher, for example, if the prior probability
+were $\Pr(H_0) = 0.5$, representing a priori equipoise.
 
 
 \section{Simulation study}
@@ -1437,9 +1444,9 @@ $\Pr(H_0) = 0.5$, representing a priori equipoise.
 We conducted a simulation study to evaluate the performance of point null
 Bayesian RAR for different values of the prior probability of the null
 hypothesis $\Pr(H_0)$, and compare it to Thompson sampling (potentially modified
-with burn-in periods, randomization probability capping, power transformations)
-and equal randomization. Considered patient performance measures were the rate
-of successes, the rate of extreme randomization probabilities, and sample size
+with burn-in periods, probability capping, power transformations) and equal
+randomization. Considered patient performance measures were the rate of
+successes, the rate of extreme randomization probabilities, and sample size
 imbalance. Additionally, bias and coverage were considered to evaluate the
 performance of rate difference point estimates and confidence intervals under
 RAR, while the type I error rate and power of the corresponding tests were used
@@ -1463,9 +1470,9 @@ The main result of the simulation study regarding the newly proposed method was
 that, under most conditions, point null Bayesian RAR with a high prior
 probability of the null hypothesis $\Pr(H_0) = 0.75$ showed similar operating
 characteristics to Thompson sampling with capped randomization probabilities at
-10\% and 90\% and a power transformation with $c=i/(2n)$, where $i$ is the current
-sample size and $n$ is the maximum sample size. Both point null Bayesian RAR
-with a prior probability of $\Pr(H_0) = 0.75$ and modified Thompson sampling
+10\% and 90\% and a power transformation with $c=i/(2n)$, where $i$ is the
+current sample size and $n$ is the maximum sample size. Both point null Bayesian
+RAR with a prior probability of $\Pr(H_0) = 0.75$ and modified Thompson sampling
 could mitigate some issues with ordinary Thompson sampling. For instance, they
 exhibited less negative sample size imbalance, biased parameter estimates,
 undercoverage, and inflated type I error rates. However, this improvement came
@@ -1479,27 +1486,28 @@ prior probability than $\Pr(H_0) = 0.75$ produced operating characteristics
 comparable to those from less extreme modifications of Thompson sampling, such
 as a power transformation with $c = 1/2$. In sum, the simulation study
 demonstrated that point null Bayesian RAR has comparable statistical properties
-to Thompson sampling with ad hoc modifications.
+to Thompson sampling with common ad hoc modifications.
 
 \section{Discussion}
 \label{sec:discussion}
 
 In this paper we have proposed a modification of standard Bayesian RAR (Thompson
-sampling) via the introduction of a point null hypothesis, which leads to a
-spike-and-slab prior, and a recasting of the problem in a Bayesian hypothesis
-testing framework. While the plausibility of point null hypotheses is often a
-matter of philosophical debate \citep[see e.g.,][]{Berger1987b, Ly2022}, this
-method is useful in the RAR setting, as it can interpolate between equal
-randomization and Thompson sampling by changing the prior probability of the
-null hypothesis $\Pr(H_0)$. This allows experimenters to balance patient benefit
-with classical operating characteristics, such as power, type I error rate,
-bias, and coverage. For large values of $\Pr(H_0)$, we observed behaviors and
-operating characteristics similar to those obtained with ad hoc modifications of
-Thompson sampling, such as capping, burn-ins, and power transformations. Our
-method is implemented in the free and open source R package \texttt{brar} for
-binomial outcomes and for data summarized by approximately normal effect
-estimates. The latter makes the method applicable to many settings, for example,
-settings where treatment effects are estimated with regression analyses.
+sampling) via recasting of the problem in a Bayesian hypothesis testing
+framework and the introduction of a point null hypothesis.
+%% , leading to a spike-and-slab prior.
+While the plausibility of point null hypotheses is often a matter of
+philosophical debate \citep[see e.g.,][]{Berger1987b, Ly2022}, this method is
+useful in the RAR setting, as it can interpolate between equal randomization and
+Thompson sampling by changing the prior probability of the null hypothesis
+$\Pr(H_0)$. This allows experimenters to balance patient benefit with classical
+operating characteristics, such as power, type I error rate, bias, and coverage.
+For large values of $\Pr(H_0)$, we observed behaviors and operating
+characteristics similar to those obtained with ad hoc modifications of Thompson
+sampling, such as capping, burn-ins, and power transformations. Our method is
+implemented in the free and open source R package \texttt{brar} for binomial
+outcomes and for data summarized by approximately normal effect estimates. The
+latter makes the method applicable to many settings, for example, settings where
+treatment effects are estimated with regression analyses.
 
 One advantage of our framework is that the randomization probabilities
 coherently correspond with the available statistical evidence (in the form of
@@ -1514,40 +1522,46 @@ such high posterior probabilities.
 Although we conducted a simulation study to understand the method's basic
 behavior, more realistic and comprehensive evaluations are needed to understand
 its applicability in real-world conditions. For example, the method needs to be
-evaluated in combination with futility stopping. Another issue to consider is
-how to select the prior probability of the null hypothesis. In our simulation
-study, we found that setting a value of $\Pr(H_0) = 0.75$ mitigated many of the
-issues with Thompson sampling. However, other choices could be considered, such
-as setting a higher value. Similar considerations apply to the prior
-distributions of the parameters, as we did not assess the effect of varying
-these on the operating characteristics. For instance, rather than setting the
-correlation of the multivariate normal prior to achieve equal randomization
-probabilities, it could be beneficial to set it so that the prior probability of
-the control being superior is always $\Pr(H_{-}) = 0.5$ and the remaining
-probability is distributed equally among the treatments. Future work may
-therefore investigate whether a more efficient RAR procedure can be obtained by
-specifying a certain prior distribution. Finally, in many clinical trial
+evaluated in combination with futility stopping (e.g., dropping of treatment
+arms which are shown to be ineffective at an interim analysis). Another issue to
+consider is how to select the prior probability of the null hypothesis. In our
+simulation study, we found that setting a value of $\Pr(H_0) = 0.75$ mitigated
+many of the issues with Thompson sampling. However, other choices could be
+considered, such as setting a higher value. Similar considerations apply to the
+prior distributions of the parameters, as we did not assess the effect of
+varying these on the operating characteristics. For instance, rather than
+setting the correlation of the multivariate normal prior to achieve equal
+randomization probabilities, it could be beneficial to set it so that the prior
+probability of the control being superior is always $\Pr(H_{-}) = 0.5$ and the
+remaining probability is distributed equally among the treatments. Future work
+may therefore investigate whether a more efficient RAR procedure can be obtained
+by specifying a certain prior distribution. Finally, in many clinical trial
 settings, RAR methods are not directly applicable because outcomes such as death
 may only be observed after long follow-up periods, by which time recruitment and
 randomized allocation will already have finished. An alternative could be to
 perform point null Bayesian RAR with an informative surrogate outcome that is
 sooner observed than the primary outcome \citep{Gao2024}.
 
+In summary, Bayesian point null hypothesis testing can be used to effectively
+perform Bayesian RAR, and the framework can be further developed theoretically.
+Furthermore, our R package \texttt{brar} helps experimenters apply these RAR
+methods in practice.
 
-\section*{Acknowledgments}
+
+\subsection*{Acknowledgments}
 We thank František Bartoš and Małgorzata Roos for valuable comments on drafts of
 the manuscript. The acknowledgment of these individuals does not imply their
 endorsement of the paper.
 
-\section*{Conflict of interest}
+\subsection*{Conflict of interest}
 We declare no conflict of interest.
 
-\section*{Software and data}
+\subsection*{Software and data}
 Code and data to reproduce our analyses are openly available at
 \url{https://github.com/SamCH93/brar}. A snapshot of the repository at the time
 of writing is available at \url{https://doi.org/10.5281/zenodo.XXXXXX}. We used
 the statistical programming language \Sexpr{R.Version()[["version.string"]]} for
-analyses \citep{R} along with the \texttt{ggplot2} \citep{Wickham2016},
+analyses \citep{R2024} along with the \texttt{ggplot2} \citep{Wickham2016},
 \texttt{dplyr} \citep{Wickham2023}, \texttt{SimDesign} \citep{Chalmers2020},
 \texttt{mvtnorm} \citep{Genz2009}, \texttt{ggh4x} \citep{Brand2024},
 \texttt{ggpubr} \citep{Kassambara2023}, and \texttt{knitr} \citep{Xie2015}
@@ -1573,7 +1587,7 @@ binomial method from Section~\ref{sec:binary}. The following code chunk
 illustrates how both functions can be used.
 
 \begin{spacing}{1}
-<< "brar-package-demonstration", echo = TRUE >>=
+<< "brar-package-demonstration", echo = TRUE, size = "small" >>=
 library(brar) # load package
 
 ## observed successes and trials in control and 3 treatment groups
@@ -1612,12 +1626,13 @@ brar_normal(estimate = estimate, sigma = sigma, pm = pm, psigma = psigma,
 %% \setcounter{figure}{0}
 %% \renewcommand{\thefigure}{B\arabic{figure}}
 
-We will now describe the design and results of a simulation study following the
+We next describe the design and results of a simulation study following the
 structured ADEMP approach \citep{Morris2019, Siepe2024}. Our simulation study
 was not preregistered as it constitutes early-phase methodological research
 where the properties of a new method are explored without the intention to give
-recommendations for practitioners \citep{Heinze2023}. A website with additional
-details and results is provided at \url{https://samch93.github.io/brar/}.
+wide recommendations for practitioners \citep{Heinze2023}. A website with
+additional details and results is provided at
+\url{https://samch93.github.io/brar/}.
 
 \subsection{Aims}
 The aim of the simulation study is to evaluate the design characteristics of the
@@ -1659,19 +1674,19 @@ target of interest is the null hypothesis of $\text{RD}_1 = 0$.
 
 \subsection{Methods}
 
-We consider the above described point null RAR methods. The prior probability
-of $H_0$ is a tuning parameter and controls the variability of the randomization
+We consider the above described point null RAR methods. The prior probability of
+$H_0$ is a tuning parameter and controls the variability of the randomization
 probabilities. Setting $\Pr(H_0) = 1$ produces equal randomization, whereas
-$\Pr(H_0) = 1$ produces Thompson sampling. We consider values of $\Pr(H_0) \in
+$\Pr(H_0) = 0$ produces Thompson sampling. We consider values of $\Pr(H_0) \in
 \{0, 0.25, 0.5, 0.75, 1\}$, as well as the normal approximation and exact
-binomial version of RAR. For approximate normal RAR, a normal prior with mean
-0, variance 1, and in case of $K > 1$ a correlation of 1/2, is considered.
+binomial version of RAR. For approximate normal RAR, a normal prior with mean 0,
+variance 1, and in case of $K > 1$ a correlation of 0.5, is considered.
 Independent uniform priors are assigned for binomial RAR. Log odds ratios along
 with their covariance are estimated with logistic regression and then used as
-inputs for the normal RAR method, while the exact method uses success counts
-and sample sizes only. In case a method fails to converge, equal randomization
-is applied as a back-up strategy, as this mimics what an experimenter might do
-in practice when a RAR method fails to converge \citep{Paweletal2025c}.
+inputs for the normal RAR method, while the exact method uses success counts and
+sample sizes only. In case a method fails to converge, equal randomization is
+applied as a back-up strategy, as this mimics what an experimenter might do in
+practice when a RAR method fails to converge \citep{Paweletal2025c}.
 
 We also consider three modifications of these methods: In some conditions, a
 ``burn-in'' phase is carried out during which the first 50 patients are always
@@ -1783,11 +1798,11 @@ simres <- readRDS("simulation/brar-sim.rds")
 nsim <- unique(simres$REPLICATIONS)
 @
 
-Each condition was simulated \Sexpr{nsim} times. This ensures a MCSE (Monte
-Carlo Standard Error) for Type I error rate, power, and coverage of at most
-\Sexpr{100*sqrt(0.5^2/nsim)}\%. MCSEs were calculated using the formulae from
-\citet{Siepe2024} and are provided for all measures in the following figures and
-the supplemental website.
+Each condition was simulated \Sexpr{format(nsim, big.mark = "'")} times. This
+ensures a MCSE (Monte Carlo Standard Error) for Type I error rate, power, and
+coverage of at most \Sexpr{100*sqrt(0.5^2/nsim)}\%. MCSEs were calculated using
+the formulae from \citet{Siepe2024} and are provided for all measures in the
+following figures and the supplemental website.
 
 \subsection{Computational aspects}
 
@@ -1889,8 +1904,8 @@ maxNC <- summaries |>
 Non-convergence happened only rarely for the normal approximation method due to
 logistic regression not converging at the start of the study when no events were
 observed for some groups. In this case, equal randomization was applied. The
-highest rate of such non-convergence was in a condition with 3 treatment groups
-where \Sexpr{round(100 - 100*maxNC[,"meanconvergence"], 1)}\% of the $n$
+highest rate of such non-convergence was in a condition with $K = 3$ treatment
+groups where \Sexpr{round(100 - 100*maxNC[,"meanconvergence"], 1)}\% of the $n$
 logistic regressions did not converge. No other forms of missingness were
 observed. Figures and tables with per-condition-method non-convergence rates are
 available at \url{https://samch93.github.io/brar/}.
@@ -1920,8 +1935,8 @@ ggplot(data = summaries,
     theme_dashboard()
 @
 \caption{Mean rate of successes (i.e., the number of successes in a study
-  divided by its sample size averaged over all \Sexpr{nsim} simulation
-  repetitions). The maximum MCSE is
+  divided by its sample size averaged over all \Sexpr{format(nsim, big.mark =
+    "'")} simulation repetitions). The maximum MCSE is
   \Sexpr{signif(100*max(summaries[,"PS_mcse"]), 2)}\%.}
 \label{fig:successrate}
 \end{figure}
@@ -1947,9 +1962,10 @@ ggplot(data = summaries,
          color = "Method", shape = "Modifications") +
     theme_dashboard()
 @
-\caption{Mean proportion of \Sexpr{nsim} simulations with randomization
-  probabilities either less than 0.1 or greater than 0.9. The maximum MCSE is
-  \Sexpr{signif(100*max(summaries[,"PExtreme_mcse"]), 2)}\%.}
+\caption{Mean proportion of \Sexpr{format(nsim, big.mark = "'")} simulations
+  with randomization probabilities either less than 10\% or greater than 90\%.
+  The maximum MCSE is \Sexpr{signif(100*max(summaries[,"PExtreme_mcse"]),
+    2)}\%.}
 \label{fig:extreme}
 \end{figure}
 
@@ -1974,9 +1990,10 @@ ggplot(data = filter(summaries, pt1 > pc),
          color = "Method", shape = "Modifications") +
     theme_dashboard()
 @
-\caption{Proportion of \Sexpr{nsim} simulations with more than 10\% of the
-  sample size randomized to other groups than treatment group 1. The maximum
-  MCSE is \Sexpr{signif(100*max(summaries[,"S01_mcse"]), 2)}\%.}
+\caption{Proportion of \Sexpr{format(nsim, big.mark = "'")} simulations with
+  more than 10\% of the sample size randomized to other groups than treatment
+  group 1. The maximum MCSE is \Sexpr{signif(100*max(summaries[,"S01_mcse"]),
+    2)}\%.}
 \label{fig:imbalance}
 \end{figure}
 
@@ -2002,9 +2019,9 @@ ggplot(data = summaries,
     theme_dashboard()
 @
 \caption{Empirical bias of the estimate of the rate difference $\text{RD}_1$
-  between the first treatment group and the control group based on \Sexpr{nsim}
-  simulation repetitions. The maximum MCSE is
-  \Sexpr{signif(max(summaries[,"biasRD1_mcse"]), 2)}.}
+  between the first treatment group and the control group based on
+  \Sexpr{format(nsim, big.mark = "'")} simulation repetitions. The maximum MCSE
+  is \Sexpr{signif(max(summaries[,"biasRD1_mcse"]), 2)}.}
 \label{fig:bias}
 \end{figure}
 
@@ -2030,8 +2047,9 @@ ggplot(data = summaries,
     theme_dashboard()
 @
 \caption{Empirical coverage of the 95\% Wald confidence interval for the risk
-  difference $\text{RD}_1$ based on \Sexpr{nsim} simulation repetitions. The
-  maximum MCSE is \Sexpr{signif(100*max(summaries[,"covRD1_mcse"]), 2)}\%.}
+  difference $\text{RD}_1$ based on \Sexpr{format(nsim, big.mark = "'")}
+  simulation repetitions. The maximum MCSE is
+  \Sexpr{signif(100*max(summaries[,"covRD1_mcse"]), 2)}\%.}
 \label{fig:coverage}
 \end{figure}
 
@@ -2058,8 +2076,9 @@ ggplot(data = filter(summaries, pt1 == pc),
     theme_dashboard()
 @
 \caption{Empirical type I error rate of the Wald test of $\text{RD}_1 = 0$ based
-  on \Sexpr{nsim} simulation repetitions. The maximum MCSE is
-  \Sexpr{signif(100*max(filter(summaries, pt1 == pc)[,"rrRD1_mcse"]), 2)}\%.}
+  on \Sexpr{format(nsim, big.mark = "'")} simulation repetitions. The maximum
+  MCSE is \Sexpr{signif(100*max(filter(summaries, pt1 == pc)[,"rrRD1_mcse"]),
+    2)}\%.}
 \label{fig:t1e}
 \end{figure}
 
@@ -2085,8 +2104,8 @@ ggplot(data = filter(summaries, pt1 > pc),
     theme_dashboard()
 @
 \caption{Empirical power of the Wald test of $\text{RD}_1 = 0$ based on
-  \Sexpr{nsim} simulation repetitions. The maximum MCSE is
-  \Sexpr{signif(100*max(filter(summaries, pt1 > pc)[,"rrRD1_mcse"]), 2)}\%.}
+  \Sexpr{format(nsim, big.mark = "'")} simulation repetitions. The maximum MCSE
+  is \Sexpr{signif(100*max(filter(summaries, pt1 > pc)[,"rrRD1_mcse"]), 2)}\%.}
 \label{fig:power}
 \end{figure}
 
@@ -2100,13 +2119,14 @@ generally the highest for Thompson sampling and lowest for equal randomization.
 The normal approximation and exact method produced mostly similar rates, with
 the normal method sometimes showing slightly higher rates (e.g., for $K = 3$ and
 $\text{RD}_1 = 0.2$). The Thompson sampling modifications generally reduced the
-mean success rate. In conditions with small sample size these rates were similar
-as when the prior probability was $H_0 = 0.75$, while they were lower when the
-sample size was larger. This makes sense as for larger sample sizes, uncapped
-randomization probabilities are more likely to converge to extreme ones. This is
-also visible in Figure~\ref{fig:extreme} where more extreme randomization
-probabilities are observed with increasing sample size and rate difference for
-all methods but the ones with capping.
+mean success rate, with the greatest reduction achieved by combining capping and
+power transformation with $c = i/(2n)$. In conditions with small sample size
+these rates were similar as when the prior probability was $H_0 = 0.75$, while
+they were lower when the sample size was larger. This makes sense as for larger
+sample sizes, uncapped randomization probabilities are more likely to converge
+to extreme ones. This is also visible in Figure~\ref{fig:extreme} where more
+extreme randomization probabilities are observed with increasing sample size and
+rate difference for all methods but the ones with capping.
 
 \paragraph{Negative sample size imbalance}
 Figure~\ref{fig:imbalance} shows negative sample size imbalance as quantified by
@@ -2119,15 +2139,16 @@ below Thompson sampling with modifications.
 Figures~\ref{fig:bias} and~\ref{fig:coverage} show empirical bias and coverage
 related to estimates of the rate difference between the first treatment group
 and the control group $\text{RD}_1$. In conditions where there was no difference
-($\text{RD}_1 = 0$), all methods produced unbiased point estimates, though also
-all methods but equal randomization showed undercoverage. Bias occurred in
+($\text{RD}_1 = 0$), all methods produced unbiased point estimates, though all
+methods but equal randomization also showed undercoverage. Bias occurred in
 conditions with non-zero rate differences, the bias being the greatest for
 Thompson sampling and decreasing to some extent when modifications were
 introduced or the prior probability of $H_0$ increased. Similarly, modifications
 or increasing prior probabilitities improved coverage, although they still
-remained suboptimal in most conditions. For large rate differences, coverage was
-much better for the normal than the exact version of RAR. Similarly, bias was in
-some cases larger for the exact compared to the normal version.
+remained suboptimal in most conditions. For large rate difference conditions,
+coverage was much better for the normal than the exact version of RAR.
+Similarly, bias was in some cases larger for the exact compared to the normal
+version.
 
 
 \paragraph{Type I error rate and power}
