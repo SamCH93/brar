@@ -141,7 +141,7 @@ text(x = -1, y = 0.1, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 
 
 ## ----"example-normal", fig.height = 3.5, cache = TRUE-------------------------
-## simulate adaptive randomization
+## simulate RAR
 set.seed(500)
 n <- 200
 nseq <- seq_len(n)
@@ -303,7 +303,7 @@ text(x = -2.25, y = -2, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 
 
 ## ----"example-multinormal", fig.height = 4, cache = TRUE----------------------
-## simulate adaptive randomization
+## simulate RAR
 set.seed(42)
 n <- 200
 nseq <- seq_len(n)
@@ -403,7 +403,7 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
 
 
 ## ----"example-multibinomial", fig.height = 4, cache = TRUE--------------------
-## simulate adaptive randomization
+## simulate RAR
 set.seed(42)
 n <- 200
 nseq <- seq_len(n)

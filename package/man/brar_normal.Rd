@@ -2,7 +2,7 @@
 % Please edit documentation in R/brar-normal.R
 \name{brar_normal}
 \alias{brar_normal}
-\title{Bayesian response adaptive randomization}
+\title{Bayesian response-adaptive randomization}
 \usage{
 brar_normal(estimate, sigma, pm = rep(0, length(estimate)), psigma, pH0 = 0.5)
 }
@@ -30,7 +30,7 @@ An object of type \code{"brar"}
 }
 \description{
 This function computes Bayes factors, posterior probabilities,
-    and response adaptive randomization probabilities in the setting of data
+    and response-adaptive randomization probabilities in the setting of data
     in the form of approximately normal effect estimates.
 }
 \examples{

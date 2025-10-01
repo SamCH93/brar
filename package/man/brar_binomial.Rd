@@ -2,7 +2,7 @@
 % Please edit documentation in R/brar-binomial.R
 \name{brar_binomial}
 \alias{brar_binomial}
-\title{Bayesian response adaptive randomization for binomial outcomes}
+\title{Bayesian response-adaptive randomization for binomial outcomes}
 \usage{
 brar_binomial(
   y,
@@ -52,7 +52,7 @@ An object of type \code{"brar"}
 }
 \description{
 This function computes Bayes factors, posterior probabilities,
-    and response adaptive randomization probabilities in the setting of
+    and response-adaptive randomization probabilities in the setting of
     binomial outcomes.
 }
 \examples{

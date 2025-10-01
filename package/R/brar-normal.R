@@ -1,7 +1,7 @@
-#' @title Bayesian response adaptive randomization
+#' @title Bayesian response-adaptive randomization
 #'
 #' @description This function computes Bayes factors, posterior probabilities,
-#'     and response adaptive randomization probabilities in the setting of data
+#'     and response-adaptive randomization probabilities in the setting of data
 #'     in the form of approximately normal effect estimates.
 #'
 #' @param estimate Vector of effect estimates. Each estimates quantifies the

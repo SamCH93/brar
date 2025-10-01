@@ -89,7 +89,7 @@ This dashboard presents detailed results from the simulation study reported in P
 
 ### Aims
 
-To investigate the design characteristics of different BRAR (Bayesian Response Adaptive Randomization) methods.
+To investigate the design characteristics of different BRAR (Bayesian Response-Adaptive Randomization) methods.
 
 ### Data-generating mechanism
 
@@ -144,7 +144,7 @@ The simulation study was run on a server running `r si$running` and `r si$R.vers
 
 Cite this dashboard as 
 
-> Pawel, S., Held, L. (2025). Results from Simulation Study on Point Null Bayesian Response Adaptive Randomization Methods. <https://samch93.github.io/brar/>
+> Pawel, S., Held, L. (2025). Results from Simulation Study on Point Null Bayesian Response-Adaptive Randomization Methods. <https://samch93.github.io/brar/>
 
 
 # Patient Benefit

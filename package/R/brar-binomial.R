@@ -12,10 +12,10 @@ Pmaxi <- function(a, b, i, ...) {
     return(res)
 }
 
-#' @title Bayesian response adaptive randomization for binomial outcomes
+#' @title Bayesian response-adaptive randomization for binomial outcomes
 #'
 #' @description This function computes Bayes factors, posterior probabilities,
-#'     and response adaptive randomization probabilities in the setting of
+#'     and response-adaptive randomization probabilities in the setting of
 #'     binomial outcomes.
 #'
 #' @param y Vector with number of successes in each group. The first element

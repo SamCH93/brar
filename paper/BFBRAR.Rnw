@@ -34,7 +34,7 @@
 
 %% title, authors, affiliations, mail
 \title{\vspace{-4em} \textbf{\textsf{
-      Stabilizing Thompson Sampling with Point Null Bayesian Response Adaptive Randomization
+      Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization
       %% some potential titles
       %% Bayesian Response Adaptive Randomization \\ with Point~Null Bayesian Hypothesis Testing
       %% A Bayesian Hypothesis Testing Framework for Response Adaptive Randomization
@@ -112,7 +112,7 @@ col3 <- "#009E73"
 
 %% should be less than 225 words
 \begin{abstract}
-  \noindent Response adaptive randomization (RAR) methods use accumulated data
+  \noindent Response-adaptive randomization (RAR) methods use accumulated data
   to adapt randomization probabilities, aiming to increase the probability of
   allocating patients to effective treatments. A popular RAR method is Thompson
   sampling, which randomizes patients proportionally to the Bayesian posterior
@@ -138,15 +138,15 @@ col3 <- "#009E73"
 \end{abstract}
 
 \section{Introduction}
-Response adaptive randomization (RAR) methods, sometimes also called outcome
-adaptive randomization methods, randomly allocate experimental units (e.g.,
-patients or animals) to treatments in a manner that is informed by accumulating
-data \citep{Thall2007, berry2010bayesian, Grieve2016a, Robertson2023}. A popular
-approach is Thompson sampling \citep{Thompson1933}, which randomizes
-participants proportionally to the Bayesian posterior probability that each
-treatment is the most effective. Such RAR methods are attractive because they
-naturally balance gathering information on treatment effectiveness and assigning
-subjects to effective treatments.
+Response-adaptive randomization (RAR) methods, sometimes also called
+outcome-adaptive randomization methods, randomly allocate experimental units
+(e.g., patients or animals) to treatments in a manner that is informed by
+accumulating data \citep{Thall2007, berry2010bayesian, Grieve2016a,
+  Robertson2023}. A popular approach is Thompson sampling \citep{Thompson1933},
+which randomizes participants proportionally to the Bayesian posterior
+probability that each treatment is the most effective. Such RAR methods are
+attractive because they naturally balance gathering information on treatment
+effectiveness and assigning subjects to effective treatments.
 
 Despite its benefits, there are also various challenges with Thompson sampling.
 For example, the method can exhibit high variability, particularly in the early
@@ -515,18 +515,18 @@ text(x = -1, y = 0.1, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 To compute posterior hypothesis probabilities, specification of prior hypothesis
 probabilities is required. The prior probability of the null hypothesis
 $\Pr(H_0)$ represents the a priori plausibility of an absent effect, and also
-acts as a tuning parameter that controls the degree of variability of the
-adaptive randomization. An intuitive default is $\Pr(H_0) = 0.5$ as it
-represents the equipoise position of equal probability of an absent effect
-relative to a present (either harmful or beneficial) effect
-\citep{Johnson2013b}. For a given $\Pr(H_0)$, it is then natural to set the
-prior probabilities of the other two hypotheses to $\Pr(H_{+}) = \{1 -
-\Pr(H_0)\} \times \Phi(\mu/\tau)$ and $\Pr(H_{-}) = \{1 - \Pr(H_0)\} \times
-\Phi(-\mu/\tau)$ so that to the prior distribution averaged over $H_{-}$ and
-$H_{+}$ is again the $\mathrm{N}(\mu, \tau^2)$ normal distribution that was
-truncated in the first place. For example, when setting $\Pr(H_0) = 0.5$ and
-specifying a zero-centered prior ($\mu = 0$) as in Figure~\ref{fig:spike-slab},
-we obtain $\Pr(H_{+}) = \Pr(H_{-}) = 0.5 \times 0.5 = 0.25.$
+acts as a tuning parameter that controls the degree of variability of RAR. An
+intuitive default is $\Pr(H_0) = 0.5$ as it represents the equipoise position of
+equal probability of an absent effect relative to a present (either harmful or
+beneficial) effect \citep{Johnson2013b}. For a given $\Pr(H_0)$, it is then
+natural to set the prior probabilities of the other two hypotheses to
+$\Pr(H_{+}) = \{1 - \Pr(H_0)\} \times \Phi(\mu/\tau)$ and $\Pr(H_{-}) = \{1 -
+\Pr(H_0)\} \times \Phi(-\mu/\tau)$ so that to the prior distribution averaged
+over $H_{-}$ and $H_{+}$ is again the $\mathrm{N}(\mu, \tau^2)$ normal
+distribution that was truncated in the first place. For example, when setting
+$\Pr(H_0) = 0.5$ and specifying a zero-centered prior ($\mu = 0$) as in
+Figure~\ref{fig:spike-slab}, we obtain $\Pr(H_{+}) = \Pr(H_{-}) = 0.5 \times 0.5
+= 0.25.$
 
 With the prior densities and prior hypothesis probabilities specified, we can
 compute the marginal likelihood of the observed effect estimate under each
@@ -654,7 +654,7 @@ res$posterior[2] # should be the same
 
 \begin{figure}[!htb]
 << "example-normal", fig.height = 3.5, cache = TRUE >>=
-## simulate adaptive randomization
+## simulate RAR
 set.seed(500)
 n <- 200
 nseq <- seq_len(n)
@@ -726,21 +726,20 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
 Figure~\ref{fig:example-normal1} shows sequences of randomization probabilities
 computed from simulated normal data. To enable comparison of randomization
 probabilities across different prior probabilities $\Pr(H_0)$, the data were not
-simulated under adaptive randomization but by simulating an additional
-observation from the treatment and control groups at each step. We can see that
-the probability to randomize to the treatment group based on $\Pr(H_0) = 1$
-remains static at $50\%$ (yellow line). In contrast, the randomization
-probabilities based on $\Pr(H_0) < 1$ tend towards $100\%$ as more data
-accumulate, as expected, given that the data were simulated under a beneficial
-treatment effect. Moreover, a clear ordering is visible: Probabilities under
-$\Pr(H_0) = 0$, which corresponds to Thompson sampling, are the most extreme and
-may even go strongly in the ``wrong'' direction. For example, the probability to
-randomize to control is higher than 75\% at some point during the earlier stages
-of the study. In contrast, probabilities based on $0 < \Pr(H_0) < 1$ show the
-same qualitative behavior but are less extreme. Setting a higher prior
-probability $\Pr(H_0)$ thus reduces the variability of randomization
-probabilities but also makes convergence to a probability of 100\% for the more
-effective treatment slower.
+simulated under RAR but by simulating an additional observation from the
+treatment and control groups at each step. We can see that the probability to
+randomize to the treatment group based on $\Pr(H_0) = 1$ remains static at
+$50\%$ (yellow line). In contrast, the randomization probabilities based on
+$\Pr(H_0) < 1$ tend towards $100\%$ as more data accumulate, as expected, given
+that the data were simulated under a beneficial treatment effect. Moreover, a
+clear ordering is visible: Probabilities under $\Pr(H_0) = 0$, which corresponds
+to Thompson sampling, are the most extreme and may even go strongly in the
+``wrong'' direction. For example, the probability to randomize to control is
+higher than 75\% at some point during the earlier stages of the study. In
+contrast, probabilities based on $0 < \Pr(H_0) < 1$ show the same qualitative
+behavior but are less extreme. Setting a higher prior probability $\Pr(H_0)$
+thus reduces the variability of randomization probabilities but also makes
+convergence to a probability of 100\% for the more effective treatment slower.
 
 \subsection{More than two groups}
 Suppose now there are $K > 1$ treatment groups and consequently $K$ effect
@@ -970,7 +969,7 @@ det(diag(4) + solve(Sigma) %*% Tau)
 
 \begin{figure}[!htb]
 << "example-multinormal", fig.height = 4, cache = TRUE >>=
-## simulate adaptive randomization
+## simulate RAR
 set.seed(42)
 n <- 200
 nseq <- seq_len(n)
@@ -1174,7 +1173,7 @@ integrate(intFun, 0, 1)$value
 
 \begin{figure}[!htb]
 << "example-multibinomial", fig.height = 4, cache = TRUE >>=
-## simulate adaptive randomization
+## simulate RAR
 set.seed(42)
 n <- 200
 nseq <- seq_len(n)
