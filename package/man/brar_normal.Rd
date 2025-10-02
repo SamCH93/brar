@@ -29,11 +29,12 @@ obtain Thompson sampling and to \code{1} to obtain equal randomization}
 }
 \value{
 An object of type \code{"brar"}, which is a list with the following
-    elements: \code{"data"} (input data), \code{"prior"} (prior probabilities
-    of the null hypothesis and control/treatment superiority), \code{"BF_ij"}
-    (Bayes factor matrix), \code{"posterior"} (posterior probabilities of the
-    null hypothesis and control/treatment superiority), and "prand"
-    (response-adaptive randomzation probabilities)
+    elements: \code{"data"} (input data), \code{"prior"} (prior probability
+    of the null hypothesis and prior probabilities of control/treatment
+    superiority), \code{"BF_ij"} (Bayes factor matrix), \code{"posterior"}
+    (posterior probability of the null hypothesis and posterior probabilities
+    of control/treatment superiority), and "prand" (response-adaptive
+    randomization probabilities).
 }
 \description{
 This function computes Bayes factors, posterior probabilities,
