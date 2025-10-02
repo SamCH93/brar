@@ -1,6 +1,6 @@
 Package: brar
 Version: 0.1
-Date: 2025-10-01
+Date: 2025-10-02
 Authors@R:
     c(person(given = "Samuel",
            family = "Pawel",

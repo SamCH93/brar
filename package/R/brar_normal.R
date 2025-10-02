@@ -1,10 +1,12 @@
-#' @title Bayesian response-adaptive randomization
+#' @title Bayesian response-adaptive randomization for approximately normal
+#'     effect estimates
 #'
 #' @description This function computes Bayes factors, posterior probabilities,
 #'     and response-adaptive randomization probabilities in the setting of data
 #'     in the form of approximately normal effect estimates.
 #'
-#' @param estimate Vector of effect estimates. Each estimates quantifies the
+#' @param estimate Vector of effect estimates (e.g., a vector of mean
+#'     differences or log odds/hazard/rate ratios). Each estimate quantifies the
 #'     effect of a treatment relative to control
 #' @param sigma Covariance matrix of the effect estimate vector. In case, there
 #'     is only one effect estimate, this is the squared standard error of the
@@ -14,17 +16,21 @@
 #' @param psigma Covariance matrix of the normal prior assigned to the effect
 #'     under the alternative. In case, there is only one effect estimate, this
 #'     is the prior variance
-#' @param pH0 Prior probability of the point null hypothesis (i.e., all effects
-#'     being equal to 0). Defaults to \code{0.5}. Set to \code{0} to obtain
-#'     standard Thompson sampling and \code{1} to obtain equal randomization
+#' @param pH0 Prior probability of the point null hypothesis (i.e., all
+#'     treatment effects equal to 0). Defaults to \code{0.5}. Set to \code{0} to
+#'     obtain Thompson sampling and to \code{1} to obtain equal randomization
 #'
-#' @return An object of type \code{"brar"}
+#' @return An object of type \code{"brar"}, which is a list with the following
+#'     elements: \code{"data"} (input data), \code{"prior"} (prior probabilities
+#'     of the null hypothesis and control/treatment superiority), \code{"BF_ij"}
+#'     (Bayes factor matrix), \code{"posterior"} (posterior probabilities of the
+#'     null hypothesis and control/treatment superiority), and "prand"
+#'     (response-adaptive randomzation probabilities)
 #'
 #' @author Samuel Pawel
 #'
 #' @examples
-#'
-#' ## simulate data
+#' ## simulate normal data from four treatment groups
 #' set.seed(42)
 #' n <- 10
 #' muc <- 0
@@ -39,13 +45,18 @@
 #' estimate <- fit$coef[-1]
 #' sigma <- vcov(fit)[-1,-1]
 #' pm <- rep(0, K)
+#'
+#' ## 0.5 correlated prior to distribute prior probability equally among treatments
 #' rho <- 0.5
 #' psigma <- matrix(rho, nrow = K, ncol = K)
 #' diag(psigma) <- 1
 #' brar_normal(estimate = estimate, sigma = sigma, pm = pm, psigma = psigma,
 #'             pH0 = 0.5)
 #'
-#' brar_normal(estimate = 0.5, sigma = 0.1^2, pm = 0, psigma = 1, pH0 = 0.5)
+#' ## brar for only first treatment group
+#' est <- summary(fit)$coefficients[2,1]
+#' se <- summary(fit)$coefficients[2,2]
+#' brar_normal(est, sigma = se^2, pm = 0, psigma = 1, pH0 = 0.5)
 #'
 #' @export
 brar_normal <- function(estimate, sigma, pm = rep(0, length(estimate)), psigma,

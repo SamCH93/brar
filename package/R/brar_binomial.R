@@ -37,12 +37,12 @@ Pmaxi <- function(a, b, i, ...) {
 #'     element corresponds to the control group, and the remaining elements
 #'     correspond to the treatment groups. Defaults to \code{rep(1, length(y))}
 #' @param pH0 Prior probability of the null hypothesis (i.e., a common
-#'     probability in both groups). Defaults to \code{0.5}. Set to \code{0} to
-#'     obtain standard Thompson sampling and \code{1} to obtain equal
-#'     randomization
+#'     probability in the control and all treatment groups). Defaults to
+#'     \code{0.5}. Set to \code{0} to obtain Thompson sampling and \code{1} to
+#'     obtain equal randomization
 #' @param ... Other arguments passed to \code{stats::integrate}
 #'
-#' @return An object of type \code{"brar"}
+#' @inherit brar_normal return
 #'
 #' @author Samuel Pawel
 #'
