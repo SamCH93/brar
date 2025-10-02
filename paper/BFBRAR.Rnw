@@ -112,7 +112,7 @@ col3 <- "#009E73"
 
 %% should be less than 225 words
 \begin{abstract}
-  \noindent Response-adaptive randomization (RAR) methods use accumulated data to adapt randomization probabilities, aiming to increase the probability of allocating patients to effective treatments. A popular RAR method is Thompson sampling, which randomizes patients proportionally to the Bayesian posterior probability that each treatment is the most effective. However, its high variability early in a trial can actually also increase the risk of assigning patients to inferior treatments. We propose a principled method based on Bayesian hypothesis testing to mitigate this issue. Specifically, we introduce a point null hypothesis that postulates equal effectiveness of treatments. This induces shrinkage toward equal randomization probabilities, with the degree of shrinkage controlled by the prior probability of the null hypothesis. Equal randomization and Thompson sampling arise as special cases when the prior probability is set to one or zero, respectively. Simulated and real-world examples illustrate that the proposed method balances highly variable Thompson sampling with static equal randomization. A simulation study demonstrates that the method can mitigate issues with ordinary Thompson sampling and has comparable statistical properties to Thompson sampling with common ad hoc modifications such as power transformation and probability capping. We implement the method in the open-source R package \texttt{brar}, enabling experimenters to easily perform point null Bayesian RAR and support more effective randomization of patients. \\
+  \noindent Response-adaptive randomization (RAR) methods use accumulated data to adapt randomization probabilities, aiming to increase the probability of allocating patients to effective treatments. A popular RAR method is Thompson sampling, which randomizes patients proportionally to the Bayesian posterior probability that each treatment is the most effective. However, its high variability early in a trial can also increase the risk of assigning patients to inferior treatments. We propose a principled method based on Bayesian hypothesis testing to mitigate this issue. Specifically, we introduce a point null hypothesis that postulates equal effectiveness of treatments. This induces shrinkage toward equal randomization probabilities, with the degree of shrinkage controlled by the prior probability of the null hypothesis. Equal randomization and Thompson sampling arise as special cases when the prior probability is set to one or zero, respectively. Simulated and real-world examples illustrate that the proposed method balances highly variable Thompson sampling with static equal randomization. A simulation study demonstrates that the method can mitigate issues with ordinary Thompson sampling and has comparable statistical properties to Thompson sampling with common ad hoc modifications such as power transformation and probability capping. We implement the method in the open-source R package \texttt{brar}, enabling experimenters to easily perform point null Bayesian RAR and support more effective randomization of patients. \\
   \noindent \textit{Keywords}: Adaptive trials, A/B testing, Bayes factor,
   Bayesian model averaging, sharp null hypothesis, spike-and-slab prior
 \end{abstract}
@@ -181,16 +181,17 @@ In the following Section~\ref{sec:general-theory} we introduce the general idea
 of the method in more detail, followed by tailoring it to the setting of
 approximately normal effect estimates (Section~\ref{sec:normal}) and binary
 outcomes (Section~\ref{sec:binary}). In Section~\ref{sec:applications}, we then
-illustrate the method on data from the infamous ECMO trial \citep{Bartlett1985},
-followed by evaluating its statistical properties in a simulation study
+illustrate the method on data from the ECMO trial \citep{Bartlett1985}, followed
+by evaluating its statistical properties in a simulation study
 (Section~\ref{sec:simulation}). The paper ends with concluding remarks on
 advantages, limitations, and opportunities for future research
 (Section~\ref{sec:discussion}). Appendix~\ref{app:package} illustrates our R
 package \texttt{brar} for performing point null Bayesian RAR.
+Appendix~\ref{app:simulation} provides further details on our simulation study.
 
 \section{Point null Bayesian RAR}
 \label{sec:general-theory}
-We next explain the general idea of point null Bayesian RAR, without going into
+We now explain the general idea of point null Bayesian RAR, without going into
 specifics such as data distribution or computation (these will follow in the
 subsequent sections). Throughout we will assume that we have observed data $y$
 and we want to use these to randomize a future experimental unit. We start with
@@ -405,12 +406,12 @@ summarized by an asymptotically normally distributed effect estimate. This does
 not mean that the raw data (e.g., a vector of outcomes and a matrix of
 covariates), from which the estimate is computed, need to be normally
 distributed. For instance, the regression coefficients from generalized linear
-models estimated using maximum likelihood satisfy asymptotic normality. This is
-useful because it allows us to efficiently compute posterior and randomization
-probabilities without the need for simulation. Although this framework is widely
-applicable, improvements may be possible by considering the exact distribution
-of the data. This will be detailed for binary outcomes in
-Section~\ref{sec:binary}.
+models estimated using maximum likelihood satisfy asymptotic normality even if
+the data are themselves not normally distributed. This is useful because it
+allows us to efficiently compute posterior and randomization probabilities
+without the need for simulation. Although this framework is widely applicable,
+improvements may be possible by considering the exact distribution of the data.
+This will be detailed for binary outcomes in Section~\ref{sec:binary}.
 
 \subsection{Two group comparisons}
 \label{sec:normal2}
@@ -478,7 +479,7 @@ text(x = 1, y = 0.1, labels = bquote(italic(H)["+"]), cex = 1.25, col = col2)
 text(x = -1, y = 0.1, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 @
 \caption{Illustration of spike-and-slab prior for the effect $\theta$. A point
-  mass prior at 0 is assumed under $H_0$. A normal prior $\theta \sim
+  prior at 0 is assumed under $H_0$. A normal prior $\theta \sim
   \mathrm{N}(\Sexpr{mu}, \Sexpr{tau^2})$ with support truncated to the positive
   or negative side is assumed under $H_{+}$ and $H_{-}$, respectively. These
   priors are averaged assuming prior hypothesis probabilities $\Pr(H_0) =
@@ -873,7 +874,7 @@ statistical software \citep[e.g., in the \texttt{mvtnorm} R
 that allows experimenters to compute randomization probabilities in complex
 settings, for instance, multiple regression, where a full Bayesian analysis may
 involve various complexities, such as priors for nuisance parameters and Markov
-chain Monte Carlo for the computation of posteriors.
+chain Monte Carlo methods for the computation of posteriors.
 
 << "check-multivariate", eval = FALSE >>=
 ## simulate and compute probability of H+1
@@ -1043,7 +1044,7 @@ pronounced for positive prior probabilities $\Pr(H_0) > 0$.
 
 \section{Point null Bayesian RAR for binary outcomes}
 \label{sec:binary}
-We next consider the setting with binary outcomes, as such outcomes frequently
+We now consider the setting with binary outcomes, as such outcomes frequently
 occur in applications of Bayesian RAR (e.g., in clinical trials or A/B testing
 settings). Suppose that we observe data of the form $y = \{y_C, y_1, \dots,
 y_{K}, n_C, n_1, \dots, n_{K}\}$ where $y_i$ denotes the number of successes out
@@ -1591,7 +1592,7 @@ brar_binomial(y = y, n = n,
 %% \setcounter{figure}{0}
 %% \renewcommand{\thefigure}{B\arabic{figure}}
 
-We next describe the design and results of a simulation study following the
+We now describe the design and results of our simulation study following the
 structured ADEMP approach \citep{Morris2019, Siepe2024}. Our simulation study
 was not preregistered as it constitutes early-phase methodological research
 where the properties of a new method are explored without the intention to give
