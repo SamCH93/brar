@@ -40,4 +40,4 @@ docker-paper: dbuild
 	-w /home/rstudio/paper \
 	$(FILE) \
 	make tex
-	cd paper && make pdf
+	cd paper && make pdf2

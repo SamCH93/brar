@@ -15,6 +15,13 @@ pdf: tex
 	pdflatex $(FILE)
 	pdflatex $(FILE)
 
+## generate .pdf file from .tex file
+pdf2:
+	pdflatex $(FILE)
+	bibtex $(FILE)
+	pdflatex $(FILE)
+	pdflatex $(FILE)
+
 ## extract R code
 code: $(FILE).Rnw
 	Rscript -e "knitr::purl('$(FILE).Rnw')" --vanilla
