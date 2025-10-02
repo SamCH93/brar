@@ -16,8 +16,6 @@
 \allsectionsfont{\sffamily} % for sections use sans serif
 \usepackage[labelfont={bf,sf},font=small]{caption} % customize captions
 \usepackage{orcidlink} % for ORCID symbol with link
-\definecolor{lightgray}{gray}{0.9} % color for tables
-\usepackage{todonotes}
 \usepackage{pdflscape} % rotated landscape
 \usepackage{afterpage} % floating landscape
 
@@ -35,12 +33,6 @@
 %% title, authors, affiliations, mail
 \title{\vspace{-4em} \textbf{\textsf{
       Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization
-      %% some potential titles
-      %% Bayesian Response Adaptive Randomization \\ with Point~Null Bayesian Hypothesis Testing
-      %% A Bayesian Hypothesis Testing Framework for Response Adaptive Randomization
-      %% Point Null Bayesian Response Adaptive Randomization
-      %% Stabilizing Bayesian Response Adaptive Randomization with Point Null Hypotheses
-      %% Reducing Variability in Bayesian Response Adaptive Randomization through Point Null Testing
 }}}
 \author{
   Samuel Pawel \orcidlink{0000-0003-2779-320X}
@@ -1539,13 +1531,13 @@ We declare no conflict of interest.
 \subsection*{Software and data}
 Code and data to reproduce our analyses are openly available at
 \url{https://github.com/SamCH93/brar}. A snapshot of the repository at the time
-of writing is available at \url{https://doi.org/10.5281/zenodo.XXXXXX}. We used
-the statistical programming language \Sexpr{R.Version()[["version.string"]]} for
-analyses \citep{R2024} along with the \texttt{ggplot2} \citep{Wickham2016},
-\texttt{dplyr} \citep{Wickham2023}, \texttt{SimDesign} \citep{Chalmers2020},
-\texttt{mvtnorm} \citep{Genz2009}, \texttt{ggh4x} \citep{Brand2024},
-\texttt{ggpubr} \citep{Kassambara2023}, and \texttt{knitr} \citep{Xie2015}
-packages.
+of writing is available at \url{https://doi.org/10.5281/zenodo.17248628}. We
+used the statistical programming language
+\Sexpr{R.Version()[["version.string"]]} for analyses \citep{R2024} along with
+the \texttt{ggplot2} \citep{Wickham2016}, \texttt{dplyr} \citep{Wickham2023},
+\texttt{SimDesign} \citep{Chalmers2020}, \texttt{mvtnorm} \citep{Genz2009},
+\texttt{ggh4x} \citep{Brand2024}, \texttt{ggpubr} \citep{Kassambara2023}, and
+\texttt{knitr} \citep{Xie2015} packages.
 
 %% \onehalfspacing
 % Reset line spacing to 1.5 from here on
