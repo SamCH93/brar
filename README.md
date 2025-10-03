@@ -4,7 +4,7 @@ This repository contains
 
 1. `./package` The R package **brar** to conduct Bayesian response-adaptive randomization
 
-2. `./paper` Code and data to reproduce result from the paper: *Pawel, S., Held. L. (2025). Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization. <https://github.com/SamCH93/brar>*
+2. `./paper` Code and data to reproduce result from the paper: *Pawel, S., Held. L. (2025). Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization. <https://doi.org/10.48550/arXiv.2510.01734>*
 
 To cite our work, use the following BibTeX reference
 
@@ -13,7 +13,8 @@ To cite our work, use the following BibTeX reference
   year = {2025},
   author = {Samuel Pawel and Leonhard Held},
   title = {Stabilizing {Thompson} Sampling with Point Null {Bayesian} Response-Adaptive Randomization},
-  url = {https://github.com/SamCH93/brar}
+  url = {https://github.com/SamCH93/brar},
+  doi = {10.48550/arXiv.2510.01734}
 }
 ```
 

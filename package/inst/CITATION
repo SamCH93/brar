@@ -2,7 +2,8 @@ citHeader(paste("To cite the R-package 'brar' in publications,",
                 "please use:",
                 "Pawel, S., Held, L.",
                 "(2025).",
-                "Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization."))
+                "Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization.",
+                "https://doi.org/10.48550/arXiv.2510.01734"))
 
 bibentry(bibtype = "Misc",
          title = "Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization",
@@ -12,6 +13,6 @@ bibentry(bibtype = "Misc",
          ## volume = "",
          ## number = "",
          ## pages = "",
-         ## doi = "",
+         doi = "10.48550/arXiv.2510.01734",
          year = "2025"
          )
