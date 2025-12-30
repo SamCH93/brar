@@ -1,0 +1,586 @@
+\section{The R package brar}
+\label{app:package}
+Our R package can be installed by running \texttt{remotes::install\_github(repo
+  = "SamCH93/brar", subdir = "package")} in an R session (requires the
+\texttt{remotes} package, which is available on CRAN). The main functions of the
+package are \texttt{brar\_normal} and \texttt{brar\_binomial}, which implement
+the approximate normal method and the exact binomial method for conducting
+Bayesian RAR. The following code chunk illustrates how both functions can be
+used.
+
+\begin{spacing}{1}
+<< "brar-package-demonstration", echo = TRUE, size = "small" >>=
+library(brar) # load package
+
+## observed successes and trials in control and 3 treatment groups
+y <- c(10, 9, 14, 13)
+n <- c(20, 20, 22, 21)
+group <- c("control", paste("treatment", seq(1, 3)))
+
+## conduct exact point null Bayesian RAR
+brar_binomial(y = y, n = n,
+              ## uniform prior for common probability under H0
+              a0 = 1, b0 = 1,
+              ## uniform priors for all probabilities
+              a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
+              ## prior probability of the null hypothesis
+              pH0 = 0.5)
+
+## get data into shape for approximate point null Bayesian RAR
+fit <- glm(cbind(y, n - y) ~ group, family = binomial) # fit logistic regression
+estimate <- fit$coefficients[-1] # remove intercept to get logOR estimates
+sigma <- vcov(fit)[-1,-1] # remove intercept to get logOR covariance matrix
+
+## conduct approximate point null Bayesian RAR
+pm <- c(0, 0, 0) # set prior mean to zero
+## set 0.5 correlated prior covariance so that equal prior probabilities
+psigma <- matrix(0.5, nrow = 3, ncol = 3)
+diag(psigma) <- 1
+brar_normal(estimate = estimate, sigma = sigma, pm = pm, psigma = psigma,
+            pH0 = 0.5)
+@
+\end{spacing}
+
+\section{Simulation study}
+\label{app:simulation}
+
+%% % reset counter of figures and add preceeding B
+%% \setcounter{figure}{0}
+%% \renewcommand{\thefigure}{B\arabic{figure}}
+
+We now describe the design and results of our simulation study following the
+structured ADEMP approach \citep{Morris2019, Siepe2024}. Our simulation study
+was not preregistered as it constitutes early-phase methodological research
+where the properties of a new method are explored without the intention to give
+wide recommendations for practitioners \citep{Heinze2023}. A website with
+additional details and results is provided at
+\url{https://samch93.github.io/brar/}.
+
+\subsection{Aims}
+The aim of the simulation study is to evaluate the design characteristics of the
+newly proposed point null Bayesian RAR approach, and compare it to existing
+methods.
+
+\subsection{Data-generating mechanism}
+The data-generating mechanism was inspired by the simulation studies from
+\citet{Robertson2023}, \citet{Thall2007}, and \citet{Wathen2017}. In each
+repetition, a data set with $n$ binary outcomes is simulated through RAR: A
+patient $i$ is randomly allocated to the control group or one of the $K$
+treatment groups based on randomization probabilities computed from the $1,
+\dots, i -1$ preceding outcomes. Depending on the allocation, an outcome is
+either simulated from a Bernoulli distribution with probability $\theta_C$ in
+the control group, $\theta_1$ in the first treatment group, or $\theta_2$ for
+the remaining treatment groups (in case $K > 1$).
+
+Parameters were chosen similar to the simulation study from
+\citet{Robertson2023}. We vary the sample size $n \in \{200, 654\}$ to represent
+low and high powered studies, the number of treatment groups $K \in \{1, 2,
+3\}$, and probability in the first treatment group $\theta_1 \in \{0.25, 0.35,
+0.45\}$. The probability in the control group and the remaining groups is always
+fixed at $\theta_C = 0.25$ and $\theta_2 = \theta_3 = 0.3$, respectively. All
+these parameters are varied fully-factorially, leading to $2 \times 3 \times 3 =
+18$ parameter conditions.
+
+Since treatment allocation determines from which true probability an outcome is
+simulated, data generation is directly influenced by the RAR methods described
+below. These come with additional parameters that are, however, considered as
+method tuning parameters rather than true underlying parameters.
+
+
+\subsection{Estimands and other targets}
+
+The primary interest of this simulation study lies in assessing the patient
+benefit characteristics of different RAR methods. Additionally, the estimand of
+interest is the rate difference $\text{RD}_1 = \theta_1 - \theta_C$ and the
+target of interest is the null hypothesis of $\text{RD}_1 = 0$.
+
+\subsection{Methods}
+
+We consider the above described point null RAR methods. The prior probability of
+$H_0$ is a tuning parameter and controls the variability of the randomization
+probabilities. Setting $\Pr(H_0) = 1$ produces equal randomization, whereas
+$\Pr(H_0) = 0$ produces Thompson sampling. We consider values of $\Pr(H_0) \in
+\{0, 0.25, 0.5, 0.75, 1\}$, as well as the normal approximation and exact
+binomial version of RAR. For approximate normal RAR, a normal prior with mean 0,
+variance 1, and in case of $K > 1$ a correlation of 0.5, is considered.
+Independent uniform priors are assigned for binomial RAR. Log odds ratios along
+with their covariance are estimated with logistic regression and then used as
+inputs for the normal RAR method, while the exact method uses success counts and
+sample sizes only. In case a method fails to converge, equal randomization is
+applied as a back-up strategy, as this mimics what an experimenter might do in
+practice when a RAR method fails to converge \citep{Paweletal2025c}.
+
+We also consider three modifications of these methods: In some conditions, a
+``burn-in'' phase is carried out during which the first 50 patients are always
+randomized with equal probability $1/(K + 1)$ to each group. For Thompson
+sampling ($\Pr(H_0) = 0$), we additionally consider conditions with power
+transformations of randomization probabilities, i.e., if $\pi_k$ is the
+randomization probability of group $k$, we take $\pi_k^* = \pi_k^c / \sum_{j\in
+  \{C,1,\dots,K\}} \pi_j^c$. We consider $c=1/2$ and $c=i/(2n)$ with $i$ the
+current and $n$ the maximal sample size, which are two popular choices of the
+tuning parameter $c$ \citep{Wathen2017}. Additionally, in some conditions
+``capping'' is applied to Thompson sampling. That is, randomization
+probabilities outside the $[10\%, 90\%]$ interval are set to either 10\% or
+90\%. After capping has been performed, randomization probabilities are
+re-normalized to sum to one \citep{Wathen2017, Kim2021}. This re-normalization
+is only performed for randomization probabilities greater than 10\%, as these
+would otherwise be reduced again to probabilities less than 10\%. In case, a
+re-normalized probability becomes less than 10\%, it is also capped at 10\% and
+second re-normalization performed. Finally, for equal randomization ($\Pr(H_0) =
+1$), no burn-in, capping, or power transformation conditions are simulated as
+these manipulations have no effect.
+
+
+\subsection{Performance measures}
+
+Different performance measures were used. Patient benefit was quantified with:
+\begin{itemize}
+\item The mean rate of successes per study
+  \begin{align*}
+    \overline{\text{RS}} = \frac{1}{n_{\text{sim}}} \sum_{i=1}^{n_{\text{sim}}} \, \sum_{j=1}^n
+  \frac{y_{ij}}{n}
+  \end{align*}
+  where $y_{ij}$ denotes the 0/1 success indicator of patient $j$ in simulation
+  $i$, $n$ is the sample size, and $n_{\text{sim}}$ is the number of simulation
+  repetitions.
+
+%% \item The mean rate of allocations to treatment group 1
+%%   \begin{align*}
+%%     \overline{\text{RT}}_1 = \frac{1}{n_{\text{sim}}} \sum_{i=1}^{n_{\text{sim}}} n_{1i}
+%%   \end{align*}
+%%   where $n_{1i}$ is the number of allocations to treatment group 1 in simulation
+%%   $i$. Treatment 1 is the most beneficial treatment in all conditions where
+%%   $\theta_1 > \theta_0$.
+
+  \item The mean rate of extreme randomization probabilities (less than 10\% or
+    greater than 90\%)
+  \begin{align*}
+    \overline{\text{REP}} = \frac{1}{n_{\text{sim}}} \sum_{i=1}^{n_{\text{sim}}} \sum_{j=1}^n \frac{\mathbb{1}(\text{any randomization probability at time } j ~ < 10\% ~ \text{or} ~ > 90\%)}{n}
+  \end{align*}
+  with indicator function $\mathbb{1}(\cdot)$.
+
+
+
+%% \item The mean sample size difference between treatment group 1 and the average
+%%   sample size in the remaining groups
+%%   \begin{align*}
+%%     \overline{\text{ND}}_1 = \frac{1}{n_{\text{sim}}} \sum_{i=1}^{n_{\text{sim}}} \left(n_{1i} - \frac{n - n_{1i}}{K} \right)
+%%   \end{align*}
+%%   where $n_{1i}$ is the number of allocations to treatment group 1 in simulation
+%%   $i$. This reduces to the mean sample size difference between treatment and
+%%   control group in case there is only one treatment group ($K = 1$).
+
+\item %% The rate of simulations with more than 10\% sample size imbalance in favor
+  %% of other treatments than treatment 1. That is,
+  The proportion of simulations where the number of allocations to treatment 1
+  was at least 10\% of the total sample size $n$ less than the average sample
+  size in the remaining groups
+  \begin{align*}
+  \hat{S}_{0.1} = \frac{1}{n_{\text{sim}}} \sum_{i=1}^{n_{\text{sim}}} \,
+  \mathbb{1}\left(\frac{n - n_{1i}}{K} - n_{1i} > 0.1n\right)
+  \end{align*}
+  where $n_{1i}$ is the number of allocations to treatment group 1 in simulation
+  $i$.
+  %% This reduces to the mean sample size difference between treatment and
+  %% control group in case there is only one treatment group ($K = 1$).
+  For $K= 1$, this reduces to the $\hat{S}_{0.1}$ sample size imbalance measure
+  from \citet{Robertson2023}, which in turn was inspired by the performance
+  evaluation in the simulation study from \citet{Thall2015}.
+\end{itemize}
+Parameter estimation and hypothesis testing performance was quantified with:
+\begin{itemize}
+
+\item The empirical bias of the estimate of the rate difference $\text{RD}_1$
+  \begin{align*}
+  \mathrm{Bias}(\text{RD}_1) = \frac{1}{n_{\text{sim}}} \sum_{i=1}^{n_{\text{sim}}} \,
+  \hat{\theta}_{1i} - \hat{\theta}_{0i} - \text{RD}_1
+  \end{align*}
+  where $\hat{\theta}_{1i}$ and $\hat{\theta}_{Ci}$ are the maximum likelihood
+  estimates of the probabilities $\theta_1$ and $\theta_C$ in simulation
+  repetition $i$.
+
+\item Empirical coverage of the $95\%$ Wald confidence intervals of
+  $\text{RD}_1$
+  \begin{align*}
+  \mathrm{Coverage}(\text{RD}_1) = \frac{1}{n_{\text{sim}}} \sum_{i=1}^{n_{\text{sim}}} \,
+  \mathbb{1}\left\{95\% ~ \text{CI includes} ~ \text{RD}_1 ~ \text{in simulation} ~ i\right\}.
+  \end{align*}
+
+\item Empirical rejection rate (type I error rate or power depending on the
+  condition) related to the Wald test of the rate difference $\text{RD}_1$
+  \begin{align*}
+  \mathrm{RR}(\text{RD}_1) = \frac{1}{n_{\text{sim}}} \sum_{i=1}^{n_{\text{sim}}} \,
+  \mathbb{1}\left\{\text{Test rejects} ~ H_0 \colon \text{RD}_1 = 0 ~ \text{in simulation} ~ i\right\}.
+  \end{align*}
+\end{itemize}
+
+
+<< "load-sim-data" >>=
+simres <- readRDS("simulation/brar-sim.rds")
+nsim <- unique(simres$REPLICATIONS)
+@
+
+Each condition was simulated \Sexpr{format(nsim, big.mark = "'")} times. This
+ensures a MCSE (Monte Carlo Standard Error) for Type I error rate, power, and
+coverage of at most \Sexpr{100*sqrt(0.5^2/nsim)}\%. MCSEs were calculated using
+the formulae from \citet{Siepe2024} and are provided for all measures in the
+following figures and the supplemental website.
+
+\subsection{Computational aspects}
+
+<< "load-sim-session-info" >>=
+si <- readRDS("simulation/sessioninfo-server.rds")
+@
+
+The simulation study was run on a server running \Sexpr{si$running} and
+\Sexpr{si$R.version$version.string}. The SimDesign R package was used to
+organize and run the simulation study \citep{Chalmers2020}. Our newly developed
+\texttt{brar} R package was used to perform Bayesian RAR.
+%%  (see Appendix~\ref{app:package} for an illustration).
+Code and data to reproduce this simulation study are available at
+\url{https://github.com/SamCH93/brar}.
+
+\subsection{Results}
+
+<< "preprare-simulation-data" >>=
+summaries <- readRDS("simulation/sim-summaries.rds") |>
+    mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
+                            labels = c("none", "[0.1,0.9]")),
+           method = ifelse(pH0 == 1, "equal", method)) |>
+    mutate(trans = case_when(
+        capping_eps == 0.5 & c == "1" ~ "none",
+        capping_eps == 0.4 & c == "1" ~ "capping",
+        capping_eps == 0.5 & c == "1/2" ~ "c=1/2",
+        capping_eps == 0.4 & c == "1/2" ~ "capping and c=1/2",
+        capping_eps == 0.5 & c == "i/(2n)" ~ "c=i/(2n)",
+        capping_eps == 0.4 & c == "i/(2n)" ~ "capping and c=i/(2n)"
+                             ),
+        trans = factor(trans, levels = c("none", "capping", "c=1/2",
+                                         "capping and c=1/2","c=i/(2n)",
+                                         "capping and c=i/(2n)"))) |>
+    mutate(method = factor(method, levels = c("exact", "normal", "equal"),
+                           labels = c("Exact BRAR", "Normal BRAR",
+                                      "Equal Randomization"))) |>
+    mutate(Klab = paste0("italic(K) == ", K),
+           nlab = paste0("italic(n) == ", n),
+           burninlab = paste0("'Burn-in' == ", burnin),
+           rd1lab = paste0("'RD'[1] == ", pt1 - pc))
+
+## ## warnings and errors
+## SimExtract(simres, what = "warnings")
+## SimExtract(simres, what = "errors")
+
+## ## compare to results from Robertson et al. (2023)
+## summaries |>
+##     filter(K == 1, pc == 0.25, pt1 == 0.35, capping_eps == 0.5, burnin == 0,
+##            c == "1", pH0 %in% c(0, 1), method %in% c("Exact BRAR",
+##                                                      "Equal Randomization")) |>
+##     select(n, pH0, method, EN1diff, EN1diffL, EN1diffU, S01, ENS, ENS_sd) |>
+##     arrange(-pH0)
+## #> # A tibble: 4 × 9
+## #>       n   pH0 method              EN1diff EN1diffL EN1diffU    S01   ENS ENS_sd
+## #>   <dbl> <dbl> <fct>                 <dbl>    <dbl>    <dbl>  <dbl> <dbl>  <dbl>
+## #> 1   200     1 Equal Randomization  -0.01       -28       28 0.0683  60.0   6.48
+## #> 2   654     1 Equal Randomization  -0.288      -50       50 0.0058 196.   11.7
+## #> 3   200     0 Exact BRAR           96.6       -116      182 0.0929  64.8   7.82
+## #> 4   654     0 Exact BRAR          469.          30      628 0.0171 220.   14.9
+
+## ## ER (n = 200): ENdiff = 0 (-28, 28), S_01 = 0.069, ENS = 60 (6.4)
+## ## -> corresponds to pH0 = 1
+## ## ER (n = 654): ENdiff = 0 (-50, 50), S_01 = 0.005, ENS = 196 (11.7)
+## ## -> corresponds to pH0 = 1
+## ## TS (n = 200): ENdiff = 95 (-182, 190), S_01 = 0.137, ENS = 65 (8.5)
+## ## -> rougly corresponds to pH0 = 0
+## ## TS (n = 654): ENdiff = 461 (-356, 640), S_01 = 0.042, ENS = 220 (17.5)
+## ## -> rougly corresponds to pH0 = 0
+
+## plot parameters
+theme_dashboard <- function() {
+  ggplot2::theme_bw() +
+  ggplot2::theme(legend.position = "top",
+                 panel.grid.minor = element_blank(),
+                 panel.grid.major.x = element_blank(),
+                 strip.background = element_rect(fill = "#00000003"))
+}
+dodge_width <- 0.2
+errorbar_width <- 0
+errorbar_alpha <- 0.8
+cols <- c("Exact BRAR" = "#0072B2",
+          "Normal BRAR" = "#D55E00",
+          "Equal Randomization" = "#000000")
+shapes <- c("none" = 19,
+            "capping" = 2,
+            "c=1/2" = 0,
+            "capping and c=1/2" = 5,
+            "c=i/(2n)" = 6,
+            "capping and c=i/(2n)" = 1)
+@
+
+<< "minimum-convergence" >>=
+maxNC <- summaries |>
+    slice_min(order_by = meanconvergence)
+@
+
+
+\paragraph{Convergence}
+Non-convergence happened only rarely for the normal approximation method due to
+logistic regression not converging at the start of the study when no events were
+observed for some groups. In this case, equal randomization was applied. The
+highest rate of such non-convergence was in a condition with $K = 3$ treatment
+groups where \Sexpr{round(100 - 100*maxNC[,"meanconvergence"], 1)}\% of the $n$
+logistic regressions did not converge. No other forms of missingness were
+observed. Figures and tables with per-condition-method non-convergence rates are
+available at \url{https://samch93.github.io/brar/}.
+
+\afterpage{
+\begin{landscape}
+
+\begin{figure}[!htb]
+<< "plot-success-rate", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+ggplot(data = summaries,
+       aes(x = pH0, y = PS, col = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    # geom_hline(aes(yintercept = pt1), lty = 2, alpha = 0.5) +
+    # geom_hline(aes(yintercept = (pt1 + pc)/2), lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = PS - PS_mcse, ymax = PS + PS_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"), y = "Mean rate of successes",
+         color = "Method", shape = "Modifications") +
+    theme_dashboard()
+@
+\caption{Mean rate of successes (i.e., the number of successes in a study
+  divided by its sample size averaged over all \Sexpr{format(nsim, big.mark =
+    "'")} simulation repetitions). The maximum MCSE is
+  \Sexpr{signif(100*max(summaries[,"PS_mcse"]), 2)}\%.}
+\label{fig:successrate}
+\end{figure}
+
+\begin{figure}[!htb]
+<< "plot-extreme-probabilities", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+ggplot(data = summaries,
+       aes(x = pH0, y = PExtreme, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = PExtreme - PExtreme_mcse,
+    ##                   ymax = PExtreme + PExtreme_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = "Mean proportion of extreme randomization probabilities",
+         color = "Method", shape = "Modifications") +
+    theme_dashboard()
+@
+\caption{Mean proportion of \Sexpr{format(nsim, big.mark = "'")} simulations
+  with randomization probabilities either less than 10\% or greater than 90\%.
+  The maximum MCSE is \Sexpr{signif(100*max(summaries[,"PExtreme_mcse"]),
+    2)}\%.}
+\label{fig:extreme}
+\end{figure}
+
+
+\begin{figure}[!htb]
+<< "plot-negative-imbalance", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+ggplot(data = filter(summaries, pt1 > pc),
+       aes(x = pH0, y = S01, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = S01 - S01_mcse, ymax = S01 + S01_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = "Proportion of negative sample size differences more than 10%",
+         color = "Method", shape = "Modifications") +
+    theme_dashboard()
+@
+\caption{Proportion of \Sexpr{format(nsim, big.mark = "'")} simulations with
+  more than 10\% of the sample size randomized to other groups than treatment
+  group 1. The maximum MCSE is \Sexpr{signif(100*max(summaries[,"S01_mcse"]),
+    2)}\%.}
+\label{fig:imbalance}
+\end{figure}
+
+
+\begin{figure}[!htb]
+<< "plot-bias", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+ggplot(data = summaries,
+       aes(x = pH0, y = biasRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(yintercept = 0, lty = 2, alpha = 0.3) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = biasRD1 - biasRD1_mcse, ymax = biasRD1 + biasRD1_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = bquote("Bias (RD"[1] * ")"),
+         shape = "Modifications", color = "Method") +
+    theme_dashboard()
+@
+\caption{Empirical bias of the estimate of the rate difference $\text{RD}_1$
+  between the first treatment group and the control group based on
+  \Sexpr{format(nsim, big.mark = "'")} simulation repetitions. The maximum MCSE
+  is \Sexpr{signif(max(summaries[,"biasRD1_mcse"]), 2)}.}
+\label{fig:bias}
+\end{figure}
+
+\begin{figure}[!htb]
+<< "plot-coverage", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+ggplot(data = summaries,
+       aes(x = pH0, y = covRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = covRD1 - covRD1_mcse, ymax = covRD1 + covRD1_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = bquote("95% CI Coverage (RD"[1] * ")"),
+         shape = "Modifications", color = "Method") +
+    theme_dashboard()
+@
+\caption{Empirical coverage of the 95\% Wald confidence interval for the risk
+  difference $\text{RD}_1$ based on \Sexpr{format(nsim, big.mark = "'")}
+  simulation repetitions. The maximum MCSE is
+  \Sexpr{signif(100*max(summaries[,"covRD1_mcse"]), 2)}\%.}
+\label{fig:coverage}
+\end{figure}
+
+\begin{figure}[!htb]
+<< "plot-t1e", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+ggplot(data = filter(summaries, pt1 == pc),
+       aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(yintercept = 0.025, lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = rrRD1 - rrRD1_mcse, ymax = rrRD1 + rrRD1_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
+    expand_limits(y = 0) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = bquote("Type I error rate (RD"[1] == 0 * ")"),
+         shape = "Modifications", color = "Method") +
+    theme_dashboard()
+@
+\caption{Empirical type I error rate of the Wald test of $\text{RD}_1 = 0$ based
+  on \Sexpr{format(nsim, big.mark = "'")} simulation repetitions. The maximum
+  MCSE is \Sexpr{signif(100*max(filter(summaries, pt1 == pc)[,"rrRD1_mcse"]),
+    2)}\%.}
+\label{fig:t1e}
+\end{figure}
+
+\begin{figure}[!htb]
+<< "plot-power", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+ggplot(data = filter(summaries, pt1 > pc),
+       aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    ## geom_hline(yintercept = 0.8, lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = rrRD1 - rrRD1_mcse, ymax = rrRD1 + rrRD1_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = bquote("Power (RD"[1] == 0 * ")"),
+         shape = "Modifications", color = "Method") +
+    theme_dashboard()
+@
+\caption{Empirical power of the Wald test of $\text{RD}_1 = 0$ based on
+  \Sexpr{format(nsim, big.mark = "'")} simulation repetitions. The maximum MCSE
+  is \Sexpr{signif(100*max(filter(summaries, pt1 > pc)[,"rrRD1_mcse"]), 2)}\%.}
+\label{fig:power}
+\end{figure}
+
+\end{landscape}
+}
+
+
+\paragraph{Rate of successes and extreme randomization probabilities}
+The mean rate of successes is shown in Figure~\ref{fig:successrate}. It was
+generally the highest for Thompson sampling and lowest for equal randomization.
+The normal approximation and exact method produced mostly similar rates, with
+the normal method sometimes showing slightly higher rates (e.g., for $K = 3$ and
+$\text{RD}_1 = 0.2$). The Thompson sampling modifications generally reduced the
+mean success rate, with the greatest reduction achieved by combining capping and
+power transformation with $c = i/(2n)$. In conditions with small sample size
+these rates were similar as when the prior probability was $H_0 = 0.75$, while
+they were lower when the sample size was larger. This makes sense as for larger
+sample sizes, uncapped randomization probabilities are more likely to converge
+to extreme ones. This is also visible in Figure~\ref{fig:extreme} where more
+extreme randomization probabilities are observed with increasing sample size and
+rate difference for all methods but the ones with capping.
+
+\paragraph{Negative sample size imbalance}
+Figure~\ref{fig:imbalance} shows negative sample size imbalance as quantified by
+the $\hat{S}_{0.1}$ metric. Negative imbalance was the greatest for Thompson
+sampling and reduced when modifications were applied. Similarly, increasing the
+prior probability of $H_0$ decreased negative imbalance, in some cases even
+below Thompson sampling with modifications.
+
+\paragraph{Bias and coverage}
+Figures~\ref{fig:bias} and~\ref{fig:coverage} show empirical bias and coverage
+related to estimates of the rate difference between the first treatment group
+and the control group $\text{RD}_1$. In conditions where there was no difference
+($\text{RD}_1 = 0$), all methods produced unbiased point estimates, though all
+methods but equal randomization also showed undercoverage. Bias occurred in
+conditions with non-zero rate differences, the bias being the greatest for
+Thompson sampling and decreasing to some extent when modifications were
+introduced or the prior probability of $H_0$ increased. Similarly, modifications
+or increasing prior probabilitities improved coverage, although they still
+remained suboptimal in most conditions. For large rate difference conditions,
+coverage was much better for the normal than the exact version of RAR.
+Similarly, bias was in some cases larger for the exact compared to the normal
+version.
+
+
+\paragraph{Type I error rate and power}
+Figures~\ref{fig:t1e} and~\ref{fig:power} show empirical type I error rate and
+power associated with the Wald test of $\text{RD}_1 = 0$. We see that standard
+Thompson sampling shows an inflated type I error rate above the nominal 2.5\%
+which is reduced to some extent by increasing either the prior probability of
+$H_0$ or applying modifications. In the same way, Thompson sampling exhibits
+reduced power compared to equal randomization, which is again alleviated by
+modifications or positive prior probability of the null hypotheses. In small
+sample sizes and large rate differences, power was slightly increased for the
+exact compared to the normal version of RAR, while for Thompson sampling the
+type I rate was slightly higher for the exact compared to the normal version.

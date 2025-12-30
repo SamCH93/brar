@@ -572,12 +572,15 @@ post0 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0)$H.1
 post5 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0.5)$H.1
 
 
+## ----child = "appendix.Rnw"---------------------------------------------------
+
 ## ----"brar-package-demonstration", echo = TRUE, size = "small"----------------
 library(brar) # load package
 
 ## observed successes and trials in control and 3 treatment groups
 y <- c(10, 9, 14, 13)
 n <- c(20, 20, 22, 21)
+group <- c("control", paste("treatment", seq(1, 3)))
 
 ## conduct exact point null Bayesian RAR
 brar_binomial(y = y, n = n,
@@ -587,6 +590,19 @@ brar_binomial(y = y, n = n,
               a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
               ## prior probability of the null hypothesis
               pH0 = 0.5)
+
+## get data into shape for approximate point null Bayesian RAR
+fit <- glm(cbind(y, n - y) ~ group, family = binomial) # fit logistic regression
+estimate <- fit$coefficients[-1] # remove intercept to get logOR estimates
+sigma <- vcov(fit)[-1,-1] # remove intercept to get logOR covariance matrix
+
+## conduct approximate point null Bayesian RAR
+pm <- c(0, 0, 0) # set prior mean to zero
+## set 0.5 correlated prior covariance so that equal prior probabilities
+psigma <- matrix(0.5, nrow = 3, ncol = 3)
+diag(psigma) <- 1
+brar_normal(estimate = estimate, sigma = sigma, pm = pm, psigma = psigma,
+            pH0 = 0.5)
 
 
 ## ----"load-sim-data"----------------------------------------------------------
@@ -821,6 +837,7 @@ ggplot(data = filter(summaries, pt1 > pc),
          y = bquote("Power (RD"[1] == 0 * ")"),
          shape = "Modifications", color = "Method") +
     theme_dashboard()
+
 
 
 

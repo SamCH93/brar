@@ -15,12 +15,15 @@ pdf: tex
 	pdflatex $(FILE)
 	pdflatex $(FILE)
 
-## generate .pdf file from .tex file
+## generate .pdf file (without first knitting tex)
 pdf2:
 	pdflatex $(FILE)
 	bibtex $(FILE)
 	pdflatex $(FILE)
 	pdflatex $(FILE)
+
+supplement: supplement.Rnw appendix.Rnw tex
+	Rscript -e "knitr::knit2pdf('supplement.Rnw')" --vanilla
 
 ## extract R code
 code: $(FILE).Rnw
@@ -28,6 +31,11 @@ code: $(FILE).Rnw
 
 ## clean
 clean:  
-	-rm $(FILE).aux  $(FILE).blg  $(FILE).log  $(FILE).tex  $(FILE).bbl \
-	$(FILE).out $(FILE).brf $(FILE).tex $(FILE).synctex.gz
-	# -rm -r ./figure/
+	-rm $(FILE).aux  $(FILE).blg  $(FILE).log $(FILE).bbl \
+	$(FILE).out $(FILE).brf $(FILE).tex $(FILE).synctex.gz \
+	supplement.aux  supplement.blg  supplement.log  supplement.tex  supplement.bbl \
+	supplement.out supplement.brf supplement.synctex.gz
+
+cleanall: clean
+	-rm -r ./figure/
+	-rm -r ./cache/
