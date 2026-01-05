@@ -1146,8 +1146,8 @@ integrate(intFun, 0, 1)$value
 @
 
 
-\begin{figure}[!htb]
-<< "example-multibinomial", fig.height = 4, cache = TRUE >>=
+%% \begin{figure}[!htb]
+<< "example-multibinomial", fig.height = 4, cache = TRUE, eval = FALSE >>=
 ## simulate RAR
 set.seed(42)
 n <- 200
@@ -1223,31 +1223,31 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac,
           legend.position = "top")
 
 @
-\caption{Evolution of Bayesian RAR probabilities for \Sexpr{length(pt)}
-  treatments and a control group. In each step, one observation from each group
-  is simulated from a binomial distribution with probability as indicated in the
-  panel titles (treatment 1 is the most effective). Randomization probabilities
-  are computed assuming binomial likelihoods with independent uniform priors or
-  a normal approximation to the vector of log odds ratios obtained from logistic
-  regression along with a multivariate normal prior with variances
-  $\Sexpr{tau^2}$ and correlations $\Sexpr{rho}$.}
-\label{fig:example-multibinomial}
-\end{figure}
+%% \caption{Evolution of Bayesian RAR probabilities for \Sexpr{length(pt)}
+%%   treatments and a control group. In each step, one observation from each group
+%%   is simulated from a binomial distribution with probability as indicated in the
+%%   panel titles (treatment 1 is the most effective). Randomization probabilities
+%%   are computed assuming binomial likelihoods with independent uniform priors or
+%%   a normal approximation to the vector of log odds ratios obtained from logistic
+%%   regression along with a multivariate normal prior with variances
+%%   $\Sexpr{tau^2}$ and correlations $\Sexpr{rho}$.}
+%% \label{fig:example-multibinomial}
+%% \end{figure}
 
-Figure~\ref{fig:example-multibinomial} illustrates RAR probabilities for
-simulated binomial data with a control and $K = \Sexpr{K}$ treatment groups.
-Randomization probabilities were computed assuming exact binomial likelihoods
-with uniform priors for the probabilities or a normal approximation to the
-vector of log odds ratios obtained from logistic regression along with a
-multivariate normal prior. We can see that the exact (solid lines) and
-approximate (dashed lines) probabilities are not too far from each other in most
-cases even though the true probabilities from which the data are simulated are
-rather small. The RAR probabilities with $\Pr(H_0) = 0.5$ remain considerably
-closer to 25\% (equal randomization) compared to the RAR probabilities with
-$\Pr(H_0) = 0$ (Thompson sampling), which shows the largest variability. Since
-the true probability in treatment group 1 is the highest, all randomization
-probabilities converge towards $100\%$ for treatment 1, as expected, while they
-decrease to $0\%$ for the other treatments.
+%% Figure~\ref{fig:example-multibinomial} illustrates RAR probabilities for
+%% simulated binomial data with a control and $K = \Sexpr{K}$ treatment groups.
+%% Randomization probabilities were computed assuming exact binomial likelihoods
+%% with uniform priors for the probabilities or a normal approximation to the
+%% vector of log odds ratios obtained from logistic regression along with a
+%% multivariate normal prior. We can see that the exact (solid lines) and
+%% approximate (dashed lines) probabilities are not too far from each other in most
+%% cases even though the true probabilities from which the data are simulated are
+%% rather small. The RAR probabilities with $\Pr(H_0) = 0.5$ remain considerably
+%% closer to 25\% (equal randomization) compared to the RAR probabilities with
+%% $\Pr(H_0) = 0$ (Thompson sampling), which shows the largest variability. Since
+%% the true probability in treatment group 1 is the highest, all randomization
+%% probabilities converge towards $100\%$ for treatment 1, as expected, while they
+%% decrease to $0\%$ for the other treatments.
 
 
 \section{Reanalyzing the ECMO trial}

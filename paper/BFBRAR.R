@@ -402,81 +402,81 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
 # ## works, yay!
 
 
-## ----"example-multibinomial", fig.height = 4, cache = TRUE--------------------
-## simulate RAR
-set.seed(42)
-n <- 200
-nseq <- seq_len(n)
-sd <- 1 # true standard deviation
-pc <- 0.2 # true mean in control group
-pt <- c(0.3, 0.2, 0.1) # true means in treatment groups
-K <- length(pt) # number of treatments
-datC <- data.frame(y = cumsum(rbinom(n = n, size = 1, prob = pc)), n = nseq,
-                   group = "Control")
-datT <- do.call("rbind", lapply(seq(1, K), function(k) {
-    data.frame(y = cumsum(rbinom(n = n, size = 1, prob = pt[k])), n = nseq,
-               group = paste("Treatment", k))
-}))
-dat <- rbind(datC, datT)
-
-## priors
-a0 <- 1
-b0 <- 1
-a <- rep(1, K + 1)
-b <- rep(1, K + 1)
-pm <- rep(0, K)
-rho <- 0.5 # to have equal prior probabilities
-psigma <- matrix(rho, nrow = K, ncol = K)
-tau <- 1
-diag(psigma) <- tau^2
-pH0seq <- seq(0, 1, 0.5)
-
-## perform BRAR for accumulating data
-plotDF <- do.call("rbind", lapply(X = seq(5, n), FUN = function(ni) {
-    fit <- glm(cbind(y, n - y) ~ group, data = subset(dat, n == ni),
-               family = binomial)
-    est <- fit$coef[-1]
-    sigma <- vcov(fit)[-1,-1]
-    do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
-        brar <- brar_binomial(y = subset(dat, n == ni)$y, n = rep(ni, K + 1),
-                              pH0 = pH0)
-        brarnorm <- brar_normal(estimate = est, sigma = sigma, pm = pm,
-                                psigma = psigma, pH0 = pH0)
-        res <- rbind(data.frame("time" = ni, "pH0" = pH0, "prand" = brar$prand,
-                                "group" = names(brar$prand), method = "exact"),
-                     data.frame("time" = ni, "pH0" = pH0,
-                                "prand" = brarnorm$prand,
-                                "group" = names(brarnorm$prand),
-                                method = "normal approximation"))
-        rownames(res) <- NULL
-        return(res)
-    }))
-}))
-
-
-pH0lvls <- unique(plotDF$pH0)
-pH0labs <- as.character(pH0lvls)
-pH0labs[pH0lvls == 0] <- "0 (Thompson)"
-pH0labs[pH0lvls == 1] <- "1 (equal)"
-plotDF$pH0fac <- factor(plotDF$pH0, ordered = TRUE,
-                        levels = pH0lvls, labels = pH0labs)
-lvls <- c("Control", paste("Treatment", seq(1, K)))
-labs <- c(paste("'Control (' * theta == ", pc, "* ')'"),
-          paste("'Treatment",  seq(1, K), "(' * theta == ", pt, "* ')'"))
-plotDF$groupLab <- factor(plotDF$group, levels = lvls, labels = labs)
-ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac,
-                          lty = method)) +
-    facet_wrap(~ groupLab, labeller = label_parsed) +
-    labs(x = "Sample size per group", y = "Randomization probability",
-         color = bquote("Pr(" * italic(H)[0] * ")"), linetype = "Method") +
-    ## geom_hline(yintercept = 1/(K + 1), lty = 2, alpha = 0.5) +
-    geom_step(alpha = 0.8) +
-    scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-    theme_bw() +
-    theme(panel.grid.minor = element_blank(),
-          strip.background = element_rect(fill = "#00000003"),
-          legend.position = "top")
-
+## ----"example-multibinomial", fig.height = 4, cache = TRUE, eval = FALSE------
+# ## simulate RAR
+# set.seed(42)
+# n <- 200
+# nseq <- seq_len(n)
+# sd <- 1 # true standard deviation
+# pc <- 0.2 # true mean in control group
+# pt <- c(0.3, 0.2, 0.1) # true means in treatment groups
+# K <- length(pt) # number of treatments
+# datC <- data.frame(y = cumsum(rbinom(n = n, size = 1, prob = pc)), n = nseq,
+#                    group = "Control")
+# datT <- do.call("rbind", lapply(seq(1, K), function(k) {
+#     data.frame(y = cumsum(rbinom(n = n, size = 1, prob = pt[k])), n = nseq,
+#                group = paste("Treatment", k))
+# }))
+# dat <- rbind(datC, datT)
+# 
+# ## priors
+# a0 <- 1
+# b0 <- 1
+# a <- rep(1, K + 1)
+# b <- rep(1, K + 1)
+# pm <- rep(0, K)
+# rho <- 0.5 # to have equal prior probabilities
+# psigma <- matrix(rho, nrow = K, ncol = K)
+# tau <- 1
+# diag(psigma) <- tau^2
+# pH0seq <- seq(0, 1, 0.5)
+# 
+# ## perform BRAR for accumulating data
+# plotDF <- do.call("rbind", lapply(X = seq(5, n), FUN = function(ni) {
+#     fit <- glm(cbind(y, n - y) ~ group, data = subset(dat, n == ni),
+#                family = binomial)
+#     est <- fit$coef[-1]
+#     sigma <- vcov(fit)[-1,-1]
+#     do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
+#         brar <- brar_binomial(y = subset(dat, n == ni)$y, n = rep(ni, K + 1),
+#                               pH0 = pH0)
+#         brarnorm <- brar_normal(estimate = est, sigma = sigma, pm = pm,
+#                                 psigma = psigma, pH0 = pH0)
+#         res <- rbind(data.frame("time" = ni, "pH0" = pH0, "prand" = brar$prand,
+#                                 "group" = names(brar$prand), method = "exact"),
+#                      data.frame("time" = ni, "pH0" = pH0,
+#                                 "prand" = brarnorm$prand,
+#                                 "group" = names(brarnorm$prand),
+#                                 method = "normal approximation"))
+#         rownames(res) <- NULL
+#         return(res)
+#     }))
+# }))
+# 
+# 
+# pH0lvls <- unique(plotDF$pH0)
+# pH0labs <- as.character(pH0lvls)
+# pH0labs[pH0lvls == 0] <- "0 (Thompson)"
+# pH0labs[pH0lvls == 1] <- "1 (equal)"
+# plotDF$pH0fac <- factor(plotDF$pH0, ordered = TRUE,
+#                         levels = pH0lvls, labels = pH0labs)
+# lvls <- c("Control", paste("Treatment", seq(1, K)))
+# labs <- c(paste("'Control (' * theta == ", pc, "* ')'"),
+#           paste("'Treatment",  seq(1, K), "(' * theta == ", pt, "* ')'"))
+# plotDF$groupLab <- factor(plotDF$group, levels = lvls, labels = labs)
+# ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac,
+#                           lty = method)) +
+#     facet_wrap(~ groupLab, labeller = label_parsed) +
+#     labs(x = "Sample size per group", y = "Randomization probability",
+#          color = bquote("Pr(" * italic(H)[0] * ")"), linetype = "Method") +
+#     ## geom_hline(yintercept = 1/(K + 1), lty = 2, alpha = 0.5) +
+#     geom_step(alpha = 0.8) +
+#     scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+#     theme_bw() +
+#     theme(panel.grid.minor = element_blank(),
+#           strip.background = element_rect(fill = "#00000003"),
+#           legend.position = "top")
+# 
 
 
 ## ----"ECMO-analysis", fig.height = 6------------------------------------------
@@ -590,19 +590,6 @@ brar_binomial(y = y, n = n,
               a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
               ## prior probability of the null hypothesis
               pH0 = 0.5)
-
-## get data into shape for approximate point null Bayesian RAR
-fit <- glm(cbind(y, n - y) ~ group, family = binomial) # fit logistic regression
-estimate <- fit$coefficients[-1] # remove intercept to get logOR estimates
-sigma <- vcov(fit)[-1,-1] # remove intercept to get logOR covariance matrix
-
-## conduct approximate point null Bayesian RAR
-pm <- c(0, 0, 0) # set prior mean to zero
-## set 0.5 correlated prior covariance so that equal prior probabilities
-psigma <- matrix(0.5, nrow = 3, ncol = 3)
-diag(psigma) <- 1
-brar_normal(estimate = estimate, sigma = sigma, pm = pm, psigma = psigma,
-            pH0 = 0.5)
 
 
 ## ----"load-sim-data"----------------------------------------------------------

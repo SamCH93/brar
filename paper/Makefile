@@ -29,12 +29,22 @@ supplement: supplement.Rnw appendix.Rnw tex
 code: $(FILE).Rnw
 	Rscript -e "knitr::purl('$(FILE).Rnw')" --vanilla
 
+## use texdiff to show difference to previous version
+$(FILE)-changes.pdf: tex old/$(FILE)-v1.tex old/ld.cfg
+	-latexdiff -c old/ld.cfg old/$(FILE)-v1.tex $(FILE).tex > $(FILE)-changes.tex
+	-pdflatex --interaction nonstopmode $(FILE)-changes
+	-bibtex $(FILE)-changes
+	-pdflatex --interaction nonstopmode $(FILE)-changes
+	-pdflatex --interaction nonstopmode $(FILE)-changes
+
 ## clean
 clean:  
 	-rm $(FILE).aux  $(FILE).blg  $(FILE).log $(FILE).bbl \
 	$(FILE).out $(FILE).brf $(FILE).tex $(FILE).synctex.gz \
 	supplement.aux  supplement.blg  supplement.log  supplement.tex  supplement.bbl \
-	supplement.out supplement.brf supplement.synctex.gz
+	supplement.out supplement.brf supplement.synctex.gz \
+	$(FILE)-changes.aux  $(FILE)-changes.blg  $(FILE)-changes.log $(FILE)-changes.bbl \
+	$(FILE)-changes.out $(FILE)-changes.brf $(FILE)-changes.tex $(FILE)-changes.synctex.gz
 
 cleanall: clean
 	-rm -r ./figure/

@@ -4,9 +4,9 @@ Our R package can be installed by running \texttt{remotes::install\_github(repo
   = "SamCH93/brar", subdir = "package")} in an R session (requires the
 \texttt{remotes} package, which is available on CRAN). The main functions of the
 package are \texttt{brar\_normal} and \texttt{brar\_binomial}, which implement
-the approximate normal method and the exact binomial method for conducting
-Bayesian RAR. The following code chunk illustrates how both functions can be
-used.
+the approximate normal method from Section~\ref{sec:normal} and the exact
+binomial method from Section~\ref{sec:binary}. The following code chunk
+illustrates how the latter function can be used.
 
 \begin{spacing}{1}
 << "brar-package-demonstration", echo = TRUE, size = "small" >>=
@@ -25,19 +25,6 @@ brar_binomial(y = y, n = n,
               a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
               ## prior probability of the null hypothesis
               pH0 = 0.5)
-
-## get data into shape for approximate point null Bayesian RAR
-fit <- glm(cbind(y, n - y) ~ group, family = binomial) # fit logistic regression
-estimate <- fit$coefficients[-1] # remove intercept to get logOR estimates
-sigma <- vcov(fit)[-1,-1] # remove intercept to get logOR covariance matrix
-
-## conduct approximate point null Bayesian RAR
-pm <- c(0, 0, 0) # set prior mean to zero
-## set 0.5 correlated prior covariance so that equal prior probabilities
-psigma <- matrix(0.5, nrow = 3, ncol = 3)
-diag(psigma) <- 1
-brar_normal(estimate = estimate, sigma = sigma, pm = pm, psigma = psigma,
-            pH0 = 0.5)
 @
 \end{spacing}
 
