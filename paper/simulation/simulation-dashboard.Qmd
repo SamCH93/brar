@@ -60,9 +60,12 @@ summaries <- readRDS("sim-summaries.rds") |>
         trans = factor(trans, levels = c("none", "capping", "c=1/2", 
                                          "capping and c=1/2","c=i/(2n)", 
                                          "capping and c=i/(2n)"))) |>
-    mutate(method = factor(method, levels = c("exact", "normal", "equal"),
+    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.2, pH0)) |>
+    mutate(method = factor(method, levels = c("exact", "normal", "equal",
+                                              "gittins", "bayesUCB"),
                            labels = c("Exact BRAR", "Normal BRAR",
-                                      "Equal Randomization"))) |>
+                                      "Equal Randomization",
+                                      "Gittins", "Bayes UCB"))) |>
     mutate(Klab = paste0("italic(K) == ", K),
            nlab = paste0("italic(n) == ", n),
            burninlab = paste0("'Burn-in' == ", burnin),
@@ -74,7 +77,9 @@ errorbar_width <- 0
 errorbar_alpha <- 0.8
 cols <- c("Exact BRAR" = "#0072B2",
           "Normal BRAR" = "#D55E00",
-          "Equal Randomization" = "#000000")
+          "Equal Randomization" = "#000000",
+          "Gittins" = "#009E73",
+          "Bayes UCB" = "#CC79A7")
 shapes <- c("none" = 19, 
             "capping" = 2, # 17, 
             "c=1/2" = 0, # 15, 
@@ -170,6 +175,7 @@ ggplot(data = summaries,
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), y = "Mean rate of successes",
          color = "Method", shape = "Modifications")
 ```
@@ -191,6 +197,7 @@ ggplot(data = summaries,
     scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = "Mean rate of allocations to treatment 1",
          color = "Method", shape = "Modifications")
@@ -212,6 +219,7 @@ ggplot(data = summaries,
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = "Mean sample size difference",
          color = "Method", shape = "Modifications")
@@ -234,6 +242,7 @@ ggplot(data = filter(summaries, pt1 > pc),
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = "Proportion of sample size differences more than 10%",
          color = "Method", shape = "Modifications")
@@ -256,6 +265,7 @@ ggplot(data = summaries,
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = "Mean proportion of extreme randomization probabilities",
          color = "Method", shape = "Modifications")
@@ -282,6 +292,7 @@ ggplot(data = summaries,
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
          y = bquote("Bias (RD"[1] * ")"), 
          shape = "Modifications", color = "Method")
@@ -304,6 +315,7 @@ ggplot(data = summaries,
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
          y = bquote("95% CI Coverage (RD"[1] * ")"),
          shape = "Modifications", color = "Method")
@@ -332,6 +344,7 @@ ggplot(data = filter(summaries, pt1 == pc),
     expand_limits(y = 0) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
          y = bquote("Type I error rate (RD"[1] == 0 * ")"),
          shape = "Modifications", color = "Method")
@@ -354,6 +367,7 @@ ggplot(data = filter(summaries, pt1 > pc),
     scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
          y = bquote("Power (RD"[1] == 0 * ")"),
          shape = "Modifications", color = "Method")
@@ -377,6 +391,7 @@ ggplot(data = summaries,
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), 
          y = "Mean convergence",
          shape = "Modifications", color = "Method")
@@ -388,6 +403,7 @@ ggplot(data = summaries,
 ```{r}
 #| echo: false
 summaries |>
+    mutate(pH0 = ifelse(pH0 < 0, NA, pH0)) |>
     mutate_at(c("pc", "pt1", "pt2", "burnin", "n", "K", "pH0", "c"), factor) |>
     mutate_at(c("ENS", "ENS_sd", "EN1diff"), 
               function(x) round(x, 1)) |>
@@ -436,8 +452,9 @@ summaries |>
 sumFun <- function(x, digits = 2) {
     paste0(round(median(x), digits), " (", round(min(x), digits), ",", 
            round(max(x), digits), ")")
-} 
+}
 summaries |>
+    mutate(pH0 = ifelse(pH0 < 0, NA, pH0)) |>
     mutate_at(c("pc", "pt1", "pt2", "burnin", "n", "K", "pH0", "c"), factor) |>
     group_by(method, pH0, capping, c, burnin) |>
     summarise("Median ENS (Min, Max)" = sumFun(ENS, digits = 1),

@@ -1,5 +1,6 @@
 library(SimDesign)
 library(brar)
+library(RARtrials)
 
 ## uniform priors for exact method
 a <- b <- 1
@@ -11,16 +12,25 @@ rho <- 0.5
 ## maximum number of treatment groups considered
 Kmax <- 3
 
+## Gittins index lookup table
+df <- 0.995
+gindex <- RARtrials::Gittins(Gittinstype = "Binary", df = df)
+
+## Bayes UCB c tuning parameter
+## Kaufmann et al. (2012): "in simulations, the choice c = 0 actually proved to
+## be the most satisfying"
+cUCB <- 0
+
 ## fixed objects for SimDesign
 fixed_objects <- list("a" = a, "b" = b, "pm" = pm, "psd" = psd, "rho" = rho,
-                      "Kmax" = Kmax)
+                      "Kmax" = Kmax, "gindex" = gindex, "cUCB" = cUCB)
 
 ## create fully factorial simulation design
 DesignFull <- createDesign(
     ## sample size (low and high power)
     n = c(200, 654),
     ## probability in control group
-    pc  = c(0.25),
+    pc = c(0.25),
     ## probability in first treatment group
     pt1 = c(0.25, 0.35, 0.45),
     ## probabilities in remaining treatment groups (if there are any)
@@ -36,11 +46,15 @@ DesignFull <- createDesign(
     burnin = c(0, 50),
     ## power-shrinkage (a value of 1 corresponds to no shrinkage)
     c = c("1", "1/2", "i/(2n)"),
-    ## exact or normal approximation
-    method = c("exact", "normal")
+    ## exact or normal approximation, or Gittins index
+    method = c("exact", "normal", "gittins", "bayesUCB")
 )
 ## remove combinations that make no sense
 Design <- subset(DesignFull,
+                 ## Gittins index nad Bayes UCB don't use capping, pH0, c tuning parameters
+                 !(pH0 != 0 & method %in% c("gittins", "bayesUCB")) &
+                 !(capping_eps != 0.5 & method %in% c("gittins", "bayesUCB")) &
+                 !(c != "1" & method %in% c("gittins", "bayesUCB")) &
                  ## "normal" or "exact" produce same result for equal randomization
                  !(pH0 == 1 & method == "normal") &
                  ## power shrinkage only for Thompson sampling (pH0 = 0) settings
@@ -60,7 +74,7 @@ Generate <- function(condition, fixed_objects) {
     uppercap <- 0.5 + condition$capping_eps
 
     ## priors
-    if (condition$method == "exact") {
+    if (condition$method == "exact" | condition$method == "gittins") {
         a1 <- rep(a, ngroups)
         b1 <- rep(b, ngroups)
     }
@@ -114,6 +128,30 @@ Generate <- function(condition, fixed_objects) {
                     brar::brar_normal(estimate = est, sigma = sigma, pm = pm1,
                                       psigma = psigma1, pH0 = condition$pH0)
                 }, silent = TRUE)
+            } else if (condition$method %in% c("gittins", "bayesUCB")) {
+                ## list to augment later with a rand vector
+                res <- list()
+
+                ## posterior a and b parameters
+                apost <- a + ycurrent
+                bpost <- b + ncurrent - ycurrent
+
+                if (condition$method == "gittins") {
+                    ## get Gittins indices
+                    index <- sapply(X = seq(1, ngroups), FUN = function(j) {
+                        ## LOL: no documentation in RARtrials::Gittins but it seems
+                        ## that first index is failures and second is successes?
+                        return(gindex[bpost[j], apost[j]])
+                    })
+                } else {
+                    ## get Bayesian upper confidence bound index
+                    index <- stats::qbeta(p = 1 - 1/(i*log(condition$n)^cUCB), apost, bpost)
+                }
+
+                ## allocate to group with highest Gittins index / UCB, randomize if ties
+                maxindex <- index == max(index)
+                res$prand <- rep(0, ngroups)
+                res$prand[maxindex] <- 1/sum(maxindex)
             } else {
                 stop(paste("undefined method:", condition$method))
             }
@@ -269,12 +307,14 @@ Analyse <- function(condition, dat, fixed_objects) {
 
 ## ## uncomment to test
 ## set.seed(42); (condition <- Design[432,]); dat <- Generate(condition); (res <- Analyse(condition, dat))
+## set.seed(43); (condition <- Design[700,]); dat <- Generate(condition); (res <- Analyse(condition, dat))
+## set.seed(44); (condition <- Design[710,]); dat <- Generate(condition); (res <- Analyse(condition, dat))
 
 ## save sessionInfo before starting the simulation study
 si <- sessionInfo()
 saveRDS(si, "sessioninfo-server.rds")
 
-set.seed(143)
+set.seed(144)
 nsim <- 10000
 ncores <- 100
 simres <- runSimulation(
