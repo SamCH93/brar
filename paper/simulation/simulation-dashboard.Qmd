@@ -352,7 +352,7 @@ ggplot(data = filter(summaries, pt1 == pc),
 
 ```{r}
 #| title: Power
-#| fig-cap: !expr paste0("Empirical power of the Wald test of $\text{RD}_1 = 0$. The maximum MCSE is ", signif(100*max(filter(summaries, pt1 > pc)[,"rrRD1_mcse"]), 2), "%.")
+#| fig-cap: !expr paste0("Empirical power of the Wald test of $\\text{RD}_1 = 0$. The maximum MCSE is ", signif(100*max(filter(summaries, pt1 > pc)[,"rrRD1_mcse"]), 2), "%.")
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +

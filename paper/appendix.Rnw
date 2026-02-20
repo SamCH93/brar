@@ -28,6 +28,30 @@ brar_binomial(y = y, n = n,
 @
 \end{spacing}
 
+%% \section{Asymptotic randomization probability}
+
+%% Assume the normality setting from Section~\ref{sec:normal}, and suppose there is
+%% one treatment group ($K = 1$), and that a normal prior centered around zero $\mu
+%% = 0$ with variance $\tau^2$ along with $\Pr(H_0) > 0$ for the spike at 0 are
+%% specified. For an effect estimate $\hat{\theta}_n$ with standard error
+%% $\sigma_n$ based on $n$ observations, the posterior probability of the null
+%% hypothesis $H_0$ is then
+%% \begin{align*}
+%%   \Pr(H_0 \mid \hat{\theta}_n) =
+%%   \left(
+%%   1 + \frac{1 - \Pr(H_0)}{\Pr(H_0)} \, \times \, \exp\left[\frac{Z^2_n}{2(1 + \sigma^2_n/\tau^2)}\right] \, \bigg / \,
+%%   \sqrt{1 + \frac{\tau^2}{\sigma^2_n}}
+%%   \right)^{-1}
+%% \end{align*}
+%% with \textit{z}-statistic $Z_n = \hat{\theta}_n/\sigma_n$. If data are sampled
+%% based on non-adaptive randomization, it is clear that as the sample size $n$
+%% increases, under $H_0 \colon \theta = 0$, the \textit{z}-statistic is
+%% asymptotically $Z_n \sim \mathrm{N}(0, 1)$ and the standard error goes to zero,
+%% so that $\Pr(H_0 \mid \hat{\theta}_n) \uparrow 1$ in probability as $\sigma_n
+%% \downarrow 0$. However, under RAR, the distribution of $Z_n$ is more complicated
+%% as the standard error is now also a random variable
+
+
 \section{Simulation study}
 \label{app:simulation}
 
@@ -45,7 +69,7 @@ additional details and results is provided at
 
 \subsection{Aims}
 The aim of the simulation study is to evaluate the design characteristics of the
-newly proposed point null Bayesian RAR approach, and compare it to existing
+newly proposed null hypothesis Bayesian RAR approach, and compare it to existing
 methods.
 
 \subsection{Data-generating mechanism}
@@ -62,11 +86,11 @@ the remaining treatment groups (in case $K > 1$).
 Parameters were chosen similar to the simulation study from
 \citet{Robertson2023}. We vary the sample size $n \in \{200, 654\}$ to represent
 low and high powered studies, the number of treatment groups $K \in \{1, 2,
-3\}$, and probability in the first treatment group $\theta_1 \in \{0.25, 0.35,
-0.45\}$. The probability in the control group and the remaining groups is always
-fixed at $\theta_C = 0.25$ and $\theta_2 = \theta_3 = 0.3$, respectively. All
-these parameters are varied fully-factorially, leading to $2 \times 3 \times 3 =
-18$ parameter conditions.
+3\}$, and the probability in the first treatment group $\theta_1 \in \{0.25,
+0.35, 0.45\}$. The probability in the control group and the remaining groups is
+always fixed at $\theta_C = 0.25$ and $\theta_2 = \theta_3 = 0.3$, respectively.
+All these parameters are varied fully-factorially, leading to $2 \times 3 \times
+3 = 18$ parameter conditions.
 
 Since treatment allocation determines from which true probability an outcome is
 simulated, data generation is directly influenced by the RAR methods described
@@ -78,24 +102,28 @@ method tuning parameters rather than true underlying parameters.
 
 The primary interest of this simulation study lies in assessing the patient
 benefit characteristics of different RAR methods. Additionally, the estimand of
-interest is the rate difference $\text{RD}_1 = \theta_1 - \theta_C$ and the
-target of interest is the null hypothesis of $\text{RD}_1 = 0$.
+interest is the response rate difference $\text{RD}_1 = \theta_1 - \theta_C$ and
+the target of interest is the null hypothesis of $\text{RD}_1 = 0$.
 
 \subsection{Methods}
 
-We consider the above described point null RAR methods. The prior probability of
-$H_0$ is a tuning parameter and controls the variability of the randomization
-probabilities. Setting $\Pr(H_0) = 1$ produces equal randomization, whereas
-$\Pr(H_0) = 0$ produces Thompson sampling. We consider values of $\Pr(H_0) \in
-\{0, 0.25, 0.5, 0.75, 1\}$, as well as the normal approximation and exact
-binomial version of RAR. For approximate normal RAR, a normal prior with mean 0,
-variance 1, and in case of $K > 1$ a correlation of 0.5, is considered.
-Independent uniform priors are assigned for binomial RAR. Log odds ratios along
-with their covariance are estimated with logistic regression and then used as
-inputs for the normal RAR method, while the exact method uses success counts and
-sample sizes only. In case a method fails to converge, equal randomization is
-applied as a back-up strategy, as this mimics what an experimenter might do in
-practice when a RAR method fails to converge \citep{Paweletal2025c}.
+We consider the null hypothesis Bayesian RAR method described in the main text.
+The prior probability of $H_0$ is a tuning parameter and controls the
+variability of the randomization probabilities. Setting $\Pr(H_0) = 1$ produces
+equal randomization, whereas $\Pr(H_0) = 0$ produces Thompson sampling. We
+consider values of $\Pr(H_0) \in \{0, 0.25, 0.5, 0.75, 1\}$, as well as the
+normal approximation and exact binomial version of RAR. For approximate normal
+RAR, a normal prior with mean 0, variance 1, and in case of $K > 1$ a
+correlation of 0.5, is considered. Independent uniform priors are assigned for
+binomial RAR. Log odds ratios along with their covariance are estimated with
+logistic regression and then used as inputs for the normal RAR method, while the
+exact method uses success counts and sample sizes only. In case a method fails
+to converge, equal randomization is applied as a back-up strategy, as this
+mimics what an experimenter might do in practice when a RAR method fails to
+converge \citep{Paweletal2025c}.
+%% Since the normal and binomial priors use weakly-informative defaults but are in
+%% no way ``matched'', results can also be considered as sensitivity analyses of
+%% Bayesian RAR.
 
 We also consider three modifications of these methods: In some conditions, a
 ``burn-in'' phase is carried out during which the first 50 patients are always
@@ -113,14 +141,24 @@ re-normalized to sum to one \citep{Wathen2017, Kim2021}. This re-normalization
 is only performed for randomization probabilities greater than 10\%, as these
 would otherwise be reduced again to probabilities less than 10\%. In case, a
 re-normalized probability becomes less than 10\%, it is also capped at 10\% and
-second re-normalization performed. Finally, for equal randomization ($\Pr(H_0) =
-1$), no burn-in, capping, or power transformation conditions are simulated as
-these manipulations have no effect.
+a second re-normalization performed. For equal randomization ($\Pr(H_0) = 1$),
+no burn-in, capping, or power transformation conditions are simulated as these
+manipulations have no effect.
+
+Finally, upon suggestions from the associate editor, we also include two methods
+from the multi-armed bandit literature in the simulation study to compare null
+hypothesis Bayesian RAR to more aggressive allocation methods -- the Gittins
+index \citep{Gittins2011, Villar2015} and the Bayesian upper confidence bound
+(Bayes UCB) methods \citep{Kaufmann2012}. For the Gittins index, we use the
+implementation from the \texttt{RARtrials} R package \citep{Xu2025} with a
+discount factor of $d = 0.995$. For Bayes UCB we use uniform priors for each
+probability along with the tuning parameter $c = 0$, as recommended in
+\citet{Kaufmann2012} based on their simulation results.
 
 
 \subsection{Performance measures}
 
-Different performance measures were used. Patient benefit was quantified with:
+Patient benefit was quantified with:
 \begin{itemize}
 \item The mean rate of successes per study
   \begin{align*}
@@ -172,7 +210,14 @@ Different performance measures were used. Patient benefit was quantified with:
   %% control group in case there is only one treatment group ($K = 1$).
   For $K= 1$, this reduces to the $\hat{S}_{0.1}$ sample size imbalance measure
   from \citet{Robertson2023}, which in turn was inspired by the performance
-  evaluation in the simulation study from \citet{Thall2015}.
+  evaluation in the simulation study from \citet{Thall2015}. Note that the
+  $\hat{S}_{0.1}$ measure is difficult to translate into an actual patient
+  benefit measure because the patient benefit loss related to imbalance depends
+  on the size of the treatment effect \citep{Robertson2023}. For instance,
+  imbalance is less consequential if the treatment effect is small than if it is
+  large. Nevertheless, we include the $\hat{S}_{0.1}$ measure for comparability
+  with previous simulation studies.
+
 \end{itemize}
 Parameter estimation and hypothesis testing performance was quantified with:
 \begin{itemize}
@@ -208,7 +253,7 @@ nsim <- unique(simres$REPLICATIONS)
 @
 
 Each condition was simulated \Sexpr{format(nsim, big.mark = "'")} times. This
-ensures a MCSE (Monte Carlo Standard Error) for Type I error rate, power, and
+ensures a MCSE (Monte Carlo Standard Error) for type I error rate, power, and
 coverage of at most \Sexpr{100*sqrt(0.5^2/nsim)}\%. MCSEs were calculated using
 the formulae from \citet{Siepe2024} and are provided for all measures in the
 following figures and the supplemental website.
@@ -225,7 +270,8 @@ organize and run the simulation study \citep{Chalmers2020}. Our newly developed
 \texttt{brar} R package was used to perform Bayesian RAR.
 %%  (see Appendix~\ref{app:package} for an illustration).
 Code and data to reproduce this simulation study are available at
-\url{https://github.com/SamCH93/brar}.
+\url{https://github.com/SamCH93/brar} and persistenly archived at
+\url{https://doi.org/10.5281/zenodo.17248628}.
 
 \subsection{Results}
 
@@ -245,9 +291,12 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
         trans = factor(trans, levels = c("none", "capping", "c=1/2",
                                          "capping and c=1/2","c=i/(2n)",
                                          "capping and c=i/(2n)"))) |>
-    mutate(method = factor(method, levels = c("exact", "normal", "equal"),
+    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.2, pH0)) |>
+    mutate(method = factor(method, levels = c("exact", "normal", "equal",
+                                              "gittins", "bayesUCB"),
                            labels = c("Exact BRAR", "Normal BRAR",
-                                      "Equal Randomization"))) |>
+                                      "Equal Randomization",
+                                      "Gittins", "Bayes UCB"))) |>
     mutate(Klab = paste0("italic(K) == ", K),
            nlab = paste0("italic(n) == ", n),
            burninlab = paste0("'Burn-in' == ", burnin),
@@ -294,7 +343,9 @@ errorbar_width <- 0
 errorbar_alpha <- 0.8
 cols <- c("Exact BRAR" = "#0072B2",
           "Normal BRAR" = "#D55E00",
-          "Equal Randomization" = "#000000")
+          "Equal Randomization" = "#000000",
+          "Gittins" = "#009E73",
+          "Bayes UCB" = "#CC79A7")
 shapes <- c("none" = 19,
             "capping" = 2,
             "c=1/2" = 0,
@@ -339,6 +390,7 @@ ggplot(data = summaries,
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), y = "Mean rate of successes",
          color = "Method", shape = "Modifications") +
     theme_dashboard()
@@ -366,6 +418,7 @@ ggplot(data = summaries,
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = "Mean proportion of extreme randomization probabilities",
          color = "Method", shape = "Modifications") +
@@ -394,6 +447,7 @@ ggplot(data = filter(summaries, pt1 > pc),
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = "Proportion of negative sample size differences more than 10%",
          color = "Method", shape = "Modifications") +
@@ -422,6 +476,7 @@ ggplot(data = summaries,
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = bquote("Bias (RD"[1] * ")"),
          shape = "Modifications", color = "Method") +
@@ -450,12 +505,13 @@ ggplot(data = summaries,
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = bquote("95% CI Coverage (RD"[1] * ")"),
          shape = "Modifications", color = "Method") +
     theme_dashboard()
 @
-\caption{Empirical coverage of the 95\% Wald confidence interval for the risk
+\caption{Empirical coverage of the 95\% Wald confidence interval for the rate
   difference $\text{RD}_1$ based on \Sexpr{format(nsim, big.mark = "'")}
   simulation repetitions. The maximum MCSE is
   \Sexpr{signif(100*max(summaries[,"covRD1_mcse"]), 2)}\%.}
@@ -475,10 +531,12 @@ ggplot(data = filter(summaries, pt1 == pc),
     ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
-    scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
+    scale_y_continuous(breaks = seq(0, 0.15, 0.025),
+                       labels = scales::percent) + #, limits = c(0, 1)) +
     expand_limits(y = 0) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = bquote("Type I error rate (RD"[1] == 0 * ")"),
          shape = "Modifications", color = "Method") +
@@ -507,6 +565,7 @@ ggplot(data = filter(summaries, pt1 > pc),
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = bquote("Power (RD"[1] == 0 * ")"),
          shape = "Modifications", color = "Method") +
@@ -524,25 +583,35 @@ ggplot(data = filter(summaries, pt1 > pc),
 
 \paragraph{Rate of successes and extreme randomization probabilities}
 The mean rate of successes is shown in Figure~\ref{fig:successrate}. It was
-generally the highest for Thompson sampling and lowest for equal randomization.
-The normal approximation and exact method produced mostly similar rates, with
-the normal method sometimes showing slightly higher rates (e.g., for $K = 3$ and
-$\text{RD}_1 = 0.2$). The Thompson sampling modifications generally reduced the
-mean success rate, with the greatest reduction achieved by combining capping and
-power transformation with $c = i/(2n)$. In conditions with small sample size
-these rates were similar as when the prior probability was $H_0 = 0.75$, while
-they were lower when the sample size was larger. This makes sense as for larger
-sample sizes, uncapped randomization probabilities are more likely to converge
-to extreme ones. This is also visible in Figure~\ref{fig:extreme} where more
-extreme randomization probabilities are observed with increasing sample size and
-rate difference for all methods but the ones with capping.
+generally the highest for the Gittins index, followed by Bayes UCB, Thompson
+sampling, and being the lowest for equal randomization. The normal approximation
+and exact method produced mostly similar rates, with the normal method sometimes
+showing slightly higher rates (e.g., for $K = 3$ and $\text{RD}_1 = 0.2$). The
+Thompson sampling modifications generally reduced the mean success rate, with
+the greatest reduction achieved by combining capping and power transformation
+with $c = i/(2n)$. In conditions with small sample size these rates were similar
+as when the prior probability was $H_0 = 0.75$, while they were lower when the
+sample size was larger. This makes sense as for larger sample sizes, uncapped
+randomization probabilities are more likely to converge to extreme ones. This is
+also visible in Figure~\ref{fig:extreme} where more extreme randomization
+probabilities are observed with increasing sample size and rate difference for
+all methods but the ones with capping. Finally, Bayes UCB and the Gittins index
+methods always produced extreme randomization probabilities, as these methods
+deterministically allocate the next patient to the group with the highest upper
+confidence bound for and Gittins index, respectively.
 
 \paragraph{Negative sample size imbalance}
 Figure~\ref{fig:imbalance} shows negative sample size imbalance as quantified by
-the $\hat{S}_{0.1}$ metric. Negative imbalance was the greatest for Thompson
+the $\hat{S}_{0.1}$ metric. The Gittins index generally showed the highest
+negative imbalance, followed by Thompson sampling and Bayes UCB. Among the
+methods with $\Pr(H_0) < 1$, negative imbalance was the greatest for Thompson
 sampling and reduced when modifications were applied. Similarly, increasing the
 prior probability of $H_0$ decreased negative imbalance, in some cases even
-below Thompson sampling with modifications.
+below Thompson sampling with modifications. As in the simulation study from
+\citet{Robertson2023}, negative imbalance of Thompson sampling and Bayesian RAR
+with $\Pr(H_0) < 1$ was higher than under equal randomization in conditions with
+small effect size $\text{RD}_1 = 0.1$, but equal or lower than under equal
+randomization in conditions with large effect size $\text{RD}_1 = 0.2$.
 
 \paragraph{Bias and coverage}
 Figures~\ref{fig:bias} and~\ref{fig:coverage} show empirical bias and coverage
@@ -550,24 +619,27 @@ related to estimates of the rate difference between the first treatment group
 and the control group $\text{RD}_1$. In conditions where there was no difference
 ($\text{RD}_1 = 0$), all methods produced unbiased point estimates, though all
 methods but equal randomization also showed undercoverage. Bias occurred in
-conditions with non-zero rate differences, the bias being the greatest for
-Thompson sampling and decreasing to some extent when modifications were
-introduced or the prior probability of $H_0$ increased. Similarly, modifications
-or increasing prior probabilitities improved coverage, although they still
-remained suboptimal in most conditions. For large rate difference conditions,
-coverage was much better for the normal than the exact version of RAR.
-Similarly, bias was in some cases larger for the exact compared to the normal
-version.
-
+conditions with non-zero rate differences, the bias being the greatest for the
+Gittins index, Bayes UCB, and Thompson sampling, and decreasing to some extent
+when modifications were introduced or the prior probability of $H_0$ increased.
+Similarly, modifications or increasing prior probabilitities improved coverage,
+although coverage still remained suboptimal in most conditions. For large rate
+difference conditions, coverage was often better for the normal than the exact
+version of RAR. Similarly, bias was in some cases somewhat larger for the exact
+compared to the normal version. This could potentially be due to the normal
+prior distribution on the log odds ratio being better tuned to effect sizes in
+the data-generating mechanism difference compared to the uniform priors on the
+probabilities under the binomial model.
 
 \paragraph{Type I error rate and power}
 Figures~\ref{fig:t1e} and~\ref{fig:power} show empirical type I error rate and
-power associated with the Wald test of $\text{RD}_1 = 0$. We see that standard
-Thompson sampling shows an inflated type I error rate above the nominal 2.5\%
-which is reduced to some extent by increasing either the prior probability of
-$H_0$ or applying modifications. In the same way, Thompson sampling exhibits
-reduced power compared to equal randomization, which is again alleviated by
-modifications or positive prior probability of the null hypotheses. In small
-sample sizes and large rate differences, power was slightly increased for the
-exact compared to the normal version of RAR, while for Thompson sampling the
-type I rate was slightly higher for the exact compared to the normal version.
+power associated with the Wald test of $\text{RD}_1 = 0$. We see that the
+Gittins index, Bayes UCB, and Thompson sampling methods showed an inflated type
+I error rate above the nominal 2.5\% which was reduced to some extent by
+increasing either the prior probability of $H_0$ or applying modifications. In
+the same way, Gittins index, Bayes UCB, and Thompson sampling often exhibited
+reduced power compared to equal randomization, which was again alleviated by
+modifications or increasing $\Pr(H_0)$. In small sample sizes and large rate
+differences, power was slightly increased for the exact compared to the normal
+version of RAR, while for Thompson sampling the type I rate was slightly higher
+for the exact compared to the normal version.
