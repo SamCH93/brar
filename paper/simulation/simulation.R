@@ -316,7 +316,7 @@ saveRDS(si, "sessioninfo-server.rds")
 
 set.seed(144)
 nsim <- 10000
-ncores <- 100
+ncores <- 50
 simres <- runSimulation(
     design = Design,
     generate = Generate,
