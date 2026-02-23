@@ -197,6 +197,7 @@ brar_normal <- function(estimate, sigma, pm = rep(0, length(estimate)), psigma,
         ## compute BFs
         margdens <- c(margdensHm, margdensH0, resHp[,3])
         bfmat <- outer(X = margdens, Y = margdens, FUN = `/`)
+        diag(bfmat) <- 1
         Hpnames <- paste0("H+", seq(1, K))
         colnames(bfmat) <- rownames(bfmat) <- c("H-", "H0", Hpnames)
 
@@ -206,8 +207,33 @@ brar_normal <- function(estimate, sigma, pm = rep(0, length(estimate)), psigma,
         prior <- c(pHm, pH0, pHp)
         names(prior) <- c("H-", "H0", Hpnames)
 
+        ## ## compute posterior hypothesis probabilitites
+        ## post <- prior*margdens/sum(prior*margdens)
         ## compute posterior hypothesis probabilitites
-        post <- prior*margdens/sum(prior*margdens)
+        if (pH0 == 1) {
+            ## if Pr(H0) = 1, posterior prob of H0 is always 1 regardless of data
+            post <- c(0, 1, rep(0, K))
+        } else if (sum(margdens == 0) > 1) {
+            ## more than one marginal log likelihood = -Inf => all post probs are NaN
+            post <- rep(NaN, K + 2)
+        } else {
+            odds <- outer(X = prior, Y = prior, FUN = `/`)
+            diag(odds) <- 1
+            post <- 1/sapply(X = seq_len(ncol(bfmat)), FUN = function(i) {
+                sum(bfmat[,i]*odds[,i])
+            })
+        }
+        names(post) <- names(prior)
+    }
+    ## if prior is 0, posterior is always 0 regardless of data
+    ## set posterior manually to avoid numerical NaN issues
+    post[prior == 0] <- 0
+    ## if posterior prob of any hypothesis is 1, all other probs are 0
+    ## set manually to avoid some numerical NaN issues
+    post1 <- post == 1
+    if (any(post1) & sum(post1, na.rm = TRUE) == 1) {
+        post[!post1] <- 0
+        post[is.nan(post)] <- 0
     }
 
     ## compute randomization probabilities

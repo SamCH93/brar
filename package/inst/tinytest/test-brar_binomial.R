@@ -40,7 +40,8 @@ expect_equal(sum(res4$prand), 1, tolerance = 1e-12)
 expect_equal(dim(res4$BF_ij), c(K + 2, K + 2))
 
 ## pH0 = 1 should give equal randomization
-res5 <- brar_binomial(y = y, n = n, pH0 = 1)
+res5 <- brar_binomial(y = y, n = n
+                    , pH0 = 1)
 expect_equal(unname(res5$prand), rep(1 / (K + 1), K + 1), tolerance = 1e-12)
 
 ## for pH0 = 0 randomization probabilities should equal posterior probabilities
