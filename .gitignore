@@ -61,3 +61,4 @@ old/
 *.pdf
 .quarto/
 paper/simulation/.gitignore
+paper/simulation/asymptotic-sim.rds
