@@ -90,7 +90,7 @@ shapes <- c("none" = 19,
 
 # {.sidebar}
 
-This dashboard presents detailed results from the simulation study reported in Pawel and Held (2025, <https://github.com/SamCH93/brar>). Below is a brief description of the design and analysis of the study, following the ADEMP reporting structure (Morris et al., 2019, <https://doi.org/10.1002/sim.8086>).
+This dashboard presents detailed results from the simulation study reported in Pawel and Held (2025, <https://doi.org/10.48550/arXiv.2510.01734>). Below is a brief description of the design and analysis of the study, following the ADEMP reporting structure (Morris et al., 2019, <https://doi.org/10.1002/sim.8086>).
 
 ### Aims
 
@@ -110,9 +110,11 @@ The primary targets of interest are the design characteristics of the compared B
 
 ### Methods
 
-We consider the BRAR methods described in Pawel and Held (2025, <https://github.com/SamCH93/brar>). These methods introduce a point hypothesis $H_0$ postulating that all treatments are equally effective as the control. The prior probability of $H_0$ is a tuning parameter and controls the variability of the randomization probabilities. Setting $\Pr(H_0) = 1$ produces equal randomization, whereas $\Pr(H_0) = 0$ produces Thompson sampling. We will consider values $\Pr(H_0) \in \{0, 0.25, 0.5, 0.75, 1\}$, as well as the normal approximation and exact binomial version of BRAR. For approximate normal BRAR, a normal prior with mean 0, variance 1, and in case of $K > 1$ a correlation of 0.5 are considered, whereas independent uniform priors are assigned for binomial BRAR. Log odds ratios along with their covariance are estimated with logistic regression and then used as inputs for the normal BRAR method, while the exact method used counts and sample sizes only. In case a method fails to converge, equal randomization is applied.
+We consider the BRAR methods described in Pawel and Held (2025, <https://doi.org/10.48550/arXiv.2510.01734>). These methods introduce a point hypothesis $H_0$ postulating that all treatments are equally effective as the control. The prior probability of $H_0$ is a tuning parameter and controls the variability of the randomization probabilities. Setting $\Pr(H_0) = 1$ produces equal randomization, whereas $\Pr(H_0) = 0$ produces Thompson sampling. We will consider values $\Pr(H_0) \in \{0, 0.25, 0.5, 0.75, 1\}$, as well as the normal approximation and exact binomial version of BRAR. For approximate normal BRAR, a normal prior with mean 0, variance 1, and in case of $K > 1$ a correlation of 0.5 are considered, whereas independent uniform priors are assigned for binomial BRAR. Log odds ratios along with their covariance are estimated with logistic regression and then used as inputs for the normal BRAR method, while the exact method used counts and sample sizes only. In case a method fails to converge, equal randomization is applied.
 
 We also consider some modifications of these methods: In some conditions, a "burn-in" phase is carried out during which patients are always randomized with equal probability $1/(K + 1)$ to each group. For Thompson sampling ($\Pr(H_0) = 0$), we also consider two more modifications: (i) conditions with "capping" of randomization probabilities to $[10\%, 90\%]$, that is, to set randomization probabilities to either 10\% or 90\% if they are outside this interval, (ii) conditions with power transformations of randomization probabilities, i.e., if $\pi_k$ is the randomization probability of group $k$, we take $\pi_k^* = \pi_k^c / \sum_{j \in \{C,1,\dots,K\}} \pi_j^c$. After capping has been performed, randomization probabilities are re-normalized to sum to one (Wathen and Thall, 2017, <https://doi.org/10.1177/1740774517692302>). This re-normalization is only performed for randomization probabilities greater than 0.1, as these randomization probability would otherwise be reduced again to probabilities less than 10\%. In case, a re-normalized probability becomes less than 10\%, it is also capped at 10\% and second re-normalization performed. For equal randomization ($\Pr(H_0) = 1$), no burn-in, capping, or power transformation conditions are simulated as these manipulations have no effect on equal randomization.
+
+We also include two methods from the multi-armed bandit literature in the simulation study to compare null hypothesis Bayesian RAR to more aggressive allocation methods -- the Gittins index (Gittins et al., 2011, <https://doi.org/10.1002/9780470980033>; Villar et al., 2015,  <https://doi.org/10.1214/14-sts504>) and the Bayesian upper confidence bound (Bayes UCB) methods (Kaufmann et al., 2012, <https://proceedings.mlr.press/v22/kaufmann12.html>). For the Gittins index, we use the implementation from the **RARtrials** R package (Xu et al., 2025, <https://doi.org/10.32614/CRAN.package.RARtrials>) with a discount factor of $d = 0.995$. For Bayes UCB we use uniform priors for each probability along with the tuning parameter $c = 0$, as recommended in Kaufmann et al. (2012) based on their simulation results.
 
 ### Performance measures
 
@@ -123,7 +125,8 @@ Different performance measures were used
 - The mean rate of successes per study
 - The mean rate of allocations to treatment group 1 (the best group in all conditions where $\theta_1 > \theta_C$)
 - The mean sample size difference between treatment group 1 and the average sample size in the remaining groups
-- The rate of simulations with 10% sample size imbalance in favor of inferior treatments, i.e., $\hat{S}_{0.1} = \Pr(\frac{n - n_1}{K} - n_1 > 0.1n)$. For $K= 1$, this reduces to the $\hat{S}_{0.1}$ measure from Robertson et al. (2023, <https://doi.org/10.1214/22-STS865>), which in turn was inspired by the performance evaluation in the simulation study from Thall, Fox, and Wathen (2015, <https://doi.org/10.1093/annonc/mdv238>).
+- The rate of simulations with 10% sample size imbalance in favor of inferior treatments, i.e., $\hat{S}_{0.1} = \Pr(\frac{n - n_1}{K} - n_1 > 0.1n)$. For $K= 1$, this reduces to the $\hat{S}_{0.1}$ measure from Robertson et al. (2023, <https://doi.org/10.1214/22-STS865>), which in turn was inspired by the performance evaluation in the simulation study from Thall, Fox, and Wathen (2015, <https://doi.org/10.1093/annonc/mdv238>).  Note that the $\hat{S}_{0.1}$ measure is difficult to translate into an actual patient benefit measure because the patient benefit loss related to imbalance depends on the size of the treatment effect. For instance, imbalance is less consequential if the treatment effect is small than if it is large. We include the $\hat{S}_{0.1}$ measure primarily for comparability with previous simulation studies.
+  with previous simulation studies.
 - The rate of simulations with extreme randomization probabilities (less than 10\%0.1 or greater than 90\%).
 
 #### Parameter estimation performance
@@ -149,7 +152,7 @@ The simulation study was run on a server running `r si$running` and `r si$R.vers
 
 Cite this dashboard as 
 
-> Pawel, S., Held, L. (2025). Results from Simulation Study on Point Null Bayesian Response-Adaptive Randomization Methods. <https://samch93.github.io/brar/>
+> Pawel, S., Held, L. (2025). Results from Simulation Study on Bayesian Response-Adaptive Randomization Methods. <https://samch93.github.io/brar/>
 
 
 # Patient Benefit
@@ -340,7 +343,7 @@ ggplot(data = filter(summaries, pt1 == pc),
                   position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = seq(0, 1, 0.25)) +
-    scale_y_continuous(labels = scales::percent) + #, limits = c(0, 1)) +
+    scale_y_continuous(breaks = seq(0, 0.15, 0.025), labels = scales::percent) + #, limits = c(0, 1)) +
     expand_limits(y = 0) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
