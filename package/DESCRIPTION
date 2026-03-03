@@ -1,6 +1,6 @@
 Package: brar
 Version: 0.1
-Date: 2026-02-23
+Date: 2026-03-03
 Authors@R:
     c(person(given = "Samuel",
            family = "Pawel",
@@ -9,7 +9,7 @@ Authors@R:
            comment = c(ORCID = "0000-0003-2779-320X")))
 Author: Samuel Pawel [aut, cre] (<https://orcid.org/0000-0003-2779-320X>)
 Maintainer: Samuel Pawel <samuel.pawel@uzh.ch>
-Title: Point Null Bayesian Response-Adaptive Randomization
+Title: Null Hypothesis Bayesian Response-Adaptive Randomization
 Description: Implements Bayesian response-adaptive randomization methods based on Bayesian hypothesis testing for multi-arm settings (Pawel and Held, 2025, <doi:10.48550/arXiv.2510.01734>).
 License: GPL-3
 Encoding: UTF-8

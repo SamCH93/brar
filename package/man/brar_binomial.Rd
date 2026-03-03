@@ -53,13 +53,12 @@ An object of type \code{"brar"}, which is a list with the following
     of the null hypothesis and prior probabilities of control/treatment
     superiority), \code{"BF_ij"} (Bayes factor matrix), \code{"posterior"}
     (posterior probability of the null hypothesis and posterior probabilities
-    of control/treatment superiority), and "prand" (response-adaptive
+    of control/treatment superiority), and \code{"prand"} (response-adaptive
     randomization probabilities).
 }
 \description{
 This function computes Bayes factors, posterior probabilities,
-    and response-adaptive randomization probabilities in the setting of
-    binomial outcomes.
+    and response-adaptive randomization probabilities for binomial outcomes.
 }
 \examples{
 ## 1 control and 1 treatment group

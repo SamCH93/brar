@@ -1,4 +1,4 @@
-# Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization
+# Stabilizing Thompson Sampling with Null Hypothesis Bayesian Response-Adaptive Randomization
 
 This repository contains 
 
