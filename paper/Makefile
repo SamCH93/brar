@@ -39,11 +39,11 @@ $(FILE)-changes.pdf: tex old/$(FILE)-v1.tex old/ld.cfg
 
 ## clean
 clean:  
-	-rm $(FILE).aux  $(FILE).blg  $(FILE).log $(FILE).bbl \
+	-rm $(FILE).aux  $(FILE).blg  $(FILE).log $(FILE).bbl $(FILE).fff \
 	$(FILE).out $(FILE).brf $(FILE).tex $(FILE).synctex.gz \
 	supplement.aux  supplement.blg  supplement.log  supplement.tex  supplement.bbl \
 	supplement.out supplement.brf supplement.synctex.gz \
-	$(FILE)-changes.aux  $(FILE)-changes.blg  $(FILE)-changes.log $(FILE)-changes.bbl \
+	$(FILE)-changes.aux  $(FILE)-changes.blg  $(FILE)-changes.log $(FILE)-changes.bbl $(FILE)-changes.fff \
 	$(FILE)-changes.out $(FILE)-changes.brf $(FILE)-changes.tex $(FILE)-changes.synctex.gz
 
 cleanall: clean

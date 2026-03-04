@@ -222,7 +222,7 @@ plotDF$Hfac <- factor(plotDF$H, levels = c("Hp", "H0", "Hm"),
                       labels = c(paste0("theta == ", mut - muc),
                                  "theta == 0",
                                  paste0("theta == ", muc - mut)))
-ggplot(data = plotDF, aes(x = n, y = prand, color = pH0fac)) +
+pltnorm1 <- ggplot(data = plotDF, aes(x = n, y = prand, color = pH0fac)) +
     facet_wrap(~ Hfac, labeller = label_parsed) +
     labs(x = "Sample size", y = "Randomization probability",
          color = bquote("Pr(" * italic(H)[0] * ")")) +
@@ -233,8 +233,7 @@ ggplot(data = plotDF, aes(x = n, y = prand, color = pH0fac)) +
           strip.background = element_rect(fill = "#00000003"),
           legend.position = "top")
 
-
-## ----"asymptotics-normal", fig.height = 4.5-----------------------------------
+## ----"asymptotics-normal", fig.height = 8-------------------------------------
 nsim <- 1000
 sd <- 1
 pH0seq <- c(0, 0.5)
@@ -245,33 +244,43 @@ mgrid <- expand.grid(mc = c(0, 0.25, -0.25), psd = c(0.5, psd))
 mgrid$mt <- 0
 grid <- rbind(data.frame(mgrid, pH0 = 0),
               data.frame(mgrid, pH0 = 0.5))
-if ("asymptotic-sim.rds" %in% list.files(path = "simulation/")) {
-    simres <- readRDS(file = "simulation/asymptotic-sim.rds")
+if ("asymptotic-sim-subset.rds" %in% list.files(path = "simulation")) {
+    simressubset <- readRDS(file = "simulation/asymptotic-sim-subset.rds")
 } else {
-    set.seed(42)
-    simres <- do.call("rbind", mclapply(X = seq(1, nrow(grid)), FUN = function(i) {
-        do.call("rbind", lapply(X = seq(1, nsim), FUN = function(simi) {
-            dat <- simulate_brar(burnin = burnin, n = n, nincr = nincr,
-                                 muc = grid$mc[i], mut = grid$mt[i], sd = sd,
-                                 pm = pm, psd = grid$psd[i], pH0 = grid$pH0[i])
-            res <- data.frame(sim = simi, pH0 = grid$pH0[i], mt = grid$mt[i],
-                              psd = grid$psd[i], mc = grid$mc[i], dat)
-            return(res)
-        }))
-    }, mc.cores = 12)) ## change cores depending on system
-    simres$md <- simres$mt - simres$mc
-    simres$md <- factor(simres$md)
-    saveRDS(object = simres, file = "simulation/asymptotic-sim.rds")
+    if ("asymptotic-sim.rds" %in% list.files(path = "simulation")) {
+    simres <- readRDS(file = "simulation/asymptotic-sim.rds")
+    } else {
+        set.seed(42)
+        simres <- do.call("rbind", mclapply(X = seq(1, nrow(grid)), FUN = function(i) {
+            do.call("rbind", lapply(X = seq(1, nsim), FUN = function(simi) {
+                dat <- simulate_brar(burnin = burnin, n = n, nincr = nincr,
+                                     muc = grid$mc[i], mut = grid$mt[i],
+                                     sd = sd, pm = pm, psd = grid$psd[i],
+                                     pH0 = grid$pH0[i])
+                res <- data.frame(sim = simi, pH0 = grid$pH0[i],
+                                  mt = grid$mt[i], psd = grid$psd[i],
+                                  mc = grid$mc[i], dat)
+                return(res)
+            }))
+        }, mc.cores = 12)) ## change cores depending on system
+        simres$md <- simres$mt - simres$mc
+        simres$md <- factor(simres$md)
+        saveRDS(object = simres, file = "simulation/asymptotic-sim.rds")
+    }
+    ## select only subset for further analysis
+    simressubset <- subset(simres, n %in% c(50, 100, 250, 500, 1000))
+    saveRDS(object = simressubset, file = "simulation/asymptotic-sim-subset.rds")
 }
 
 ## randomization probabilities
-simres$pH0lab <- factor(simres$pH0, levels = c(0, 0.5),
-                        labels = c("'Pr(' * italic(H)[0] * ')' == 0 ~ '(Thompson sampling)'",
-                                   "'Pr(' * italic(H)[0] * ')' == 0.5"))
-simres$mdlab <- factor(simres$md, levels = rev(levels(simres$md)),
-                       labels = paste0("theta == ", rev(levels(simres$md))))
+simressubset$pH0lab <- factor(simressubset$pH0, levels = c(0, 0.5),
+                              labels = c("'Pr(' * italic(H)[0] * ')' == 0 ~ '(Thompson sampling)'",
+                                         "'Pr(' * italic(H)[0] * ')' == 0.5"))
+simressubset$mdlab <- factor(simressubset$md,
+                             levels = rev(levels(simressubset$md)),
+                             labels = paste0("theta == ", rev(levels(simressubset$md))))
 simcols <- c("#0072B2", "#D55E00")
-ggplot(data = subset(simres, n %in% c(50, 100, 250, 500, 1000)),
+pltnorm2 <- ggplot(data = simressubset,
        aes(x = as.factor(n), y = prand, color = factor(psd),
            fill = factor(psd))) +
     facet_grid(mdlab ~ pH0lab,
@@ -290,8 +299,10 @@ ggplot(data = subset(simres, n %in% c(50, 100, 250, 500, 1000)),
           strip.background = element_rect(fill = "#00000003"),
           legend.position = "top")
 
+ggarrange(pltnorm1, pltnorm2, ncol = 1, heights = c(1, 1.3),
+          labels = c("(a)", "(b)"), hjust = 0)
 ## ## Type I error rate
-## subset(simres, n %in% seq(100, 1000, 100)) |>
+## simressubset |>
 ##     group_by(n, md, mc, mt, pH0, psd) |>
 ##     dplyr::summarise(rr = mean(abs(z) > 1.96)) |>
 ##     ungroup() |>
@@ -362,6 +373,327 @@ text(x = 0, y = 0.3, labels = bquote(italic(H)[0]), cex = 1.25)
 text(x = 2, y = -2, labels = bquote(italic(H)["+1"]), cex = 1.25, col = col2)
 text(x = -2, y = 2, labels = bquote(italic(H)["+2"]), cex = 1.25, col = col3)
 text(x = -2.25, y = -2, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
+
+
+## ----"closed-form-binary", eval = FALSE---------------------------------------
+# ## for 2 groups, use formula from
+# ## (<https://www.evanmiller.org/bayesian-ab-testing.html#binary_abcd>)
+# Qi <- function(ac, a1, bc, b1) {
+#     sum(sapply(X = seq(0, a1 - 1, 1), FUN = function(j) {
+#         exp(lbeta(ac + j, bc + b1) - log(b1 + j) - lbeta(1 + j, b1) -
+#             lbeta(ac, bc))
+#     }))
+# }
+# 
+# grid <- expand.grid(ac = seq(1, 2), a1 = seq(1, 2), bc = seq(1, 2),
+#                     b1 = seq(1, 2))
+# do.call("rbind", lapply(X = seq(1, nrow(grid)), FUN = function(i) {
+#     ac <- grid$ac[i]
+#     a1 <- grid$a1[i]
+#     bc <- grid$bc[i]
+#     b1 <- grid$b1[i]
+#     num <- brar_binomial(y = c(ac, a1) - 1, n = c(ac + bc, a1 + b1) - 2,
+#                          pH0 = 0)$posterior[3]
+#     data.frame(ac = ac, a1 = a1, bc = bc, b1 = b1,
+#                exact = Qi(ac, a1, bc, b1), numerical = num)
+# }))
+# 
+# 
+# ## holds also for non-uniform prior?
+# brar_binomial(y = c(0, 0), n = c(0, 0), a = c(3, 50), b = c(1, 2), pH0 = 0)$posterior[3]
+# Qi(ac = 3, a1 = 50, bc = 1, b1 = 2)
+
+
+## ----"test-derivations", eval = FALSE-----------------------------------------
+# set.seed(42)
+# a1 <- 2
+# b1 <- 5
+# a2 <- 1
+# b2 <- 3
+# a3 <- 5
+# b3 <- 7
+# nsim <- 1000000
+# X <- cbind(rbeta(nsim, a1, b1), rbeta(nsim, a2, b2), rbeta(nsim, a3, b3))
+# mean(X[,1] > X[,2] & X[,1] > X[,3])
+# 
+# intFun <- function(x1) {
+#     dbeta(x1, a1, b1) * pbeta(x1, a2, b2) * pbeta(x1, a3, b3)
+# }
+# integrate(intFun, 0, 1)$value
+# 
+# ## test whether calculation of Pr(Xi = max(X)) works for arbitrary dimensions
+# set.seed(40)
+# K <- 10
+# a <- sample(seq(1, 10), K, replace = FALSE)
+# b <- sample(seq(1, 10), K, replace = FALSE)
+# X <- sapply(X = seq_len(K), FUN = function(k) rbeta(nsim, a[k], b[k]))
+# mean(apply(X[,1] > X[,-1], 1, prod))
+# intFun. <- function(x1) {
+#     dbeta(x1, a[1], b[1]) * prod(pbeta(x1, a[-1], b[-1]))
+# }
+# intFun <- Vectorize(intFun.)
+# integrate(intFun, 0, 1)$value
+# ## works, yay!
+
+
+## ----"ECMO-analysis-new", fig.height = 8--------------------------------------
+## randomized play the winner RAR
+rpw <- function(y1, y0, a = 1, b = 1, g = 1) {
+    balls1 <- a + b*y1
+    balls0 <- a + g*y0
+    p1 <- balls1/(balls1 + balls0)
+    c("Control" = 1 - p1, "Treatment 1" = p1)
+}
+
+## ECMO trial
+y <- c(1, 0, rep(1, 10)) # 1 is survival, 0 is death
+treat <- c("ECMO", "control", rep("ECMO", 10))
+pH0 <- 0.5
+pH0seq <- seq(0, 1, 0.025)
+ecmoDF <- do.call("rbind", lapply(X = seq_along(y), FUN = function(i) {
+    if (i == 0) {
+        y1 <- 0
+        n1 <- 0
+        y2 <- 0
+        n2 <- 0
+    } else {
+        y1 <- sum(y[1:i][which(treat[1:i] == "control")])
+        n1 <- length(y[1:i][which(treat[1:i] == "control")])
+        y2 <- sum(y[1:i][which(treat[1:i] == "ECMO")])
+        n2 <- length(y[1:i][which(treat[1:i] == "ECMO")])
+    }
+    a <- y2 + 0.5
+    b <- y1 + 0.5
+    c <- i - y2 + 0.5
+    d <- i - y1 + 0.5
+    logOR <- log(a*d/b/c)
+    selogOR <- sqrt(1/a + 1/b + 1/c + 1/d)
+    condition <- data.frame(y1, n1, y2, n2, ntotal = n1 + n2)
+    resbrar <- do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
+        res <- brar_binomial(y = c(y1, y2), n = c(n1, n2), pH0 = pH0)
+        resnor <- brar_normal(estimate = logOR, sigma = selogOR, psigma = 1,
+                              pH0 = pH0)
+        res <- rbind(data.frame(condition, pH0 = pH0, t(res$posterior),
+                                prand = res$prand[2], method = "Exact"),
+                     data.frame(condition, pH0 = pH0, t(resnor$posterior),
+                                prand = resnor$prand[2], method = "Normal"))
+        rownames(res) <- NULL
+        return(res)
+    }))
+    resrpw <- data.frame(condition, pH0 = NA, "H." = NA, "H0" = NA, "H.1" = NA,
+                         prand = rpw(y1 = y2, y0 = y1)[2],
+                         method = "RPW (original)")
+    rbind(resbrar, resrpw)
+}))
+
+## compute probability of observing ECMO sequence given RAR method
+rargrid <- expand.grid(method = c("Exact", "Normal"),
+                       pH0 = pH0seq, stringsAsFactors = FALSE)
+rargrid <- rbind(rargrid,
+                 data.frame(method = "RPW (original)", pH0 = NA))
+pdataDF <- do.call("rbind", lapply(X = seq(1, nrow(rargrid)), FUN = function(j) {
+    mtd <- rargrid$method[j]
+    pH0 <- rargrid$pH0[j]
+    ## extract method specific randomization probabilities
+    if (mtd != "RPW (original)") {
+        prand <- ecmoDF[ecmoDF$method == mtd & ecmoDF$pH0 == pH0,]$prand
+    } else {
+        prand <- ecmoDF[ecmoDF$method == mtd,]$prand
+    }
+    ## add 0.5 probability for the first patient and remove the last entry as
+    ## this is for the n + 1 patient
+    prand <- c(0.5, prand[-length(prand)])
+    ## compute probability of observed data sequence
+    pdata <- prod(prand^(treat == "ECMO")*(1 - prand)^(treat == "control"))
+    data.frame(method = mtd, pH0 = pH0, pdata = pdata)
+}))
+
+plt3 <- ggplot(data = subset(pdataDF, method != "RPW (original)"),
+               aes(x = pH0, y = pdata, linetype = method)) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = "Pr(ECMO allocation)",
+         linetype = "Method") +
+    ## geom_hline(data = subset(pdataDF, method == "RPW (original)"),
+    ##            aes(yintercept = pdata, linetype = method)) +
+    geom_line() +
+    scale_y_continuous(labels = scales::percent) +
+    theme_bw() +
+    theme(## legend.position = "inside",
+          ## legend.position.inside = c(0.95, 0.95),
+          ## legend.justification.inside = c(1, 1),
+          panel.grid.minor = element_blank(),
+          panel.grid.major.x = element_blank())
+
+ecmoDF <- subset(ecmoDF, is.na(pH0) | pH0 %in% c(0, 0.25, 0.5, 0.75, 1))
+ecmoDF$pH0lab <- factor(ecmoDF$pH0, ordered = TRUE,
+                        levels = pH0seq,
+                        labels = c("0 (Thompson)", pH0seq[-c(1,length(pH0seq))],
+                                   "1 (equal)"))
+plt1 <- ggplot(data = subset(ecmoDF, !is.na(pH0)), #& method != "Normal"),
+       aes(x = ntotal, y = prand, linetype = method,
+           shape = method)) +
+    labs(x = "Total sample size",
+         y = "Pr(Randomize to ECMO)",
+         color = bquote("Pr(" * italic(H)[0] * ")"),
+         shape = "Method", linetype = "Method") +
+    ## geom_hline(yintercept = 0.5, lty = 2, alpha = 0.5) +
+    geom_step(aes(color = pH0lab), alpha = 0.5) +
+    geom_point(aes(color = pH0lab)) +
+    geom_step(data = subset(ecmoDF, is.na(pH0)), alpha = 0.8) +
+    geom_point(data = subset(ecmoDF, is.na(pH0))) +
+    scale_x_continuous(breaks = seq(0, 12)) +
+    scale_y_continuous(labels = scales::percent) +
+    theme_bw() +
+    theme(panel.grid.minor = element_blank(),
+          panel.grid.major.x = element_blank())
+
+plt2 <- ggplot(data = ecmoDF,
+               aes(x = ntotal, y = H.1, linetype = method, shape = method)) +
+    labs(x = "Total sample size",
+         y = bquote("Pr(" * italic(H["+"]) ~ "|" ~ italic(y) * ")"),
+         color = bquote("Pr(" * italic(H)[0] * ")"),
+         shape = "Method", linetype = "Method") +
+    geom_step(aes(color = pH0lab), alpha = 0.5) +
+    geom_point(aes(color = pH0lab)) +
+    scale_x_continuous(breaks = seq(0, 12)) +
+    scale_y_continuous(labels = scales::percent) +
+    theme_bw() +
+    theme(panel.grid.minor = element_blank(),
+          panel.grid.major.x = element_blank())
+plt12 <- ggarrange(plt1, plt2, ncol = 1, common.legend = TRUE, legend = "right",
+                   labels = c("(a)", "(b)"), hjust = 0)
+ggarrange(plt12, plt3, ncol = 1, heights = c(2, 1),
+          labels = c("", "(c)"), hjust = 0)
+
+
+## ----"posterior-probabilities-ECMO"-------------------------------------------
+post0 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0)$H.1
+post5 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0.5)$H.1
+pdatarppw <- subset(pdataDF, method == "RPW (original)")$pdata
+pdatarppwround <- round(100*pdatarppw, 1)
+pH0lowrpwnormal <- subset(pdataDF, method == "Normal" & pdata < pdatarppw)[1,"pH0"]
+pH0lowrpwexact <- subset(pdataDF, method == "Exact" & pdata < pdatarppw)[1,"pH0"]
+
+
+## ----"simulation-main-paper"--------------------------------------------------
+simres <- readRDS("simulation/brar-sim.rds")
+nsim <- unique(simres$REPLICATIONS)
+summaries <- readRDS("simulation/sim-summaries.rds") |>
+    mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
+                            labels = c("none", "[0.1,0.9]")),
+           method = ifelse(pH0 == 1, "equal", method)) |>
+    mutate(trans = case_when(
+        capping_eps == 0.5 & c == "1" ~ "none",
+        capping_eps == 0.4 & c == "1" ~ "capping",
+        capping_eps == 0.5 & c == "1/2" ~ "c=1/2",
+        capping_eps == 0.4 & c == "1/2" ~ "capping and c=1/2",
+        capping_eps == 0.5 & c == "i/(2n)" ~ "c=i/(2n)",
+        capping_eps == 0.4 & c == "i/(2n)" ~ "capping and c=i/(2n)"
+                             ),
+        trans = factor(trans, levels = c("none", "capping", "c=1/2",
+                                         "capping and c=1/2","c=i/(2n)",
+                                         "capping and c=i/(2n)"))) |>
+    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.2, pH0)) |>
+    ## don't show normal BRAR method in main paper
+    filter(method != "normal") |>
+    mutate(method = factor(method, levels = c("exact", "normal", "equal",
+                                              "gittins", "bayesUCB"),
+                           labels = c("BRAR", "Normal BRAR",
+                                      "Equal Randomization",
+                                      "Gittins", "Bayes UCB"))) |>
+    mutate(Klab = paste0("italic(K) == ", K),
+           nlab = paste0("italic(n) == ", n),
+           burninlab = paste0("'Burn-in' == ", burnin),
+           rd1lab = paste0("'RD'[1] == ", pt1 - pc))
+
+## plot parameters
+theme_dashboard <- function() {
+  ggplot2::theme_bw() +
+  ggplot2::theme(legend.position = "top",
+                 panel.grid.minor = element_blank(),
+                 panel.grid.major.x = element_blank(),
+                 strip.background = element_rect(fill = "#00000003"))
+}
+dodge_width <- 0.2
+errorbar_width <- 0
+errorbar_alpha <- 0.8
+cols <- c("BRAR" = "#0072B2",
+          "Normal BRAR" = "#D55E00",
+          "Equal Randomization" = "#000000",
+          "Gittins" = "#009E73",
+          "Bayes UCB" = "#CC79A7")
+shapes <- c("none" = 19,
+            "capping" = 2,
+            "c=1/2" = 0,
+            "capping and c=1/2" = 5,
+            "c=i/(2n)" = 6,
+            "capping and c=i/(2n)" = 1)
+
+
+## ----"plot-simulation-results", dependson = "simulation-data", fig.height = 11, fig.width = 8.5----
+simplta <- ggplot(data = summaries,
+                  aes(x = pH0, y = PS, col = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    # geom_hline(aes(yintercept = pt1), lty = 2, alpha = 0.5) +
+    # geom_hline(aes(yintercept = (pt1 + pc)/2), lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = PS - PS_mcse, ymax = PS + PS_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"), y = "Mean rate of successes",
+         color = "Method", shape = "Modifications") +
+    theme_dashboard() +
+    theme(axis.text.y = element_text(size = rel(0.95)))
+simpltb <- ggplot(data = summaries,
+                  aes(x = pH0, y = covRD1, color = method, shape = trans)) +
+    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
+    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
+    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
+    ## geom_errorbar(aes(ymin = covRD1 - covRD1_mcse, ymax = covRD1 + covRD1_mcse),
+    ##               width = errorbar_width, alpha = errorbar_alpha,
+    ##               position = position_dodge(width = dodge_width)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_color_manual(values = cols) +
+    scale_shape_manual(values = shapes) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
+         y = bquote("95% CI Coverage (RD"[1] * ")"),
+         shape = "Modifications", color = "Method") +
+    theme_dashboard() +
+    theme(axis.text.y = element_text(size = rel(0.95)))
+ggarrange(simplta, simpltb, ncol = 1, common.legend = TRUE, legend = "top",
+          labels = c("(a)", "(b)"), hjust = 0)
+
+
+## ----child = "appendix.Rnw"---------------------------------------------------
+
+## ----"brar-package-demonstration", echo = TRUE, size = "small"----------------
+library(brar) # load package
+
+## observed successes and trials in control and 3 treatment groups
+y <- c(10, 9, 14, 13)
+n <- c(20, 20, 22, 21)
+
+## conduct exact point null Bayesian RAR
+brar_binomial(y = y, n = n,
+              ## uniform prior for common probability under H0
+              a0 = 1, b0 = 1,
+              ## uniform priors for all probabilities
+              a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
+              ## prior probability of the null hypothesis
+              pH0 = 0.5)
 
 
 ## ----"check-multivariate", eval = FALSE---------------------------------------
@@ -492,315 +824,6 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
 
 
 
-## ----"closed-form-binary", eval = FALSE---------------------------------------
-# ## for 2 groups, use formula from
-# ## (<https://www.evanmiller.org/bayesian-ab-testing.html#binary_abcd>)
-# Qi <- function(ac, a1, bc, b1) {
-#     sum(sapply(X = seq(0, a1 - 1, 1), FUN = function(j) {
-#         exp(lbeta(ac + j, bc + b1) - log(b1 + j) - lbeta(1 + j, b1) -
-#             lbeta(ac, bc))
-#     }))
-# }
-# 
-# grid <- expand.grid(ac = seq(1, 2), a1 = seq(1, 2), bc = seq(1, 2),
-#                     b1 = seq(1, 2))
-# do.call("rbind", lapply(X = seq(1, nrow(grid)), FUN = function(i) {
-#     ac <- grid$ac[i]
-#     a1 <- grid$a1[i]
-#     bc <- grid$bc[i]
-#     b1 <- grid$b1[i]
-#     num <- brar_binomial(y = c(ac, a1) - 1, n = c(ac + bc, a1 + b1) - 2,
-#                          pH0 = 0)$posterior[3]
-#     data.frame(ac = ac, a1 = a1, bc = bc, b1 = b1,
-#                exact = Qi(ac, a1, bc, b1), numerical = num)
-# }))
-# 
-# 
-# ## holds also for non-uniform prior?
-# brar_binomial(y = c(0, 0), n = c(0, 0), a = c(3, 50), b = c(1, 2), pH0 = 0)$posterior[3]
-# Qi(ac = 3, a1 = 50, bc = 1, b1 = 2)
-
-
-## ----"test-derivations", eval = FALSE-----------------------------------------
-# set.seed(42)
-# a1 <- 2
-# b1 <- 5
-# a2 <- 1
-# b2 <- 3
-# a3 <- 5
-# b3 <- 7
-# nsim <- 1000000
-# X <- cbind(rbeta(nsim, a1, b1), rbeta(nsim, a2, b2), rbeta(nsim, a3, b3))
-# mean(X[,1] > X[,2] & X[,1] > X[,3])
-# 
-# intFun <- function(x1) {
-#     dbeta(x1, a1, b1) * pbeta(x1, a2, b2) * pbeta(x1, a3, b3)
-# }
-# integrate(intFun, 0, 1)$value
-# 
-# ## test whether calculation of Pr(Xi = max(X)) works for arbitrary dimensions
-# set.seed(40)
-# K <- 10
-# a <- sample(seq(1, 10), K, replace = FALSE)
-# b <- sample(seq(1, 10), K, replace = FALSE)
-# X <- sapply(X = seq_len(K), FUN = function(k) rbeta(nsim, a[k], b[k]))
-# mean(apply(X[,1] > X[,-1], 1, prod))
-# intFun. <- function(x1) {
-#     dbeta(x1, a[1], b[1]) * prod(pbeta(x1, a[-1], b[-1]))
-# }
-# intFun <- Vectorize(intFun.)
-# integrate(intFun, 0, 1)$value
-# ## works, yay!
-
-
-## ----"ECMO-analysis", fig.height = 7.5----------------------------------------
-## randomized play the winner RAR
-rpw <- function(y1, y0, a = 1, b = 1, g = 1) {
-    balls1 <- a + b*y1
-    balls0 <- a + g*y0
-    p1 <- balls1/(balls1 + balls0)
-    c("Control" = 1 - p1, "Treatment 1" = p1)
-}
-
-## ECMO trial
-y <- c(1, 0, rep(1, 10)) # 1 is survival, 0 is death
-treat <- c("ECMO", "control", rep("ECMO", 10))
-pH0 <- 0.5
-pH0seq <- seq(0, 1, 0.025)
-ecmoDF <- do.call("rbind", lapply(X = seq_along(y), FUN = function(i) {
-    if (i == 0) {
-        y1 <- 0
-        n1 <- 0
-        y2 <- 0
-        n2 <- 0
-    } else {
-        y1 <- sum(y[1:i][which(treat[1:i] == "control")])
-        n1 <- length(y[1:i][which(treat[1:i] == "control")])
-        y2 <- sum(y[1:i][which(treat[1:i] == "ECMO")])
-        n2 <- length(y[1:i][which(treat[1:i] == "ECMO")])
-    }
-    a <- y2 + 0.5
-    b <- y1 + 0.5
-    c <- i - y2 + 0.5
-    d <- i - y1 + 0.5
-    logOR <- log(a*d/b/c)
-    selogOR <- sqrt(1/a + 1/b + 1/c + 1/d)
-    condition <- data.frame(y1, n1, y2, n2, ntotal = n1 + n2)
-    resbrar <- do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
-        res <- brar_binomial(y = c(y1, y2), n = c(n1, n2), pH0 = pH0)
-        resnor <- brar_normal(estimate = logOR, sigma = selogOR, psigma = 1,
-                              pH0 = pH0)
-        res <- rbind(data.frame(condition, pH0 = pH0, t(res$posterior),
-                                prand = res$prand[2], method = "Exact"),
-                     data.frame(condition, pH0 = pH0, t(resnor$posterior),
-                                prand = resnor$prand[2], method = "Normal"))
-        rownames(res) <- NULL
-        return(res)
-    }))
-    resrpw <- data.frame(condition, pH0 = NA, "H." = NA, "H0" = NA, "H.1" = NA,
-                         prand = rpw(y1 = y2, y0 = y1)[2],
-                         method = "RPW (original)")
-    rbind(resbrar, resrpw)
-}))
-
-## compute probability of observing ECMO sequence given RAR method
-rargrid <- expand.grid(method = c("Exact", "Normal"),
-                       pH0 = pH0seq, stringsAsFactors = FALSE)
-rargrid <- rbind(rargrid,
-                 data.frame(method = "RPW (original)", pH0 = NA))
-pdataDF <- do.call("rbind", lapply(X = seq(1, nrow(rargrid)), FUN = function(j) {
-    mtd <- rargrid$method[j]
-    pH0 <- rargrid$pH0[j]
-    ## extract method specific randomization probabilities
-    if (mtd != "RPW (original)") {
-        prand <- ecmoDF[ecmoDF$method == mtd & ecmoDF$pH0 == pH0,]$prand
-    } else {
-        prand <- ecmoDF[ecmoDF$method == mtd,]$prand
-    }
-    ## add 0.5 probability for the first patient and remove the last entry as
-    ## this is for the n + 1 patient
-    prand <- c(0.5, prand[-length(prand)])
-    ## compute probability of observed data sequence
-    pdata <- prod(prand^(treat == "ECMO")*(1 - prand)^(treat == "control"))
-    data.frame(method = mtd, pH0 = pH0, pdata = pdata)
-}))
-
-plt3 <- ggplot(data = pdataDF, aes(x = pH0, y = pdata, linetype = method)) +
-    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
-         y = "Pr(Observing ECMO data sequence)",
-         linetype = "") +
-    geom_hline(data = subset(pdataDF, method == "RPW (original)"),
-               aes(yintercept = pdata, linetype = method)) +
-    geom_line() +
-    scale_y_continuous(labels = scales::percent) +
-    theme_bw() +
-    theme(panel.grid.minor = element_blank(),
-          panel.grid.major.x = element_blank())
-
-ecmoDF <- subset(ecmoDF, is.na(pH0) | pH0 %in% c(0, 0.25, 0.5, 0.75, 1))
-ecmoDF$pH0lab <- factor(ecmoDF$pH0, ordered = TRUE,
-                        levels = pH0seq,
-                        labels = c("0 (Thompson)", pH0seq[-c(1,length(pH0seq))],
-                                   "1 (equal)"))
-plt1 <- ggplot(data = subset(ecmoDF, !is.na(pH0)), #& method != "Normal"),
-       aes(x = ntotal, y = prand, linetype = method,
-           shape = method)) +
-    labs(x = "Total sample size",
-         y = "Pr(Randomize to ECMO)",
-         color = bquote("Pr(" * italic(H)[0] * ")"),
-         shape = "", linetype = "") +
-    geom_hline(yintercept = 0.5, lty = 2, alpha = 0.5) +
-    geom_step(aes(color = pH0lab), alpha = 0.5) +
-    geom_point(aes(color = pH0lab)) +
-    geom_step(data = subset(ecmoDF, is.na(pH0)), alpha = 0.8) +
-    geom_point(data = subset(ecmoDF, is.na(pH0))) +
-    scale_x_continuous(breaks = seq(0, 12)) +
-    scale_y_continuous(labels = scales::percent) +
-    theme_bw() +
-    theme(panel.grid.minor = element_blank(),
-          panel.grid.major.x = element_blank())
-
-plt2 <- ggplot(data = ecmoDF,
-               aes(x = ntotal, y = H.1, linetype = method, shape = method)) +
-    labs(x = "Total sample size",
-         y = bquote("Pr(" * italic(H["+"]) ~ "|" ~ italic(y) * ")"),
-         color = bquote("Pr(" * italic(H)[0] * ")"),
-         shape = "", linetype = "") +
-    geom_step(aes(color = pH0lab), alpha = 0.5) +
-    geom_point(aes(color = pH0lab)) +
-    scale_x_continuous(breaks = seq(0, 12)) +
-    scale_y_continuous(labels = scales::percent) +
-    theme_bw() +
-    theme(panel.grid.minor = element_blank(),
-          panel.grid.major.x = element_blank())
-ggarrange(plt1, plt2, plt3, ncol = 1, common.legend = TRUE, legend = "right")
-
-
-## ----"posterior-probabilities-ECMO"-------------------------------------------
-post0 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0)$H.1
-post5 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0.5)$H.1
-pdatarppw <- round(100*subset(pdataDF, method == "RPW (original)")$pdata, 1)
-
-
-## ----"simulation-main-paper"--------------------------------------------------
-simres <- readRDS("simulation/brar-sim.rds")
-nsim <- unique(simres$REPLICATIONS)
-summaries <- readRDS("simulation/sim-summaries.rds") |>
-    mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
-                            labels = c("none", "[0.1,0.9]")),
-           method = ifelse(pH0 == 1, "equal", method)) |>
-    mutate(trans = case_when(
-        capping_eps == 0.5 & c == "1" ~ "none",
-        capping_eps == 0.4 & c == "1" ~ "capping",
-        capping_eps == 0.5 & c == "1/2" ~ "c=1/2",
-        capping_eps == 0.4 & c == "1/2" ~ "capping and c=1/2",
-        capping_eps == 0.5 & c == "i/(2n)" ~ "c=i/(2n)",
-        capping_eps == 0.4 & c == "i/(2n)" ~ "capping and c=i/(2n)"
-                             ),
-        trans = factor(trans, levels = c("none", "capping", "c=1/2",
-                                         "capping and c=1/2","c=i/(2n)",
-                                         "capping and c=i/(2n)"))) |>
-    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.2, pH0)) |>
-    ## don't show normal BRAR method in main paper
-    filter(method != "normal") |>
-    mutate(method = factor(method, levels = c("exact", "normal", "equal",
-                                              "gittins", "bayesUCB"),
-                           labels = c("BRAR", "Normal BRAR",
-                                      "Equal Randomization",
-                                      "Gittins", "Bayes UCB"))) |>
-    mutate(Klab = paste0("italic(K) == ", K),
-           nlab = paste0("italic(n) == ", n),
-           burninlab = paste0("'Burn-in' == ", burnin),
-           rd1lab = paste0("'RD'[1] == ", pt1 - pc))
-
-## plot parameters
-theme_dashboard <- function() {
-  ggplot2::theme_bw() +
-  ggplot2::theme(legend.position = "top",
-                 panel.grid.minor = element_blank(),
-                 panel.grid.major.x = element_blank(),
-                 strip.background = element_rect(fill = "#00000003"))
-}
-dodge_width <- 0.2
-errorbar_width <- 0
-errorbar_alpha <- 0.8
-cols <- c("BRAR" = "#0072B2",
-          "Normal BRAR" = "#D55E00",
-          "Equal Randomization" = "#000000",
-          "Gittins" = "#009E73",
-          "Bayes UCB" = "#CC79A7")
-shapes <- c("none" = 19,
-            "capping" = 2,
-            "c=1/2" = 0,
-            "capping and c=1/2" = 5,
-            "c=i/(2n)" = 6,
-            "capping and c=i/(2n)" = 1)
-
-
-## ----"plot-success-rate-main", dependson = "simulation-data", fig.height = 8, fig.width = 12----
-ggplot(data = summaries,
-       aes(x = pH0, y = PS, col = method, shape = trans)) +
-    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
-    # geom_hline(aes(yintercept = pt1), lty = 2, alpha = 0.5) +
-    # geom_hline(aes(yintercept = (pt1 + pc)/2), lty = 2, alpha = 0.5) +
-    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    ## geom_errorbar(aes(ymin = PS - PS_mcse, ymax = PS + PS_mcse),
-    ##               width = errorbar_width, alpha = errorbar_alpha,
-    ##               position = position_dodge(width = dodge_width)) +
-    geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
-    scale_y_continuous(labels = scales::percent) +
-    scale_color_manual(values = cols) +
-    scale_shape_manual(values = shapes) +
-    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
-    labs(x = bquote("Pr(" * italic(H)[0] * ")"), y = "Mean rate of successes",
-         color = "Method", shape = "Modifications") +
-    theme_dashboard()
-
-
-## ----"plot-coverage-main", dependson = "simulation-data", fig.height = 8, fig.width = 12----
-ggplot(data = summaries,
-       aes(x = pH0, y = covRD1, color = method, shape = trans)) +
-    facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
-    geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
-    geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    ## geom_errorbar(aes(ymin = covRD1 - covRD1_mcse, ymax = covRD1 + covRD1_mcse),
-    ##               width = errorbar_width, alpha = errorbar_alpha,
-    ##               position = position_dodge(width = dodge_width)) +
-    geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
-    scale_y_continuous(labels = scales::percent) +
-    scale_color_manual(values = cols) +
-    scale_shape_manual(values = shapes) +
-    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
-    labs(x = bquote("Pr(" * italic(H)[0] * ")"),
-         y = bquote("95% CI Coverage (RD"[1] * ")"),
-         shape = "Modifications", color = "Method") +
-    theme_dashboard()
-
-
-## ----child = "appendix.Rnw"---------------------------------------------------
-
-## ----"brar-package-demonstration", echo = TRUE, size = "small"----------------
-library(brar) # load package
-
-## observed successes and trials in control and 3 treatment groups
-y <- c(10, 9, 14, 13)
-n <- c(20, 20, 22, 21)
-group <- c("control", paste("treatment", seq(1, 3)))
-
-## conduct exact point null Bayesian RAR
-brar_binomial(y = y, n = n,
-              ## uniform prior for common probability under H0
-              a0 = 1, b0 = 1,
-              ## uniform priors for all probabilities
-              a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
-              ## prior probability of the null hypothesis
-              pH0 = 0.5)
-
-
 ## ----"load-sim-data"----------------------------------------------------------
 simres <- readRDS("simulation/brar-sim.rds")
 nsim <- unique(simres$REPLICATIONS)
@@ -851,10 +874,10 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
 ## #> # A tibble: 4 × 9
 ## #>       n   pH0 method              EN1diff EN1diffL EN1diffU    S01   ENS ENS_sd
 ## #>   <dbl> <dbl> <fct>                 <dbl>    <dbl>    <dbl>  <dbl> <dbl>  <dbl>
-## #> 1   200     1 Equal Randomization  -0.01       -28       28 0.0683  60.0   6.48
-## #> 2   654     1 Equal Randomization  -0.288      -50       50 0.0058 196.   11.7
-## #> 3   200     0 Exact BRAR           96.6       -116      182 0.0929  64.8   7.82
-## #> 4   654     0 Exact BRAR          469.          30      628 0.0171 220.   14.9
+## #> 1   200     1 Equal Randomization  -0.128    -28         28 0.0689  59.9   6.35
+## #> 2   654     1 Equal Randomization  -0.300    -50         50 0.0066 196.   11.7
+## #> 3   200     0 Exact BRAR           95.9     -114        182 0.0926  64.9   7.80
+## #> 4   654     0 Exact BRAR          470.        42.0      626 0.0158 220.   14.6
 
 ## ## ER (n = 200): ENdiff = 0 (-28, 28), S_01 = 0.069, ENS = 60 (6.4)
 ## ## -> corresponds to pH0 = 1

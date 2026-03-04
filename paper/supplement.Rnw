@@ -31,9 +31,10 @@
 }
 
 %% title, authors, affiliations, mail
-\title{\vspace{-4em} \textsf{\textbf{
-      Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization}}  \\
-    Supplementary Material
+\title{\vspace{-4em} Supplementary Materials for \\
+  \textsf{\textbf{
+      Stabilizing Thompson Sampling \\ with Null~Hypothesis Bayesian \\
+      Response-Adaptive~Randomization}}
 }
 \author{
   Samuel Pawel \orcidlink{0000-0003-2779-320X}
@@ -45,7 +46,7 @@
   Center for Reproducible Science and Research Synthesis (CRS) \\
   University of Zurich \\
   \texttt{\{samuel.pawel,leonhard.held\}@uzh.ch} \\ ~ \\
-  October 2, 2025
+  March 4, 2026
 }
 
 %% hyperref options

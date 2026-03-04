@@ -1,12 +1,17 @@
+% reset counter of figures and add preceeding S
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+
 \section{The R package brar}
 \label{app:package}
 Our R package can be installed by running \texttt{remotes::install\_github(repo
   = "SamCH93/brar", subdir = "package")} in an R session (requires the
 \texttt{remotes} package, which is available on CRAN). The main functions of the
 package are \texttt{brar\_normal} and \texttt{brar\_binomial}, which implement
-the approximate normal method from Section~\ref{sec:normal} and the exact
-binomial method from Section~\ref{sec:binary}. The following code chunk
-illustrates how the latter function can be used.
+the approximate normal method from Section~3 and the exact binomial method from
+Section~4 in the main text. The following code chunk illustrates how the latter
+function can be used.
 
 \begin{spacing}{1}
 << "brar-package-demonstration", echo = TRUE, size = "small" >>=
@@ -27,36 +32,272 @@ brar_binomial(y = y, n = n,
 @
 \end{spacing}
 
-%% \section{Asymptotic randomization probability}
+\section{Null hypothesis Bayesian RAR under multivariate normality}
+Suppose there are $K > 1$ treatment groups and consequently $K$ effect
+estimates, each estimate quantifying the effect of the corresponding treatment
+relative to the control. A natural generalization univariate normal Bayesian RAR
+is to stack the estimates into a vector $\boldsymbol{\hat{\theta}} =
+(\hat{\theta}_1, \dots, \hat{\theta}_K)^\top$ and assume an approximate
+$K$-variate normal distribution $\boldsymbol{\hat{\theta}} \mid
+\boldsymbol{\theta} \sim \mathrm{N}_K(\boldsymbol{\theta},
+\boldsymbol{\boldsymbol{\Sigma}})$, where $\boldsymbol{\theta} = (\theta_1,
+\dots, \theta_K)^\top$ is the vector of true effects and
+$\boldsymbol{\boldsymbol{\Sigma}}$ is the (assumed to be known) covariance
+matrix of $\boldsymbol{\hat{\theta}}$. For example, $\boldsymbol{\hat{\theta}}$
+could be a vector of estimated regression coefficients and
+$\boldsymbol{\boldsymbol{\Sigma}}$ the corresponding covariance matrix.
 
-%% Assume the normality setting from Section~\ref{sec:normal}, and suppose there is
-%% one treatment group ($K = 1$), and that a normal prior centered around zero $\mu
-%% = 0$ with variance $\tau^2$ along with $\Pr(H_0) > 0$ for the spike at 0 are
-%% specified. For an effect estimate $\hat{\theta}_n$ with standard error
-%% $\sigma_n$ based on $n$ observations, the posterior probability of the null
-%% hypothesis $H_0$ is then
+The hypotheses from Section~2.2 in the maini text then translate into
+\begin{align*}
+  &H_{-} \colon \max\{\theta_1, \dots, \theta_K\} < 0&
+   &\text{vs.} &
+  &H_{0} \colon \theta_1 = \dots = \theta_K = 0&
+   &\text{vs.} &
+  &H_{+i} \colon \theta_i = \max\{\theta_1, \dots, \theta_K\} > 0&
+\end{align*}
+for $i = 1, \dots, K$. All hypotheses apart from $H_0$ are composite and require
+the specification of a prior distribution. In analogy to the one treatment case,
+we specify a $K$-variate normal prior $\boldsymbol{\theta} \sim
+\mathrm{N}_K(\boldsymbol{\mu}, \boldsymbol{\mathcal{T}})$ and truncate its
+support to the region of the corresponding hypothesis (e.g., for hypothesis
+$H_{+i}$, the space in $\mathbb{R}^K$ where the $i$th component is positive and
+larger than and all other components). As in the one group case, it seems a
+sensible default to center the prior on $\boldsymbol{0}$ to encode clinical
+equipoise. Similarly, the prior hypothesis probabilities $\Pr(H_{+i})$ for $i=1,
+\dots, K$ may again be specified so that the $\mathrm{N}_K(\boldsymbol{\mu},
+\boldsymbol{\mathcal{T}})$ distribution is recovered when the prior is averaged
+over the hypotheses. Additionally, specifying a prior covariance matrix
+$\boldsymbol{\mathcal{T}}$ with uniform correlation of 0.5 ensures equal
+treatment prior probabilities for any number of treatment groups $K$, and thus
+seems a sensible default in the absence of prior knowledege.
+
+The normal-normal conjugate framework allows us to derive marginal likelihoods
+in closed-form. The marginal likelihood under $H_{0}$ is
+\begin{align*}
+  p(\boldsymbol{\hat{\theta}} \mid H_{0})
+  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{0}, \boldsymbol{\Sigma}),
+\end{align*}
+while the marginal likelihood under $H_{-}$ is
+\begin{align*}
+  p(\boldsymbol{\hat{\theta}} \mid H_{-})
+  %% &= \int_{(-\infty, 0)^K} \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{\theta}, \boldsymbol{\Sigma}) \,
+  %% \frac{\mathrm{N}_K(\boldsymbol{\theta} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})} \, \mathrm{d}\boldsymbol{\theta} \\
+  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma} + \boldsymbol{\mathcal{T}}) \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}_*, \boldsymbol{\mathcal{T}}_*)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}
+\end{align*}
+with $\mathrm{N}_K(\boldsymbol{x} \mid \boldsymbol{m}, \boldsymbol{V})$ and
+$\Phi_K(\boldsymbol{x} \mid \boldsymbol{m}, \boldsymbol{V})$ the density and
+cumulative distribution functions of the $K$-variate normal distribution with
+mean vector $\boldsymbol{m}$ and covariance matrix $\boldsymbol{V}$ evaluated at
+$\boldsymbol{x}$, and posterior mean $\boldsymbol{\mu}_* =
+(\boldsymbol{\Sigma}^{-1} +
+\boldsymbol{\mathcal{T}}^{-1})^{-1}(\boldsymbol{\Sigma}^{-1}\boldsymbol{\hat{\theta}}
++ \boldsymbol{\mathcal{T}}^{-1}\boldsymbol{\mu})$ and covariance
+$\boldsymbol{\mathcal{T}}_* = (\boldsymbol{\Sigma}^{-1} +
+\boldsymbol{\mathcal{T}}^{-1})^{-1}$. Finally, the marginal likelihood under
+$H_{+i}$ is given by
+\begin{align*}
+  p(\boldsymbol{\hat{\theta}} \mid H_{+i})
+  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma} + \boldsymbol{\mathcal{T}}) \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K} \boldsymbol{\mu}_*, \boldsymbol{A}_{i,K} \boldsymbol{\mathcal{T}}_* \boldsymbol{A}_{i,K}^\top)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K}\boldsymbol{\mu}, \boldsymbol{A}_{i,K}\boldsymbol{\mathcal{T}}\boldsymbol{A}_{i,K}^\top)}
+\end{align*}
+where $\boldsymbol{A}_{i,K}$ is a $K \times K$ contrast matrix that maps
+$\boldsymbol{\theta}$ to the space where the negative orthant corresponds to the
+space of hypothesis $H_{+i}$. For example, for $i = 2$ and $K = 3$, the matrix
+is
+\begin{align*}
+  \boldsymbol{A}_{2,3} =
+  \begin{bmatrix}
+    0 & -1 & 0 \\
+    1 & -1 & 0 \\
+    0 & -1 & 1 \\
+  \end{bmatrix}
+\end{align*}
+with the first row encoding the constraint of $\theta_2$ being positive, and the
+second and third rows encoding the constraints of $\theta_2$ being larger than
+$\theta_1$ and $\theta_3$, respectively. As expected, for $K=1$, these marginal
+likelihoods reduce to the univariate ones~(7) in the main text. Moreover, since
+they are all available in closed-form, Bayes factors, posterior probabilities,
+and randomization probabilities are also available in closed-form. Crucially,
+only the exact evaluation of multivariate normal densities and cumulative
+distribution functions is required, and both are efficiently implemented in
+statistical software \citep[e.g., in the \texttt{mvtnorm} R
+  package,][]{Genz2009}. This thus leads to an efficient Bayesian RAR method
+that allows experimenters to compute randomization probabilities in complex
+settings, for instance, multiple regression, where a full Bayesian analysis may
+involve various complexities, such as priors for nuisance parameters and Markov
+chain Monte Carlo methods for the computation of posteriors.
+
+<< "check-multivariate", eval = FALSE >>=
+## simulate and compute probability of H+1
+set.seed(44)
+mu <- c(0.3, -0.4)
+Sigma <- matrix(c(1, 0.8,
+                  0.8, 1),
+                byrow = TRUE, ncol = 2)
+x <- rmvnorm(n = 1000000, mean = mu, sigma = Sigma)
+
+## analytically
+A12 <- matrix(c(-1, 0,
+                -1, 1), byrow = TRUE, ncol = 2)
+pmvnorm(lower = -Inf, upper = c(0, 0), mean = as.numeric(A12 %*% mu),
+        sigma = A12 %*% Sigma %*% t(A12), keepAttr = FALSE)
+mean(x[,1] > 0 & x[,1] > x[,2])
+## pmvnorm(lower = -Inf, upper = c(0, 0), mean = mu, sigma = Sigma,
+##         keepAttr = FALSE)
+## mean(x[,1] < 0 & x[,2] < 0)
+
+## now in 3 dimensions
+mu <- c(0.3, 0, -1)
+Sigma <- matrix(c(1, 0.2, 0,
+                  0.2, 1, 0,
+                  0, 0, 1),
+                byrow = TRUE, ncol = 3)
+x <- rmvnorm(n = 10000000, mean = mu, sigma = Sigma)
+A13 <- matrix(c(-1, 0, 0,
+                -1, 1, 0,
+                -1, 0, 1), byrow = TRUE, ncol = 3)
+pmvnorm(lower = -Inf, upper = c(0, 0, 0), mean = as.numeric(A13 %*% mu),
+        sigma = A13 %*% Sigma %*% t(A13), keepAttr = FALSE)
+mean(x[,1] > 0 & x[,1] > x[,2] & x[,1] > x[,3])
+
+## now in 4 dimensions
+mu <- c(0.3, 0, -1, -0.5)
+Sigma <- matrix(c(1, 0.2, 0, 0,
+                  0.2, 1, 0, 0,
+                  0, 0, 1, 0.5,
+                  0, 0, 0.5, 1),
+                byrow = TRUE, ncol = 4)
+x <- rmvnorm(n = 10000000, mean = mu, sigma = Sigma)
+A14 <- matrix(c(-1, 0, 0, 0,
+                -1, 1, 0, 0,
+                -1, 0, 1, 0,
+                -1, 0, 0, 1), byrow = TRUE, ncol = 4)
+pmvnorm(lower = -Inf, upper = c(0, 0, 0,0 ), mean = as.numeric(A14 %*% mu),
+        sigma = A14 %*% Sigma %*% t(A14), keepAttr = FALSE)
+mean(x[,1] > 0 & x[,1] > x[,2] & x[,1] > x[,3] & x[,1] > x[,4])
+
+## check that ratio of determinants is correct
+Tau <- matrix(c(2, 0.6, 0, 0,
+                0.6, 3, 0.5, 0,
+                0, 0.5, 4, 0.8,
+                0, 0, 0.8, 5),
+              byrow = TRUE, ncol = 4)
+det(Sigma + Tau)/det(Sigma)
+det(diag(4) + Tau %*% solve(Sigma))
+det(diag(4) + solve(Sigma) %*% Tau)
+@
+
+%% For example, Bayes factors are given by
 %% \begin{align*}
-%%   \Pr(H_0 \mid \hat{\theta}_n) =
-%%   \left(
-%%   1 + \frac{1 - \Pr(H_0)}{\Pr(H_0)} \, \times \, \exp\left[\frac{Z^2_n}{2(1 + \sigma^2_n/\tau^2)}\right] \, \bigg / \,
-%%   \sqrt{1 + \frac{\tau^2}{\sigma^2_n}}
-%%   \right)^{-1}
+%%   %% \mathrm{BF}_{0-}(\boldsymbol{\hat{\theta}})
+%%   %% &= \sqrt{|\boldsymbol{I}_K + \boldsymbol{\mathcal{T}} \boldsymbol{\Sigma}^{-1}|} \times
+%%   %% \exp\left[-\frac{1}{2}\left\{\boldsymbol{\hat{\theta}}^\top \boldsymbol{\Sigma}^{-1} \boldsymbol{\hat{\theta}} - (\boldsymbol{\hat{\theta}} - \boldsymbol{\mu})^\top (\boldsymbol{\Sigma} + \boldsymbol{\mathcal{T}})^{-1} (\boldsymbol{\hat{\theta}} - \boldsymbol{\mu}) \right\}\right] \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}_*, \boldsymbol{\mathcal{T}}_*)} \\
+%%   \mathrm{BF}_{+i0}(\boldsymbol{\hat{\theta}}) =& \exp\left[-\frac{1}{2}\left\{(\boldsymbol{\hat{\theta}} - \boldsymbol{\mu})^\top (\boldsymbol{\Sigma} + \boldsymbol{\mathcal{T}})^{-1} (\boldsymbol{\hat{\theta}} - \boldsymbol{\mu}) - \boldsymbol{\hat{\theta}}^\top \boldsymbol{\Sigma}^{-1} \boldsymbol{\hat{\theta}} \right\}\right] \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K} \boldsymbol{\mu}_*, \boldsymbol{A}_{i,K} \boldsymbol{\mathcal{T}}_* \boldsymbol{A}_{i,K}^\top)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K}\boldsymbol{\mu}, \boldsymbol{A}_{i,K}\boldsymbol{\mathcal{T}}\boldsymbol{A}_{i,K}^\top)} \\ &\bigg / \sqrt{|\boldsymbol{I}_K + \boldsymbol{\mathcal{T}} \boldsymbol{\Sigma}^{-1}|} \\
+%%   \mathrm{BF}_{+i-}(\boldsymbol{\hat{\theta}}) =& \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K} \boldsymbol{\mu}_*, \boldsymbol{A}_{i,K} \boldsymbol{\mathcal{T}}_* \boldsymbol{A}_{i,K}^\top)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K}\boldsymbol{\mu}, \boldsymbol{A}_{i,K}\boldsymbol{\mathcal{T}}\boldsymbol{A}_{i,K}^\top)} \, \bigg / \, \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}_*, \boldsymbol{\mathcal{T}}_*)}  {\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}
 %% \end{align*}
-%% with \textit{z}-statistic $Z_n = \hat{\theta}_n/\sigma_n$. If data are sampled
-%% based on non-adaptive randomization, it is clear that as the sample size $n$
-%% increases, under $H_0 \colon \theta = 0$, the \textit{z}-statistic is
-%% asymptotically $Z_n \sim \mathrm{N}(0, 1)$ and the standard error goes to zero,
-%% so that $\Pr(H_0 \mid \hat{\theta}_n) \uparrow 1$ in probability as $\sigma_n
-%% \downarrow 0$. However, under RAR, the distribution of $Z_n$ is more complicated
-%% as the standard error is now also a random variable
+%% and Bayes factors for other hypothesis comparisons can again be computed through
+%% reciprocity and transitivity.
+
+
+\begin{figure}[!htb]
+<< "example-multinormal", fig.height = 4, cache = TRUE >>=
+## simulate RAR
+set.seed(42)
+n <- 200
+nseq <- seq_len(n)
+sd <- 1 # true standard deviation
+muc <- 0 # true mean in control group
+mus <- c(0.25, 0, -0.25) # true means in treatment groups
+K <- length(mus) # number of treatments
+datC <- data.frame(y = rnorm(n = n, mean = muc, sd = sd), group = "Control",
+                   time = nseq)
+datT <- do.call("rbind", lapply(seq(1, K), function(k) {
+    data.frame(y = rnorm(n = n, mean = mus[k], sd = sd),
+               group = paste("Treatment", k), time = nseq)
+}))
+dat <- rbind(datC, datT)
+
+## priors
+pm <- rep(0, K)
+rho <- 0.5 # to have equal prior probabilities
+psigma <- matrix(rho, nrow = K, ncol = K)
+tau <- 1
+diag(psigma) <- tau^2
+pH0seq <- seq(0, 1, 0.25)
+
+## perform BRAR for accumulating data
+plotDF <- do.call("rbind", lapply(X = seq(5, n), FUN = function(ni) {
+    fit <- lm(y ~ group, data = dat, subset = time <= ni)
+    estimate <- fit$coef[-1]
+    sigma <- vcov(fit)[-1,-1]
+    do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
+        brar <- brar_normal(estimate = estimate, sigma = sigma, pm = pm,
+                                 psigma = psigma, pH0 = pH0)
+        res <- data.frame("time" = ni, "pH0" = pH0, "prand" = brar$prand,
+                          "group" = names(brar$prand))
+        rownames(res) <- NULL
+        return(res)
+    }))
+}))
+
+
+pH0lvls <- unique(plotDF$pH0)
+pH0labs <- as.character(pH0lvls)
+pH0labs[pH0lvls == 0] <- "0 (Thompson sampling)"
+pH0labs[pH0lvls == 1] <- "1 (equal randomization)"
+plotDF$pH0fac <- factor(plotDF$pH0, ordered = TRUE,
+                        levels = pH0lvls, labels = pH0labs)
+lvls <- c("Control", paste("Treatment", seq(1, K)))
+## labs <- c(paste("'Control (' ~ mu == ", muc, "~ ')'"),
+##           paste("'Treatment",  seq(1, K), "(' * mu == ", mus, "* ')'"))
+labs <- c("Control",
+          paste("'Treatment",  seq(1, K), "(' * theta[", seq(1, K),
+                "] == ", mus - muc, "* ')'"))
+plotDF$groupLab <- factor(plotDF$group, levels = lvls, labels = labs)
+ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
+    facet_wrap(~ groupLab, labeller = label_parsed) +
+    labs(x = "Sample size per group", y = "Randomization probability",
+         color = bquote("Pr(" * italic(H)[0] * ")"), linetype = "Method") +
+    ## geom_hline(yintercept = 1/(K + 1), lty = 2, alpha = 0.5) +
+    geom_step(alpha = 0.8) +
+    scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+    theme_bw() +
+    theme(panel.grid.minor = element_blank(),
+          strip.background = element_rect(fill = "#00000003"),
+          legend.position = "top")
+
+@
+\caption{Evolution of Bayesian RAR probabilities for \Sexpr{length(mus)}
+  treatments and a control group. In each step, one observation from each group
+  is simulated from a normal distribution with a standard deviation of
+  \Sexpr{sd} and corresponding mean differences as indicated in the panel titles
+  (treatment 1 is the most effective treatment), and a mean difference effect
+  estimate $\boldsymbol{\hat{\theta}}$ and its estimated covariance matrix
+  $\boldsymbol{\Sigma}$ computed with linear regression. Randomization
+  probabilities are then computed using a normal spike-and-slab prior for
+  centered at the origin and with covariance matrix $\boldsymbol{\mathcal{T}}$
+  with $\boldsymbol{\mathcal{T}}_{ij} = \Sexpr{rho}$ for $i\neq j$ and
+  $\boldsymbol{\mathcal{T}}_{ij} = \Sexpr{tau^2}$ for $i = j$, and for different
+  prior probabilities $\Pr(H_0)$.}
+\label{fig:example-multinormal}
+\end{figure}
+
+Figure~\ref{fig:example-multinormal} shows sequences of randomization
+probabilities computed from simulated normal data with $K = \Sexpr{K}$ treatment
+groups. We see that assigning a prior probability $\Pr(H_0) = 1$ leads to static
+equal randomization at $\pi_i = 1/(K+1)= \Sexpr{round(100*(1/(K+1)), 2)}\%$,
+while assigning $\Pr(H_0) = 0$ (Thompson sampling) leads to the most variable
+randomization probabilities. Since data are simulated assuming that treatment 1
+is the most effective, randomization probabilities based on $\Pr(H_0) < 1$
+converge towards $\pi_1 = 100\%$ and toward $0\%$ for the remaining treatments.
+While convergence is the fastest for $\Pr(H_0) = 0$, this prior probability also
+accidentally produces rather high randomization probabilities for the control
+group at the start of the study, which is less pronounced for positive prior
+probabilities $\Pr(H_0) > 0$.
+
 
 
 \section{Simulation study}
 \label{app:simulation}
-
-%% % reset counter of figures and add preceeding B
-%% \setcounter{figure}{0}
-%% \renewcommand{\thefigure}{B\arabic{figure}}
 
 We now describe the design and results of our simulation study following the
 structured ADEMP approach \citep{Morris2019, Siepe2024}. Our simulation study
@@ -619,3 +860,15 @@ modifications or increasing $\Pr(H_0)$. In small sample sizes and large rate
 differences, power was slightly increased for the exact compared to the normal
 version of RAR, while for Thompson sampling the type I rate was slightly higher
 for the exact compared to the normal version.
+
+
+\section{Software and data}
+Code and data to reproduce our analyses are openly available at
+\url{https://github.com/SamCH93/brar}. A snapshot of the repository at the time
+of writing is available at \url{https://doi.org/10.5281/zenodo.17248628}. We
+used the statistical programming language
+\Sexpr{R.Version()[["version.string"]]} for analyses \citep{R2024} along with
+the \texttt{ggplot2} \citep{Wickham2016}, \texttt{dplyr} \citep{Wickham2023},
+\texttt{SimDesign} \citep{Chalmers2020}, \texttt{mvtnorm} \citep{Genz2009},
+\texttt{ggh4x} \citep{Brand2024}, \texttt{ggpubr} \citep{Kassambara2023},
+\texttt{RARtrials} \citep{Xu2025}, and \texttt{knitr} \citep{Xie2015} packages.

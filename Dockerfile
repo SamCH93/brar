@@ -1,5 +1,5 @@
 ## set R version (https://hub.docker.com/r/rocker/verse/tags)
-FROM rocker/verse:4.5.0
+FROM rocker/verse:4.5.2
 
 ## set up directories
 RUN mkdir /home/rstudio/paper

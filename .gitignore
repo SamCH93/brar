@@ -62,3 +62,8 @@ old/
 .quarto/
 paper/simulation/.gitignore
 paper/simulation/asymptotic-sim.rds
+
+# journal template files
+biom.bst
+biom.cls
+endrotfloat.sty
