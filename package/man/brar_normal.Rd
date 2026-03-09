@@ -16,10 +16,10 @@ effect of a treatment relative to control}
 is only one effect estimate, this is the squared standard error of the
 effect estimate}
 
-\item{pm}{Mean vector of the normal prior assigned to the effect under the
+\item{pm}{Mean vector of the normal prior assigned to the effects under the
 alternative. Defaults to \code{rep(0, length(estimate))}}
 
-\item{psigma}{Covariance matrix of the normal prior assigned to the effect
+\item{psigma}{Covariance matrix of the normal prior assigned to the effects
 under the alternative. In case, there is only one effect estimate, this
 is the prior variance}
 
@@ -33,13 +33,13 @@ An object of type \code{"brar"}, which is a list with the following
     of the null hypothesis and prior probabilities of control/treatment
     superiority), \code{"BF_ij"} (Bayes factor matrix), \code{"posterior"}
     (posterior probability of the null hypothesis and posterior probabilities
-    of control/treatment superiority), and "prand" (response-adaptive
+    of control/treatment superiority), and \code{"prand"} (response-adaptive
     randomization probabilities).
 }
 \description{
 This function computes Bayes factors, posterior probabilities,
-    and response-adaptive randomization probabilities in the setting of data
-    in the form of approximately normal effect estimates.
+    and response-adaptive randomization probabilities for data summarized by
+    approximately normal effect estimates.
 }
 \examples{
 ## simulate normal data from four treatment groups

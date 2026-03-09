@@ -2,7 +2,9 @@
 ## where X1 ~ Beta(a_1,b_1), ..., X_K ~ Beta(a_K,b_K) independent
 Pmaxi <- function(a, b, i, ...) {
     intFun. <- function(t) {
-        stats::dbeta(t, a[i], b[i])*prod(stats::pbeta(t, a[-i], b[-i]))
+        ## stats::dbeta(t, a[i], b[i])*prod(stats::pbeta(t, a[-i], b[-i]))
+        exp(stats::dbeta(t, a[i], b[i], log = TRUE) +
+            sum(stats::pbeta(t, a[-i], b[-i], log.p = TRUE)))
     }
     intFun <- Vectorize(FUN = intFun.)
     res <- try(stats::integrate(f = intFun, lower = 0, upper = 1, ... = ...)$value)
@@ -15,8 +17,7 @@ Pmaxi <- function(a, b, i, ...) {
 #' @title Bayesian response-adaptive randomization for binomial outcomes
 #'
 #' @description This function computes Bayes factors, posterior probabilities,
-#'     and response-adaptive randomization probabilities in the setting of
-#'     binomial outcomes.
+#'     and response-adaptive randomization probabilities for binomial outcomes.
 #'
 #' @param y Vector with number of successes in each group. The first element
 #'     corresponds to the control group, and the remaining elements correspond
@@ -48,8 +49,8 @@ Pmaxi <- function(a, b, i, ...) {
 #'
 #' @examples
 #' ## 1 control and 1 treatment group
-#' y <- c(10, 13)
-#' n <- c(20, 21)
+#' y <- c(15, 12)
+#' n <- c(20, 15)
 #' brar_binomial(y = y, n = n, pH0 = 0.5)
 #'
 #' ## 1 control and 5 treatment groups
@@ -128,6 +129,7 @@ brar_binomial <- function(y, n, a0 = 1, b0 = 1, a = rep(1, length(y)),
     logbfmat <- outer(X = logmargdens, Y = logmargdens, FUN = `-`)
     Hpnames <- paste0("H+", seq(1, K - 1))
     colnames(logbfmat) <- rownames(logbfmat) <- c("H-", "H0", Hpnames)
+    diag(logbfmat) <- 0
     bfmat <- exp(logbfmat)
 
     ## compute prior hypothesis probabilities
@@ -137,13 +139,33 @@ brar_binomial <- function(y, n, a0 = 1, b0 = 1, a = rep(1, length(y)),
     names(prior) <- c("H-", "H0", Hpnames)
 
     ## compute posterior hypothesis probabilitites
-    margdens <- exp(logmargdens)
-    post <- prior*margdens/sum(prior*margdens)
-    ## odds <- outer(X = prior, Y = prior, FUN = `/`)
-    ## post <- 1/sapply(X = seq_len(ncol(bfmat)), FUN = function(i) {
-    ##     sum(bfmat[,i]*odds[,i])
-    ## })
-    ## names(post) <- names(prior)
+    if (pH0 == 1) {
+        ## if Pr(H0) = 1, posterior prob of H0 is always 1 regardless of data
+        post <- c(0, 1, rep(0, K - 1))
+    } else if (sum(!is.finite(logmargdens)) > 1) {
+        ## more than one marginal log likelihood = -Inf => all post probs are NaN
+        post <- rep(NaN, K + 1)
+    } else {
+        ## margdens <- exp(logmargdens)
+        ## post <- prior*margdens/sum(prior*margdens)
+        ## for extreme data, works better with BFs than with marginal likelihoods
+        odds <- outer(X = prior, Y = prior, FUN = `/`)
+        diag(odds) <- 1
+        post <- 1/sapply(X = seq_len(ncol(bfmat)), FUN = function(i) {
+            sum(bfmat[,i]*odds[,i])
+        })
+    }
+    names(post) <- names(prior)
+    ## if prior is 0, posterior is always 0 regardless of data
+    ## set posterior manually to avoid numerical NaN issues
+    post[prior == 0] <- 0
+    ## if posterior prob of any hypothesis is 1, all other probs are 0
+    ## set manually to avoid some numerical NaN issues
+    post1 <- post == 1
+    if (any(post1) & sum(post1, na.rm = TRUE) == 1) {
+        post[!post1] <- 0
+        post[is.nan(post)] <- 0
+    }
 
     ## compute randomization probabilities
     prand <- post[2]/K + post[-2]

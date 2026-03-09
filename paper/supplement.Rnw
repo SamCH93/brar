@@ -1,0 +1,123 @@
+\documentclass[letter, 12pt]{article}
+\usepackage{amsmath, amssymb} % math
+\usepackage{array} % math
+\usepackage{doi} % automatic doi-links
+\usepackage[round]{natbib} % bibliography
+\usepackage{multirow} % multicolumn and multirow
+\usepackage{booktabs} % nicer tables
+\usepackage[title]{appendix} % better appendices
+\usepackage{nameref} % reference appendices with names
+\usepackage[dvipsnames]{xcolor}
+%% \usepackage[onehalfspacing]{setspace} % more space
+\usepackage[doublespacing]{setspace} % more space
+\usepackage{helvet}
+\usepackage{mathpazo}
+\usepackage{sectsty} % use different fonts for different sections
+\allsectionsfont{\sffamily} % for sections use sans serif
+\usepackage[labelfont={bf,sf},font=small]{caption} % customize captions
+\usepackage{orcidlink} % for ORCID symbol with link
+\usepackage{pdflscape} % rotated landscape
+\usepackage{afterpage} % floating landscape
+
+%% margins
+\usepackage{geometry}
+\geometry{
+  a4paper,
+  total={170mm,257mm},
+  left=20mm,
+  right=20mm,
+  top=30mm,
+  bottom=25mm,
+}
+
+%% title, authors, affiliations, mail
+\title{\vspace{-2.5em} Supplementary Materials for \\
+  \textsf{\textbf{
+      Stabilizing Thompson Sampling \\ with Null~Hypothesis Bayesian \\
+      Response-Adaptive~Randomization}}
+}
+\author{
+  Samuel Pawel \orcidlink{0000-0003-2779-320X}
+  \and
+  Leonhard Held \orcidlink{0000-0002-8686-5325}
+}
+\date{
+  Epidemiology, Biostatistics and Prevention Institute (EBPI) \\
+  Center for Reproducible Science and Research Synthesis (CRS) \\
+  University of Zurich \\
+  \texttt{\{samuel.pawel,leonhard.held\}@uzh.ch} \\ ~ \\
+  March 4, 2026
+}
+
+%% hyperref options
+\usepackage{hyperref}
+\hypersetup{
+  bookmarksopen=true,
+  breaklinks=true,
+  pdfsubject={},
+  pdfkeywords={},
+  colorlinks=true,
+  linkcolor=black,
+  anchorcolor=black,
+  citecolor=blue,
+  urlcolor=blue,
+}
+
+<< "main-setup", include = FALSE >>=
+## knitr options
+library(knitr)
+opts_chunk$set(fig.height = 4,
+               echo = FALSE,
+               warning = FALSE,
+               message = FALSE,
+               cache = TRUE,
+               eval = TRUE,
+               fig.align = "center")
+
+## printed digits
+options(scipen = 100000)
+
+## should sessionInfo be printed at the end?
+Reproducibility <- TRUE
+
+## packages
+library(dplyr)
+library(SimDesign)
+library(brar)
+library(mvtnorm)
+library(ggplot2)
+library(ggh4x)
+library(ggpubr)
+library(Ternary)
+
+## colors
+col1 <- "#D55E00"
+col2 <- "#0072B2"
+col3 <- "#009E73"
+@
+
+\begin{document}
+
+\begin{onehalfspacing}
+\maketitle
+\end{onehalfspacing}
+
+<< child = "appendix.Rnw" >>=
+@
+
+\bibliographystyle{apalikedoiurl}
+\bibliography{bibliography}
+
+\begin{spacing}{1}
+<< "sessionInfo1", eval = Reproducibility, results = "asis" >>=
+## print R sessionInfo to see system information and package versions
+## used to compile the manuscript (set Reproducibility = FALSE, to not do that)
+cat("\\newpage \\section*{Computational details}")
+@
+<< "sessionInfo2", echo = Reproducibility, results = Reproducibility >>=
+cat(paste(Sys.time(), Sys.timezone(), "\n"))
+sessionInfo()
+@
+\end{spacing}
+
+\end{document}

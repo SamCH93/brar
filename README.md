@@ -1,10 +1,10 @@
-# Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization
+# Stabilizing Thompson Sampling with Null Hypothesis Bayesian Response-Adaptive Randomization
 
 This repository contains 
 
 1. `./package` The R package **brar** to conduct Bayesian response-adaptive randomization
 
-2. `./paper` Code and data to reproduce result from the paper: *Pawel, S., Held. L. (2025). Stabilizing Thompson Sampling with Point Null Bayesian Response-Adaptive Randomization. <https://doi.org/10.48550/arXiv.2510.01734>*
+2. `./paper` Code and data to reproduce result from the paper: *Pawel, S., Held. L. (2025). Stabilizing Thompson Sampling with Null Hypothesis Bayesian Response-Adaptive Randomization. <https://doi.org/10.48550/arXiv.2510.01734>*
 
 To cite our work, use the following BibTeX reference
 
@@ -12,7 +12,7 @@ To cite our work, use the following BibTeX reference
 @article{PawelHeld2025,
   year = {2025},
   author = {Samuel Pawel and Leonhard Held},
-  title = {Stabilizing {Thompson} Sampling with Point Null {Bayesian} Response-Adaptive Randomization},
+  title = {Stabilizing {Thompson} Sampling with Null Hypothesis {Bayesian} Response-Adaptive Randomization},
   url = {https://github.com/SamCH93/brar},
   doi = {10.48550/arXiv.2510.01734}
 }
@@ -20,6 +20,18 @@ To cite our work, use the following BibTeX reference
 
 An interactively explorable simulation results dashboard is available at: <https://samch93.github.io/brar/>
 
+## Reproducing the paper results with a local R installation
+
+Make sure to have a recent version of R installed (only tested with version
+4.5.2). Install the required packages with the following R command
+
+```r
+install.packages(c("dplyr", "SimDesign", "brar", "mvtnorm", "ggplot2", "ggh4x",
+                   "ggpubr", "Ternary", "knitr"))
+```
+
+Then run the R script `/paper/BFBRAR.R` to reproduce the results from the paper.
+Make sure that the working directory is set to `/paper`.
 
 ## Reproducing the paper with Docker
 
