@@ -5,13 +5,11 @@
 
 \section{The R package brar}
 \label{app:package}
-Our R package can be installed by running \texttt{remotes::install\_github(repo
-  = "SamCH93/brar", subdir = "package")} in an R session (requires the
-\texttt{remotes} package, which is available on CRAN). The main functions of the
-package are \texttt{brar\_normal} and \texttt{brar\_binomial}, which implement
-the approximate normal method from Section~3 and the exact binomial method from
-Section~4 in the main text. The following code chunk illustrates how the latter
-function can be used.
+Our R package can be installed by running \texttt{install.packages("brar")} in
+an R session. The main functions of the package are \texttt{brar\_normal} and
+\texttt{brar\_binomial}, which implement the normal method from Section~3 and
+the binomial method from Section~4 in the main text. The following code chunk
+illustrates how the latter function can be used.
 
 \begin{spacing}{1}
 << "brar-package-demonstration", echo = TRUE, size = "small" >>=

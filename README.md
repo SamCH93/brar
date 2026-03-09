@@ -20,6 +20,18 @@ To cite our work, use the following BibTeX reference
 
 An interactively explorable simulation results dashboard is available at: <https://samch93.github.io/brar/>
 
+## Reproducing the paper results with a local R installation
+
+Make sure to have a recent version of R installed (only tested with version
+4.5.2). Install the required packages with the following R command
+
+```r
+install.packages(c("dplyr", "SimDesign", "brar", "mvtnorm", "ggplot2", "ggh4x",
+                   "ggpubr", "Ternary", "knitr"))
+```
+
+Then run the R script `/paper/BFBRAR.R` to reproduce the results from the paper.
+Make sure that the working directory is set to `/paper`.
 
 ## Reproducing the paper with Docker
 
