@@ -45,7 +45,7 @@ $\boldsymbol{\hat{\theta}}$ could be a vector of estimated regression
 coefficients and $\boldsymbol{\boldsymbol{\Sigma}}$ its estimated covariance
 matrix.
 
-The hypotheses from Section~2.2 in the main text then translate into
+The hypotheses from Section~2 in the main text then translate into
 \begin{align*}
   &H_{-} \colon \max\{\theta_1, \dots, \theta_K\} < 0&
    &\text{vs.} &

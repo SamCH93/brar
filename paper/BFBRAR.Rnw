@@ -1,10 +1,9 @@
-\documentclass[letter, 12pt]{article}
-
 %% %% ----------------------------------------------------------------------------
 %% %% journal template
 %% \documentclass[useAMS,usenatbib,referee]{biom}
 %% %% ----------------------------------------------------------------------------
 
+\documentclass[letter, 12pt]{article}
 \usepackage{amsmath, amssymb} % math
 \usepackage{array} % math
 \usepackage{doi} % automatic doi-links
@@ -241,9 +240,8 @@ simulation study.
 \label{sec:general-theory}
 Assume that we have observed data $y$ and want to use these to randomize a
 future patient.
-
-\subsection{Two group comparisons}
-\label{sec:one-treatment}
+%% \subsection{Two group comparisons}
+%% \label{sec:one-treatment}
 Suppose there is one control and one treatment group, and consider the
 hypotheses:
 \begin{align*}
@@ -428,7 +426,7 @@ It is of interest to understand how RAR probabilities behave as data accumulate.
 Under ordinary non-RAR based sampling, the posterior distribution is
 ``consistent'', meaning that as more data are generated under a hypothesis the
 corresponding posterior hypothesis probability tends to one \citep{Dawid2011}.
-In Section~\ref{sec:normal2}, we provide empirical support through simulation
+In Section~\ref{sec:normal}, we provide empirical support through simulation
 that posterior consistency also holds for the RAR setting. Thus if a treatment
 is superior and $\Pr(H_0) < 1$, the corresponding posterior and randomization
 probability tend to one. Conversely, if all treatments are equally effective and
@@ -457,8 +455,8 @@ randomization probability under $H_0$ but remain random \citep{Deliu2025}.
 %% multiple group settings. Both are implemented in the function
 %% \texttt{brar\_normal} in our \texttt{brar} R package.
 
-\subsection{Two group comparisons}
-\label{sec:normal2}
+%% \subsection{Two group comparisons}
+%% \label{sec:normal2}
 Suppose that the data are summarized by $y = \{\hat{\theta}, \sigma\}$, where
 $\hat{\theta}$ is an estimate of the true treatment effect $\theta$, and
 $\sigma$ is the standard error of the estimate. This does not mean that the raw
@@ -472,7 +470,7 @@ distributed around $\theta$ with its variance $\sigma^2$ assumed to be known,
 i.e., $\hat{\theta} \,\vert\, \theta \sim \mathrm{N}(\theta, \sigma^2)$.
 
 If the effect $\theta$ is oriented such that a positive effect indicates
-treatment benefit, the hypotheses from Section~\ref{sec:one-treatment} translate
+treatment benefit, the hypotheses from Section~\ref{sec:general-theory} translate
 into $H_{-} \colon \theta < 0$ vs. $H_{0} \colon \theta = 0$ vs. $H_{+} \colon
 \theta > 0$.
 %% \begin{align*}
