@@ -6,13 +6,13 @@
 \section{The R package brar}
 \label{app:package}
 Our R package can be installed by running \texttt{install.packages("brar")} in
-an R session. The main functions of the package are \texttt{brar\_normal} and
+an R console. The main functions of the package are \texttt{brar\_normal} and
 \texttt{brar\_binomial}, which implement the normal method from Section~3 and
 the binomial method from Section~4 in the main text. The following code chunk
 illustrates how the latter function can be used.
 
 \begin{spacing}{1}
-<< "brar-package-demonstration", echo = TRUE, size = "small" >>=
+<< "brar-package-demonstration", echo = TRUE, size = "normalsize" >>=
 library(brar) # load package
 
 ## observed successes and trials in control and 3 treatment groups
@@ -35,17 +35,17 @@ Suppose there are $K > 1$ treatment groups and consequently $K$ effect
 estimates, each estimate quantifying the effect of the corresponding treatment
 relative to the control. A natural generalization univariate normal Bayesian RAR
 is to stack the estimates into a vector $\boldsymbol{\hat{\theta}} =
-(\hat{\theta}_1, \dots, \hat{\theta}_K)^\top$ and assume an approximate
-$K$-variate normal distribution $\boldsymbol{\hat{\theta}} \mid
-\boldsymbol{\theta} \sim \mathrm{N}_K(\boldsymbol{\theta},
-\boldsymbol{\boldsymbol{\Sigma}})$, where $\boldsymbol{\theta} = (\theta_1,
-\dots, \theta_K)^\top$ is the vector of true effects and
-$\boldsymbol{\boldsymbol{\Sigma}}$ is the (assumed to be known) covariance
-matrix of $\boldsymbol{\hat{\theta}}$. For example, $\boldsymbol{\hat{\theta}}$
-could be a vector of estimated regression coefficients and
-$\boldsymbol{\boldsymbol{\Sigma}}$ the corresponding covariance matrix.
+(\hat{\theta}_1, \dots, \hat{\theta}_K)^\top$ and assume a $K$-variate normal
+distribution $\boldsymbol{\hat{\theta}} \mid \boldsymbol{\theta} \sim
+\mathrm{N}_K(\boldsymbol{\theta}, \boldsymbol{\boldsymbol{\Sigma}})$, where
+$\boldsymbol{\theta} = (\theta_1, \dots, \theta_K)^\top$ is the vector of true
+effects and $\boldsymbol{\boldsymbol{\Sigma}}$ is the (assumed to be known)
+covariance matrix of $\boldsymbol{\hat{\theta}}$. For example,
+$\boldsymbol{\hat{\theta}}$ could be a vector of estimated regression
+coefficients and $\boldsymbol{\boldsymbol{\Sigma}}$ its estimated covariance
+matrix.
 
-The hypotheses from Section~2.2 in the maini text then translate into
+The hypotheses from Section~2.2 in the main text then translate into
 \begin{align*}
   &H_{-} \colon \max\{\theta_1, \dots, \theta_K\} < 0&
    &\text{vs.} &
@@ -121,8 +121,8 @@ statistical software \citep[e.g., in the \texttt{mvtnorm} R
   package,][]{Genz2009}. This thus leads to an efficient Bayesian RAR method
 that allows experimenters to compute randomization probabilities in complex
 settings, for instance, multiple regression, where a full Bayesian analysis may
-involve various complexities, such as priors for nuisance parameters and Markov
-chain Monte Carlo methods for the computation of posteriors.
+involve additional complexities, such as priors for nuisance parameters and
+Markov chain Monte Carlo methods for the computation of posteriors.
 
 << "check-multivariate", eval = FALSE >>=
 ## simulate and compute probability of H+1

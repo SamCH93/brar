@@ -62,10 +62,6 @@ TernaryPlot(alab = bquote("Pr(" * italic(H["-"]) ~ "|" ~ italic(y) * ")" %->% ""
                                ## shift H0 and H+ labels to align with ticks
                                paste0(seq(0, 1, 0.2), "\n"),
                                paste0("\n \n", seq(0, 1, 0.2))),
-            ## axis.labels = list(paste0(seq(0, 100, 20), "%"),
-            ##                    ## shift H0 and H+ labels to align with ticks
-            ##                    paste0(seq(0, 100, 20), "% \n"),
-            ##                    paste0("\n \n", seq(0, 100, 20), "%")),
             axis.cex = 0.75, lab.cex = 1, padding = 0.1)
 TernaryPoints(df[, c("pm", "p0", "pp")], pch = 20, col = df$col, cex = 1.25)
 TernaryPoints(example, pch = 8, col = 1, cex = 1.25, lwd = 1.5)
@@ -679,7 +675,7 @@ ggarrange(simplta, simpltb, ncol = 1, common.legend = TRUE, legend = "top",
 
 ## ----child = "appendix.Rnw"---------------------------------------------------
 
-## ----"brar-package-demonstration", echo = TRUE, size = "small"----------------
+## ----"brar-package-demonstration", echo = TRUE, size = "normalsize"-----------
 library(brar) # load package
 
 ## observed successes and trials in control and 3 treatment groups

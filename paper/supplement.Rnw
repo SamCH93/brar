@@ -31,7 +31,7 @@
 }
 
 %% title, authors, affiliations, mail
-\title{\vspace{-4em} Supplementary Materials for \\
+\title{\vspace{-2.5em} Supplementary Materials for \\
   \textsf{\textbf{
       Stabilizing Thompson Sampling \\ with Null~Hypothesis Bayesian \\
       Response-Adaptive~Randomization}}
