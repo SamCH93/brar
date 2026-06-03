@@ -91,6 +91,7 @@ Summarise <- function(condition, results, fixed_objects) {
 ## ---- Run ----
 set.seed(4242)
 nsim <- 10000
+cores <- 100
 corsimres <- runSimulation(
     design = Design,
     replications = nsim,
@@ -110,7 +111,7 @@ corsimres <- runSimulation(
         burnin = burnin
     ),
     parallel = TRUE,
-    ncores = 10,
+    ncores = cores,
     store_results = TRUE,
     save = TRUE,
     filename = "simulation/cor-sim.rds",
