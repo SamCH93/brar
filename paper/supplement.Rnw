@@ -46,7 +46,6 @@
   Center for Reproducible Science and Research Synthesis (CRS) \\
   University of Zurich \\
   \texttt{\{samuel.pawel,leonhard.held\}@uzh.ch} \\ ~ \\
-  March 4, 2026
 }
 
 %% hyperref options
@@ -78,7 +77,7 @@ opts_chunk$set(fig.height = 4,
 options(scipen = 100000)
 
 ## should sessionInfo be printed at the end?
-Reproducibility <- TRUE
+Reproducibility <- FALSE
 
 ## packages
 library(dplyr)

@@ -13,7 +13,7 @@ opts_chunk$set(fig.height = 4,
 options(scipen = 100000)
 
 ## should sessionInfo be printed at the end?
-Reproducibility <- TRUE
+Reproducibility <- FALSE
 
 ## packages
 library(parallel)
@@ -33,7 +33,7 @@ col3 <- "#009E73"
 
 
 ## ----"ternary-plot", fig.height = 3.5, fig.width = 3.5------------------------
-## simplex grid
+## create a ternary plot showing null hypothesis Bayesian randomization scheme
 x <- seq(0, 1, length.out = 20)
 df <- na.omit(do.call("rbind", lapply(X = x, FUN = function(pp) {
     do.call("rbind", lapply(X = x, FUN = function(pm) {
@@ -72,6 +72,7 @@ PlotTools::SpectrumLegend("topleft", palette = colpal,
 
 
 ## ----"spike-and-slab", fig.height = 2.75, fig.width = 4-----------------------
+## visualize spike and slab prior
 par(mar = c(4, 4, 0.5, 0.1))
 tseqn <- seq(-3, 0, length.out = 500)
 tseqp <- seq(0, 3, length.out = 500)
@@ -83,11 +84,12 @@ pH0 <- 0.5
 pHp <- (1 - pH0)*p
 pHm <- (1 - pH0)*(1 - p)
 densFun <- function(x) {
-    pHm*dnorm(x, mu, tau)/(1 - p) + pHp*dnorm(x, mu, tau)/p
+    pHm*dnorm(x, mu, tau)/(1 - p)*as.numeric(x <= 0) +
+        pHp*dnorm(x, mu, tau)/p*as.numeric(x > 0)
 }
 dens <- densFun(tseq)
 plot(tseq, dens, type = "n", xlab = bquote(theta ~ "(treatment effect)"), ylab = "Density",
-     ylim = c(0, 1.1*max(c(dens, pH0))), las = 1)
+     ylim = c(0, 1.1*max(c(dens, pH0*0.5))), las = 1)
 polygon(x = c(tseqn, 0, min(tseqn)),
         y = c(densFun(tseqn), 0, densFun(min(tseqn))), density = 20, angle = 45,
         border = NA, col = adjustcolor(col = col1, alpha = 0.3), lty = 2, lwd = 1)
@@ -96,15 +98,14 @@ polygon(x = c(0, tseqp, max(tseqn)), y = c(0, densFun(tseqp), 0), density = 20,
         lty = 2, lwd = 1)
 lines(tseqn, densFun(tseqn), col = col1, lwd = 1.5)
 lines(tseqp, densFun(tseqp), col = col2, lwd = 1.5)
-arrows(x0 = 0, y0 = 0, y1 = pH0, lwd = 1.5, length = 0.06)
-## segments(x0 = 0, y0 = 0, y1 = densFun(0), lty = 2)
-text(x = 0, y = pH0*1.06, labels = bquote(italic(H)[0]), cex = 1.25)
-text(x = 1, y = 0.1, labels = bquote(italic(H)["+"]), cex = 1.25, col = col2)
-text(x = -1, y = 0.1, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
+arrows(x0 = 0, y0 = 0, y1 = pH0*0.5, lwd = 1.5, length = 0.06)
+text(x = 0, y = pH0*1.06*0.5, labels = bquote(italic(H)[0]), cex = 1.25)
+text(x = 1, y = 0.1*0.5, labels = bquote(italic(H)["+"]), cex = 1.25, col = col2)
+text(x = -1, y = 0.1*0.5, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 
 
 ## ----"check-marginal-likelihood-posterior", eval = FALSE----------------------
-# ## check marginal likelihood
+# ## verify marginal likelihood formulae with numerical integration
 # t <- 3
 # se <- 2
 # mu <- 0
@@ -117,7 +118,7 @@ text(x = -1, y = 0.1, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 # dnorm(t, mu, sqrt(se^2 + tau^2))*pnorm(0, mup, taup,lower.tail = FALSE)/
 #     pnorm(0, mu, tau, lower.tail = FALSE)
 # 
-# ## check posteriors
+# ## verify posteriors
 # pH0 <- 0.5
 # res <- brar_normal(estimate = t, sigma = se^2, pm = mu, psigma = tau^2,
 #                    pH0 = pH0)
@@ -138,7 +139,7 @@ text(x = -1, y = 0.1, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 
 
 ## ----"example-normal", fig.height = 3.5, cache = TRUE-------------------------
-## function to simulate a normal data sequence with BRAR
+## demonstrate normal BRAR with simulated data
 simulate_brar <- function(burnin, n, nincr = 1, muc, mut, sd, pm, psd, pH0 = 0) {
     nseq <- seq(burnin + 1, n, nincr)
     dat <- data.frame(n = seq(1, burnin, 1),
@@ -207,6 +208,7 @@ resHp <- applyRAR(dat = datHp)
 resH0 <- applyRAR(dat = datH0)
 resHm <- applyRAR(dat = datHm)
 plotDF <- rbind(data.frame(resHp, H = "Hp"), data.frame(resH0, H = "H0"), data.frame(resHm, H = "Hm"))
+
 ## plot RAR probability sequences
 pH0lvls <- unique(plotDF$pH0)
 pH0labs <- as.character(pH0lvls)
@@ -230,7 +232,8 @@ pltnorm1 <- ggplot(data = plotDF, aes(x = n, y = prand, color = pH0fac)) +
           legend.position = "top")
 
 ## ----"asymptotics-normal", fig.height = 8-------------------------------------
-nsim <- 1000
+## simulate BRAR many times to demonstrate asymptotic behavior under H-, H0, and H+
+nsim <- 10000
 sd <- 1
 pH0seq <- c(0, 0.5)
 n <- 1000
@@ -268,7 +271,7 @@ if ("asymptotic-sim-subset.rds" %in% list.files(path = "simulation")) {
     saveRDS(object = simressubset, file = "simulation/asymptotic-sim-subset.rds")
 }
 
-## randomization probabilities
+## plot simulated distribution of randomization probabilities
 simressubset$pH0lab <- factor(simressubset$pH0, levels = c(0, 0.5),
                               labels = c("'Pr(' * italic(H)[0] * ')' == 0 ~ '(Thompson sampling)'",
                                          "'Pr(' * italic(H)[0] * ')' == 0.5"))
@@ -281,7 +284,7 @@ pltnorm2 <- ggplot(data = simressubset,
            fill = factor(psd))) +
     facet_grid(mdlab ~ pH0lab,
                labeller = label_parsed) +
-    geom_boxplot(alpha = 0.1, outlier.size = 0, outlier.alpha = 0.1) +
+    geom_boxplot(alpha = 0.1, outlier.size = 0, outlier.alpha = 0.01) +
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = simcols) +
     scale_fill_manual(values = simcols) +
@@ -297,7 +300,7 @@ pltnorm2 <- ggplot(data = simressubset,
 
 ggarrange(pltnorm1, pltnorm2, ncol = 1, heights = c(1, 1.3),
           labels = c("(a)", "(b)"), hjust = 0)
-## ## Type I error rate
+## ## uncomment below to plot empirical type I error rate
 ## simressubset |>
 ##     group_by(n, md, mc, mt, pH0, psd) |>
 ##     dplyr::summarise(rr = mean(abs(z) > 1.96)) |>
@@ -331,7 +334,7 @@ ggarrange(pltnorm1, pltnorm2, ncol = 1, heights = c(1, 1.3),
 
 
 ## ----"two-dimensional-prior", fig.height = 3.2, fig.width = 3.2---------------
-## compute prior density
+## visualize two-dimensional spike-and-slab prior
 ngrid <- 300
 tseq <- seq(-3, 3, length.out = ngrid)
 mu <- c(0, 0)
@@ -341,8 +344,7 @@ sigma <- tau^2*matrix(c(1, rho,
                         rho, 1), ncol = 2, byrow = TRUE)
 pH0 <- 0.5
 dens <- matrix(t(apply(X = expand.grid(tseq, tseq), 1, FUN = function(x) {
-    ## dnorm(x[1], mu[1], tau)*dnorm(x[2], mu[2], tau)
-    dmvnorm(x = x, mean = mu, sigma = sigma)*(1 - pH0)
+    dmvnorm(x = x, mean = mu, sigma = sigma)
 })), nrow = ngrid)*(1 - pH0)
 densn <- densp1 <- densp2 <- dens
 densn[tseq > 0,] <- NaN
@@ -372,7 +374,7 @@ text(x = -2.25, y = -2, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 
 
 ## ----"closed-form-binary", eval = FALSE---------------------------------------
-# ## for 2 groups, use formula from
+# ## for 2 groups, there is a formula to compute Qi without numerical integration
 # ## (<https://www.evanmiller.org/bayesian-ab-testing.html#binary_abcd>)
 # Qi <- function(ac, a1, bc, b1) {
 #     sum(sapply(X = seq(0, a1 - 1, 1), FUN = function(j) {
@@ -395,12 +397,13 @@ text(x = -2.25, y = -2, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 # }))
 # 
 # 
-# ## holds also for non-uniform prior?
+# ## holds even for non-uniform prior
 # brar_binomial(y = c(0, 0), n = c(0, 0), a = c(3, 50), b = c(1, 2), pH0 = 0)$posterior[3]
 # Qi(ac = 3, a1 = 50, bc = 1, b1 = 2)
 
 
 ## ----"test-derivations", eval = FALSE-----------------------------------------
+# ## simulation-based verification of Qi formula with multiple groups
 # set.seed(42)
 # a1 <- 2
 # b1 <- 5
@@ -411,13 +414,12 @@ text(x = -2.25, y = -2, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 # nsim <- 1000000
 # X <- cbind(rbeta(nsim, a1, b1), rbeta(nsim, a2, b2), rbeta(nsim, a3, b3))
 # mean(X[,1] > X[,2] & X[,1] > X[,3])
-# 
 # intFun <- function(x1) {
 #     dbeta(x1, a1, b1) * pbeta(x1, a2, b2) * pbeta(x1, a3, b3)
 # }
-# integrate(intFun, 0, 1)$value
+# integrate(intFun, 0, 1)$value # works, yay!
 # 
-# ## test whether calculation of Pr(Xi = max(X)) works for arbitrary dimensions
+# ## test whether calculation of Pr(Xi = max(X)) works for higher dimensions
 # set.seed(40)
 # K <- 10
 # a <- sample(seq(1, 10), K, replace = FALSE)
@@ -428,8 +430,7 @@ text(x = -2.25, y = -2, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 #     dbeta(x1, a[1], b[1]) * prod(pbeta(x1, a[-1], b[-1]))
 # }
 # intFun <- Vectorize(intFun.)
-# integrate(intFun, 0, 1)$value
-# ## works, yay!
+# integrate(intFun, 0, 1)$value # still works, double yay!
 
 
 ## ----"ECMO-analysis-new", fig.height = 8--------------------------------------
@@ -441,7 +442,7 @@ rpw <- function(y1, y0, a = 1, b = 1, g = 1) {
     c("Control" = 1 - p1, "Treatment 1" = p1)
 }
 
-## ECMO trial
+## calculate randomization and posterior probabilities for ECMO trial
 y <- c(1, 0, rep(1, 10)) # 1 is survival, 0 is death
 treat <- c("ECMO", "control", rep("ECMO", 10))
 pH0 <- 0.5
@@ -482,7 +483,7 @@ ecmoDF <- do.call("rbind", lapply(X = seq_along(y), FUN = function(i) {
     rbind(resbrar, resrpw)
 }))
 
-## compute probability of observing ECMO sequence given RAR method
+## compute and plot probability of observing ECMO sequence given RAR method
 rargrid <- expand.grid(method = c("Exact", "Normal"),
                        pH0 = pH0seq, stringsAsFactors = FALSE)
 rargrid <- rbind(rargrid,
@@ -503,23 +504,18 @@ pdataDF <- do.call("rbind", lapply(X = seq(1, nrow(rargrid)), FUN = function(j) 
     pdata <- prod(prand^(treat == "ECMO")*(1 - prand)^(treat == "control"))
     data.frame(method = mtd, pH0 = pH0, pdata = pdata)
 }))
-
 plt3 <- ggplot(data = subset(pdataDF, method != "RPW (original)"),
                aes(x = pH0, y = pdata, linetype = method)) +
     labs(x = bquote("Pr(" * italic(H)[0] * ")"),
          y = "Pr(ECMO allocation)",
          linetype = "Method") +
-    ## geom_hline(data = subset(pdataDF, method == "RPW (original)"),
-    ##            aes(yintercept = pdata, linetype = method)) +
     geom_line() +
     scale_y_continuous(labels = scales::percent) +
     theme_bw() +
-    theme(## legend.position = "inside",
-          ## legend.position.inside = c(0.95, 0.95),
-          ## legend.justification.inside = c(1, 1),
-          panel.grid.minor = element_blank(),
+    theme(panel.grid.minor = element_blank(),
           panel.grid.major.x = element_blank())
 
+## plot RAR and posterior probabilities
 ecmoDF <- subset(ecmoDF, is.na(pH0) | pH0 %in% c(0, 0.25, 0.5, 0.75, 1))
 ecmoDF$pH0lab <- factor(ecmoDF$pH0, ordered = TRUE,
                         levels = pH0seq,
@@ -542,7 +538,6 @@ plt1 <- ggplot(data = subset(ecmoDF, !is.na(pH0)), #& method != "Normal"),
     theme_bw() +
     theme(panel.grid.minor = element_blank(),
           panel.grid.major.x = element_blank())
-
 plt2 <- ggplot(data = ecmoDF,
                aes(x = ntotal, y = H.1, linetype = method, shape = method)) +
     labs(x = "Total sample size",
@@ -556,6 +551,8 @@ plt2 <- ggplot(data = ecmoDF,
     theme_bw() +
     theme(panel.grid.minor = element_blank(),
           panel.grid.major.x = element_blank())
+
+## combine all plots
 plt12 <- ggarrange(plt1, plt2, ncol = 1, common.legend = TRUE, legend = "right",
                    labels = c("(a)", "(b)"), hjust = 0)
 ggarrange(plt12, plt3, ncol = 1, heights = c(2, 1),
@@ -563,6 +560,7 @@ ggarrange(plt12, plt3, ncol = 1, heights = c(2, 1),
 
 
 ## ----"posterior-probabilities-ECMO"-------------------------------------------
+## extract some ECMO probabilities
 post0 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0)$H.1
 post5 <- subset(ecmoDF, method == "Exact" & ntotal == 12 & pH0 == 0.5)$H.1
 pdatarppw <- subset(pdataDF, method == "RPW (original)")$pdata
@@ -572,6 +570,7 @@ pH0lowrpwexact <- subset(pdataDF, method == "Exact" & pdata < pdatarppw)[1,"pH0"
 
 
 ## ----"simulation-main-paper"--------------------------------------------------
+## load and prepare main results from the simulation study
 simres <- readRDS("simulation/brar-sim.rds")
 nsim <- unique(simres$REPLICATIONS)
 summaries <- readRDS("simulation/sim-summaries.rds") |>
@@ -627,16 +626,12 @@ shapes <- c("none" = 19,
 
 
 ## ----"plot-simulation-results", dependson = "simulation-data", fig.height = 11, fig.width = 8.5----
+## plot mean rate of successes
 simplta <- ggplot(data = summaries,
                   aes(x = pH0, y = PS, col = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
-    # geom_hline(aes(yintercept = pt1), lty = 2, alpha = 0.5) +
-    # geom_hline(aes(yintercept = (pt1 + pc)/2), lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    ## geom_errorbar(aes(ymin = PS - PS_mcse, ymax = PS + PS_mcse),
-    ##               width = errorbar_width, alpha = errorbar_alpha,
-    ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
                        labels = c("0", ".25", ".5", ".75", "1")) +
@@ -648,15 +643,14 @@ simplta <- ggplot(data = summaries,
          color = "Method", shape = "Modifications") +
     theme_dashboard() +
     theme(axis.text.y = element_text(size = rel(0.95)))
+
+## plot 95% CI coverage
 simpltb <- ggplot(data = summaries,
                   aes(x = pH0, y = covRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
     geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
-    ## geom_errorbar(aes(ymin = covRD1 - covRD1_mcse, ymax = covRD1 + covRD1_mcse),
-    ##               width = errorbar_width, alpha = errorbar_alpha,
-    ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
                        labels = c("0", ".25", ".5", ".75", "1")) +
@@ -675,25 +669,8 @@ ggarrange(simplta, simpltb, ncol = 1, common.legend = TRUE, legend = "top",
 
 ## ----child = "appendix.Rnw"---------------------------------------------------
 
-## ----"brar-package-demonstration", echo = TRUE, size = "normalsize"-----------
-library(brar) # load package
-
-## observed successes and trials in control and 3 treatment groups
-y <- c(10, 9, 14, 13)
-n <- c(20, 20, 22, 21)
-
-## conduct exact point null Bayesian RAR
-brar_binomial(y = y, n = n,
-              ## uniform prior for common probability under H0
-              a0 = 1, b0 = 1,
-              ## uniform priors for all probabilities
-              a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
-              ## prior probability of the null hypothesis
-              pH0 = 0.5)
-
-
 ## ----"check-multivariate", eval = FALSE---------------------------------------
-# ## simulate and compute probability of H+1
+# ## verification of probability of H+1 formula
 # set.seed(44)
 # mu <- c(0.3, -0.4)
 # Sigma <- matrix(c(1, 0.8,
@@ -752,65 +729,110 @@ brar_binomial(y = y, n = n,
 # det(diag(4) + solve(Sigma) %*% Tau)
 
 
-## ----"example-multinormal", fig.height = 4, cache = TRUE----------------------
+## ----"simulated-example-multinormal", fig.height = 6.5, cache = TRUE----------
+## simulate a multinormal data sequence with BRAR
+simulate_multi_brar <- function(burnin, n, nincr = 1, muc, mut, sd, pm, psd,
+                                rho, pH0) {
+    ## prior mean and covariance
+    pm <- rep(0, K)
+    psigma <- matrix(rho, nrow = K, ncol = K)
+    diag(psigma) <- psd^2
+
+    ## simulate burnin data
+    datC <- data.frame(y = rnorm(n = ceiling(burnin/(K + 1)), mean = muc,
+                                 sd = sd),
+                       group = "Control")
+    datT <- do.call("rbind", lapply(seq(1, K), function(k) {
+        data.frame(y = rnorm(n = ceiling(burnin/(K + 1)), mean = mut[k],
+                             sd = sd),
+                   group = paste("Treatment", k))
+    }))
+    dat <- rbind(datC, datT)
+    dat$n <- seq(1, nrow(dat), 1)
+    dat[, c("pc", paste0("p", 1:K))] <- 1/(K + 1)
+
+    ## simulate RAR data
+    nseq <- seq(dat$n[length(dat$n)] + 1, n, nincr)
+    for (ni in nseq) {
+        fit <- lm(y ~ group, data = dat, subset = n < ni)
+        estimate <- fit$coef[-1]
+        sigma <- vcov(fit)[-1,-1]
+        brar <- brar_normal(estimate = estimate, sigma = sigma, pm = pm,
+                            psigma = psigma, pH0 = pH0)
+        prand <- unname(brar$prand)
+        names(prand) <- c("pc", paste0("p", 1:K))
+        grpindex <- sample(x = 1:(K + 1), size = nincr, replace = TRUE,
+                           prob = prand)
+        grp <- c("Control", paste("Treatment", 1:K))[grpindex]
+        newdat <- rnorm(n = nincr, mean = c(muc, mut)[grpindex], sd = sd)
+        dati <- data.frame(n = seq(ni, ni + nincr - 1, 1), group = grp,
+                           y = newdat)
+        dat <- rbind(dat, cbind(dati, data.frame(t(prand))))
+    }
+    return(dat)
+}
+
 ## simulate RAR
 set.seed(42)
 n <- 200
 nseq <- seq_len(n)
+nincr <- 1
 sd <- 1 # true standard deviation
 muc <- 0 # true mean in control group
-mus <- c(0.25, 0, -0.25) # true means in treatment groups
-K <- length(mus) # number of treatments
-datC <- data.frame(y = rnorm(n = n, mean = muc, sd = sd), group = "Control",
-                   time = nseq)
-datT <- do.call("rbind", lapply(seq(1, K), function(k) {
-    data.frame(y = rnorm(n = n, mean = mus[k], sd = sd),
-               group = paste("Treatment", k), time = nseq)
-}))
-dat <- rbind(datC, datT)
+mut <- c(0.25, 0, -0.25) # true means in treatment groups
+K <- length(mut) # number of treatments
+burnin <- 2*(K + 1)
 
-## priors
+## prior
 pm <- rep(0, K)
+psd <- 1
 rho <- 0.5 # to have equal prior probabilities
 psigma <- matrix(rho, nrow = K, ncol = K)
-tau <- 1
-diag(psigma) <- tau^2
-pH0seq <- seq(0, 1, 0.25)
+diag(psigma) <- psd^2
+pH0 <- 0
 
-## perform BRAR for accumulating data
-plotDF <- do.call("rbind", lapply(X = seq(5, n), FUN = function(ni) {
-    fit <- lm(y ~ group, data = dat, subset = time <= ni)
+## simulate one sequence under Thompson sampling
+set.seed(12345)
+datmulti <- simulate_multi_brar(burnin = burnin, n = n, nincr = nincr,
+                                muc = muc, mut = mut, sd = sd, pm = pm,
+                                psd = psd, rho = rho, pH0 = pH0)
+## re-compute RAR probabilities for different pH0
+pH0seq <- seq(0, 1, 0.25)
+plotDF <- do.call("rbind",
+                  lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
+    dat <- datmulti
+    dat$pH0 <- pH0
+    fit <- lm(y ~ group, data = dat, subset = n < ni)
     estimate <- fit$coef[-1]
     sigma <- vcov(fit)[-1,-1]
     do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
         brar <- brar_normal(estimate = estimate, sigma = sigma, pm = pm,
-                                 psigma = psigma, pH0 = pH0)
-        res <- data.frame("time" = ni, "pH0" = pH0, "prand" = brar$prand,
-                          "group" = names(brar$prand))
-        rownames(res) <- NULL
-        return(res)
+                            psigma = psigma, pH0 = pH0)
+        dat[ni:(ni + nincr - 1), c("pc", paste0("p", 1:K))] <-
+            matrix(rep(brar$prand, nincr), ncol = K + 1, byrow = TRUE)
+        dat$pH0 <- pH0
+        dat[ni:(ni + nincr - 1),]
     }))
 }))
+plotDFlong <- tidyr::pivot_longer(plotDF, cols = c("pc", paste0("p", 1:K)),
+                                  names_to = "arm", values_to = "p")
 
-
-pH0lvls <- unique(plotDF$pH0)
+## plot simulated RAR sequence
+pH0lvls <- unique(plotDFlong$pH0)
 pH0labs <- as.character(pH0lvls)
 pH0labs[pH0lvls == 0] <- "0 (Thompson sampling)"
 pH0labs[pH0lvls == 1] <- "1 (equal randomization)"
-plotDF$pH0fac <- factor(plotDF$pH0, ordered = TRUE,
-                        levels = pH0lvls, labels = pH0labs)
-lvls <- c("Control", paste("Treatment", seq(1, K)))
-## labs <- c(paste("'Control (' ~ mu == ", muc, "~ ')'"),
-##           paste("'Treatment",  seq(1, K), "(' * mu == ", mus, "* ')'"))
+plotDFlong$pH0fac <- factor(plotDFlong$pH0, ordered = TRUE, levels = pH0lvls,
+                            labels = pH0labs)
+lvls <- c("pc", paste0("p", seq(1, K)))
 labs <- c("Control",
           paste("'Treatment",  seq(1, K), "(' * theta[", seq(1, K),
-                "] == ", mus - muc, "* ')'"))
-plotDF$groupLab <- factor(plotDF$group, levels = lvls, labels = labs)
-ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
-    facet_wrap(~ groupLab, labeller = label_parsed) +
+                "] == ", mut - muc, "* ')'"))
+plotDFlong$armLab <- factor(plotDFlong$arm, levels = lvls, labels = labs)
+pltmultia <- ggplot(data = plotDFlong, aes(x = n, y = p, color = pH0fac)) +
+    facet_wrap(~ armLab, labeller = label_parsed) +
     labs(x = "Sample size per group", y = "Randomization probability",
-         color = bquote("Pr(" * italic(H)[0] * ")"), linetype = "Method") +
-    ## geom_hline(yintercept = 1/(K + 1), lty = 2, alpha = 0.5) +
+         color = bquote("Pr(" * italic(H)[0] * ")")) +
     geom_step(alpha = 0.8) +
     scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
     theme_bw() +
@@ -818,6 +840,151 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
           strip.background = element_rect(fill = "#00000003"),
           legend.position = "top")
 
+## simulate multigroup BRAR for different prior correlation structures
+Design <- createDesign(rho = seq(0, 0.75, 0.25))
+muc <- 0
+mut <- c(0.25, 0, -0.25)
+sd <- 1
+K <- length(mut)
+pm <- rep(0, K)
+psd <- 1
+pH0 <- 0.5
+n <- 200
+nincr <- 1
+burnin <- 2 * (K + 1)
+
+Generate <- function(condition, fixed_objects) {
+    rho <- condition$rho
+    with(fixed_objects, {
+        ## Prior mean and covariance
+        pm <- rep(0, K)
+        psigma <- matrix(rho, nrow = K, ncol = K)
+        diag(psigma) <- psd^2
+
+        ## simulate burn-in data
+        datC <- data.frame(
+            y = rnorm(ceiling(burnin / (K + 1)), mean = muc, sd = sd),
+            group = "Control"
+        )
+        datT <- do.call("rbind", lapply(seq_len(K), function(k) {
+            data.frame(
+                y = rnorm(ceiling(burnin / (K + 1)), mean = mut[k], sd = sd),
+                group = paste("Treatment", k)
+            )
+        }))
+        dat <- rbind(datC, datT)
+        dat$n <- seq_len(nrow(dat))
+        dat[, c("pc", paste0("p", 1:K))] <- 1 / (K + 1)
+
+        ## simulate RAR data
+        nseq <- seq(tail(dat$n, 1) + 1, n, nincr)
+        for (ni in nseq) {
+            fit <- lm(y ~ group, data = dat, subset = n < ni)
+            estimate <- fit$coef[-1]
+            sigma <- vcov(fit)[-1, -1]
+
+            brar <- brar_normal(estimate = estimate, sigma = sigma,
+                                pm = pm, psigma = psigma, pH0 = pH0)
+            prand <- unname(brar$prand)
+            names(prand) <- c("pc", paste0("p", 1:K))
+
+            grpindex <- sample(1:(K + 1), size = nincr, replace = TRUE, prob = prand)
+            grp <- c("Control", paste("Treatment", 1:K))[grpindex]
+            newdat <- rnorm(nincr, mean = c(muc, mut)[grpindex], sd = sd)
+
+            dati <- data.frame(n = seq(ni, ni + nincr - 1), group = grp, y = newdat)
+            dat <- rbind(dat, cbind(dati, data.frame(t(prand))))
+        }
+
+        dat
+    })
+}
+
+Analyse <- function(condition, dat, fixed_objects) {
+    ## Extract randomization probabilities at interim snapshots
+    snapshots <- dat[dat$n %in% c(50, 100, 150, 200), ]
+    with(snapshots, {
+        ## Mean randomisation probability for treatment 1 at each snapshot
+        p1_by_n <- tapply(p1, n, mean)
+        setNames(as.numeric(p1_by_n), paste0("p1_n", names(p1_by_n)))
+    })
+}
+
+Summarise <- function(condition, results, fixed_objects) {
+    ## Compute mean and quantiles for p1 at each interim snapshot
+    do.call("c", lapply(colnames(results), function(col) {
+        x <- results[, col]
+        q <- quantile(x, probs = c(0.25, 0.5, 0.75))
+        setNames(
+            c(mean(x), q),
+            c(paste0(col, "_mean"), paste0(col, "_q", c(25, 50, 75)))
+        )
+    }))
+}
+
+nsim <- 10000
+if ("cor-sim.rds" %in% list.files(path = "simulation")) {
+    corsimres <- readRDS("simulation/cor-sim.rds")
+} else {
+    set.seed(4242)
+    cores <- pmax(parallel::detectCores() - 2, 1) # adjust to machine
+    corsimres <- runSimulation(
+        design = Design,
+        replications = nsim,
+        generate = Generate,
+        analyse = Analyse,
+        summarise = Summarise,
+        fixed_objects = list(
+            muc = muc,
+            mut = mut,
+            sd = sd,
+            K = K,
+            pm = pm,
+            psd = psd,
+            pH0 = pH0,
+            n = n,
+            nincr = nincr,
+            burnin = burnin
+        ),
+        parallel = TRUE,
+        ncores = cores,
+        store_results = TRUE,
+        save = TRUE,
+        filename = "simulation/cor-sim.rds",
+        packages = c("brar")
+    )
+}
+raw <- SimExtract(corsimres, what = "results")
+plot_dat <- raw |>
+    tidyr::pivot_longer(
+        cols = starts_with("p1_n"),
+        names_to = "n",
+        names_prefix = "p1_n",
+        values_to = "p1"
+    ) |>
+    dplyr::mutate(n = as.integer(n))
+
+## plot simulation results
+pltmultib <- plot_dat |>
+    dplyr::mutate(
+        nfac = factor(n),
+        rhofac = factor(rho)
+    ) |>
+    ggplot(aes(x = nfac, y = p1, fill = rhofac)) +
+    geom_boxplot(alpha = 0.3, outlier.size = 0, outlier.alpha = 0.01) +
+    labs(x = "Total sample size",
+         y = "Randomization probability (group 1)",
+         fill = bquote("Prior correlation" ~ rho)) +
+    scale_fill_viridis_d(option = "plasma") +
+    scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+    theme_bw() +
+    theme(legend.position = "top",
+          panel.grid.minor = element_blank(),
+          panel.grid.major.x = element_blank())
+
+## combine both simulation plots
+ggarrange(pltmultia, pltmultib, ncol = 1, heights = c(1.2, 1), labels = c("(a)", "(b)"),
+          hjust = 0)
 
 
 ## ----"load-sim-data"----------------------------------------------------------
@@ -830,6 +997,7 @@ si <- readRDS("simulation/sessioninfo-server.rds")
 
 
 ## ----"preprare-simulation-data"-----------------------------------------------
+## prepare results from simulation study
 summaries <- readRDS("simulation/sim-summaries.rds") |>
     mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
                             labels = c("none", "[0.1,0.9]")),
@@ -856,11 +1024,11 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
            burninlab = paste0("'Burn-in' == ", burnin),
            rd1lab = paste0("'RD'[1] == ", pt1 - pc))
 
-## ## warnings and errors
+## ## uncomment to see warnings and errors (none)
 ## SimExtract(simres, what = "warnings")
 ## SimExtract(simres, what = "errors")
 
-## ## compare to results from Robertson et al. (2023)
+## ## uncomment to compare to results from Robertson et al. (2023)
 ## summaries |>
 ##     filter(K == 1, pc == 0.25, pt1 == 0.35, capping_eps == 0.5, burnin == 0,
 ##            c == "1", pH0 %in% c(0, 1), method %in% c("Exact BRAR",
@@ -909,11 +1077,13 @@ shapes <- c("none" = 19,
 
 
 ## ----"minimum-convergence"----------------------------------------------------
+## extract condition with lowest convergence
 maxNC <- summaries |>
     slice_min(order_by = meanconvergence)
 
 
 ## ----"plot-success-rate", dependson = "simulation-data", fig.height = 8, fig.width = 12----
+## plot mean rate of successes
 ggplot(data = summaries,
        aes(x = pH0, y = PS, col = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -936,6 +1106,7 @@ ggplot(data = summaries,
 
 
 ## ----"plot-extreme-probabilities", dependson = "simulation-data", fig.height = 8, fig.width = 12----
+## plot mean proportion of extreme randomization probabilities
 ggplot(data = summaries,
        aes(x = pH0, y = PExtreme, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -958,6 +1129,7 @@ ggplot(data = summaries,
 
 
 ## ----"plot-negative-imbalance", dependson = "simulation-data", fig.height = 8, fig.width = 12----
+## plot negative sample size imbalance
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = S01, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -979,6 +1151,7 @@ ggplot(data = filter(summaries, pt1 > pc),
 
 
 ## ----"plot-bias", dependson = "simulation-data", fig.height = 8, fig.width = 12----
+## plot bias
 ggplot(data = summaries,
        aes(x = pH0, y = biasRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -1000,6 +1173,7 @@ ggplot(data = summaries,
 
 
 ## ----"plot-coverage", dependson = "simulation-data", fig.height = 8, fig.width = 12----
+## plot 95% CI coverage
 ggplot(data = summaries,
        aes(x = pH0, y = covRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -1022,6 +1196,7 @@ ggplot(data = summaries,
 
 
 ## ----"plot-t1e", dependson = "simulation-data", fig.height = 8, fig.width = 12----
+## plot type I error rate
 ggplot(data = filter(summaries, pt1 == pc),
        aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -1046,6 +1221,7 @@ ggplot(data = filter(summaries, pt1 == pc),
 
 
 ## ----"plot-power", dependson = "simulation-data", fig.height = 8, fig.width = 12----
+## plot power
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -1065,6 +1241,23 @@ ggplot(data = filter(summaries, pt1 > pc),
          y = bquote("Power (RD"[1] == 0 * ")"),
          shape = "Modifications", color = "Method") +
     theme_dashboard()
+
+
+## ----"brar-package-demonstration", echo = TRUE, size = "normalsize"-----------
+library(brar) # load package
+
+## observed successes and trials in control and 3 treatment groups
+y <- c(10, 9, 14, 13)
+n <- c(20, 20, 22, 21)
+
+## conduct exact point null Bayesian RAR
+brar_binomial(y = y, n = n,
+              ## uniform prior for common probability under H0
+              a0 = 1, b0 = 1,
+              ## uniform priors for all probabilities
+              a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
+              ## prior probability of the null hypothesis
+              pH0 = 0.5)
 
 
 

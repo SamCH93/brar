@@ -6,4 +6,4 @@ RUN mkdir /home/rstudio/paper
 
 ## install R packages from CRAN the last day of the specified R version
 RUN install2.r --error --skipinstalled --ncpus -1 \
-    remotes knitr ggplot2 dplyr Ternary ggpubr ggh4x mvtnorm SimDesign brar
+    remotes knitr ggplot2 dplyr Ternary ggpubr ggh4x mvtnorm SimDesign brar RARtrials

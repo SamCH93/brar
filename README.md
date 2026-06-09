@@ -22,16 +22,22 @@ An interactively explorable simulation results dashboard is available at: <https
 
 ## Reproducing the paper results with a local R installation
 
-Make sure to have a recent version of R installed (only tested with version
+Make sure to have a recent version of R installed (only tested with version >
 4.5.2). Install the required packages with the following R command
 
 ```r
 install.packages(c("dplyr", "SimDesign", "brar", "mvtnorm", "ggplot2", "ggh4x",
-                   "ggpubr", "Ternary", "knitr"))
+                   "ggpubr", "Ternary", "RARtrials", "knitr"))
 ```
 
 Then run the R script `/paper/BFBRAR.R` to reproduce the results from the paper.
-Make sure that the working directory is set to `/paper`.
+Make sure that the working directory is set to `/paper`. This uses pre-saved
+simulation results. To reproduce the simulation study from scratch, run the R
+script `paper/simulation/simulation.R`, but be aware that the simulation took
+several days to run on a server with 100 CPU cores. Run the R script
+`paper/simulation/simulation-summaries.R` to pre-process the simulation results
+for the paper and/or the Quarto results dashboard
+(`paper/simulation/simulation-dashboard.Qmd`).
 
 ## Reproducing the paper with Docker
 
