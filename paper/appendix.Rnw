@@ -1,49 +1,163 @@
-% reset counter of figures and add preceeding S
-\setcounter{figure}{0}
-\renewcommand{\thefigure}{S\arabic{figure}}
+%% alphabetical section, tables, figures titles
+\counterwithin{figure}{section}
+\counterwithin{table}{section}
+\renewcommand{\thesection}{\Alph{section}}
+\renewcommand{\thefigure}{\thesection\arabic{figure}}
+\renewcommand{\thetable}{\thesection\arabic{table}}
 
 
-\section{The R package brar}
-\label{app:package}
-Our R package can be installed by running \texttt{install.packages("brar")} in
-an R console. The main functions of the package are \texttt{brar\_normal} and
-\texttt{brar\_binomial}, which implement the normal method from Section~3 and
-the binomial method from Section~4 in the main text. The following code chunk
-illustrates how the latter function can be used.
+\section{Asymptotic randomization probabilities under the null}
+\label{sec:supasymptotic}
 
-\begin{spacing}{1}
-<< "brar-package-demonstration", echo = TRUE, size = "normalsize" >>=
-library(brar) # load package
+Define the alternative hypothesis $H_1$ as the complement of $H_0$ or
+equivalently as the union of all non-null hypotheses, i.e., $H_1 =
+\bigcup_{j\neq 0} H_j = H_{-} \cup H_{+1} \cup \dots \cup H_{+K}$. The
+probability to randomize to treatment group $i$ can then be expressed as
+\begin{align*}
+  \pi_i
+  &= \Pr(H_{+i} \mid y) + \Pr(H_0 \mid y)/(K + 1) \\
+  &= \Pr(H_{+i} \mid y, H_1) \times \Pr(H_{1} \mid y) + \{1 - \Pr(H_1 \mid y)\}/(K + 1) \\
+  &= w \times \underbrace{\Pr(H_{+i} \mid y, H_1)}_{\text{Thompson sampling}} +
+  (1 - w) \times \underbrace{1/(K + 1)}_{\text{equal randomization}}
+\end{align*}
+with weight
+\begin{align*}
+  w &= 1 \, \bigg / \, \left\{1 + \frac{\Pr(H_0)}{1 - \Pr(H_0)} \times \mathrm{BF}_{01}(y)\right\}.
+\end{align*}
+If the Bayes factor $\mathrm{BF}_{01}(y)$ goes to zero, the weight converges to
+one and consequently the randomization probability converges to the ordinary
+Thompson sampling randomization probability (i.e., the posterior probability of
+$H_{+i}$ conditional on $H_1$). Conversely, if the Bayes factor
+$\mathrm{BF}_{01}(y)$ diverges to $+\infty$, the weight goes to zero and
+consequently the randomization probability converges to equal randomization.
 
-## observed successes and trials in control and 3 treatment groups
-y <- c(10, 9, 14, 13)
-n <- c(20, 20, 22, 21)
+Denote by $Y_n$ the random data with sample size $n$. The inverse Bayes factor
+$1/\mathrm{BF}_{01}(Y_n)$ is a test martingale for $H_0$ \citep{Shafer2011}.
+This also holds under RAR because the allocation is predictable (the
+randomization probability for the $n$-th patient is computed from the previously
+observed data $Y_{n-1}$ and is thus fixed before the outcome of patient $n$ is
+observed). It then follows from Ville's inequality that
+\begin{align*}
+  \Pr\left\{\sup_{n > 0} 1/\mathrm{BF}_{01}(Y_n) \geq 1/\alpha \mid H_0\right\} =
+  \Pr\left\{\inf_{n > 0} \mathrm{BF}_{01}(Y_n) \leq \alpha \mid H_0\right\}
+  \leq \alpha
+\end{align*}
+for every $\alpha \leq 1$. Letting $\alpha \to 0$ shows that, under $H_0$, the
+Bayes factor is almost surely bounded away from zero. Consequently, the
+equal-randomization weight $1 - w$ is almost surely bounded away from zero for
+all $n$, so the control group and every treatment group have allocation
+probabilities that are bounded away from zero uniformly in $n$. Hence, every
+group is sampled infinitely often almost surely.
+%% ($\min_k n_k \to \infty$).
+By Theorem 3.1 from \citet{Melfi2000}, ordinarily consistent estimators thus
+remain consistent under null hypothesis Bayesian RAR if $H_0$ is true.
 
-## conduct exact point null Bayesian RAR
-brar_binomial(y = y, n = n,
-              ## uniform prior for common probability under H0
-              a0 = 1, b0 = 1,
-              ## uniform priors for all probabilities
-              a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
-              ## prior probability of the null hypothesis
-              pH0 = 0.5)
-@
-\end{spacing}
+To show that the Bayes factor diverges to $+\infty$ and randomization
+probabilities consequently tend to equal randomization probabilities, further
+assumptions on the data and form of the Bayes factor are required. In the
+following, we will assume the setting of Section~3. We start with the one
+treatment group case ($K=1$). Suppose the Bayes factor concerns the test of a
+mean difference $\theta$ based on the maximum likelihood estimate
+$\hat{\theta}_n$ with standard error $\sigma_n = \lambda \sqrt{1/n_C + 1/n_1}$.
+The logarithm of the Bayes factor is given by
+\begin{align}
+  \label{eq:logbf01}
+  \log \mathrm{BF}_{01} = \frac{1}{2}\left\{\frac{(\hat{\theta}_n -
+    \mu)^2}{\sigma^2_n + \tau^2} + \log \left(1 +
+  \frac{\tau^2}{\sigma^2_n}\right) - \frac{\hat{\theta}_n^2}{\sigma^2_n}
+  \right\}.
+\end{align}
+Since under $H_0 \colon \theta = 0$, each arm is sampled infinitely often, it
+follows that $\sigma_n$ tends to $0$ and that $\hat{\theta}_n$ converges to the
+true mean difference $\theta$. With decreasing $\sigma_n$, the first term
+in~\eqref{eq:logbf01} approaches the constant $\mu^2/\tau^2$ and the second term
+diverges to $+\infty$. The last term $-(\hat{\theta}_n/\sigma_n)^2$ involves the
+squared standardized estimate, whose growth we now bound.
+
+Conditionally on the realized sample sizes $n_C$ and $n_1$, and assuming that
+the standard deviation $\lambda$ is known, the expectation of $\hat{\theta}_n$
+equals 0 under $H_0$ and its variance equals $\sigma_n^2$, so that
+\begin{align*}
+  \mathbb{E}[(\hat{\theta}_n/\sigma_n)^2 \mid H_0, n_C, n_1] =
+  \operatorname{Var}(\hat{\theta}_n/\sigma_n \mid H_0, n_C, n_1) = 1.
+\end{align*}
+%% therefore E(Z^2) = Var(Z) + E(Z)^2 = 1 + 0^2 = 1
+Thus, by Markov's inequality,
+\begin{align*}
+  \Pr\{(\hat{\theta}_n/\sigma_n)^2 \geq 1/\alpha \mid H_0, n_C, n_1\} \leq \frac{\mathbb{E}[(\hat{\theta}_n/\sigma_n)^2 \mid H_0, n_C, n_1]}{1/\alpha} = \alpha
+\end{align*}
+for every $\alpha \leq 1$. Averaging over the (adaptively generated)
+distribution of $n_C$ and $n_1$ leaves the bound intact
+\begin{align*}
+  \Pr\{(\hat{\theta}_n/\sigma_n)^2 \geq 1/\alpha \mid H_0\} =
+  \mathbb{E}_{n_C, n_1}\left[\Pr\{(\hat{\theta}_n/\sigma_n)^2 \geq 1/\alpha \mid H_0, n_C, n_1\}\right]
+  \leq \alpha,
+\end{align*}
+as the bound does not depend on $n_C$ and $n_1$. Hence,
+$(\hat{\theta}_n/\sigma_n)^2$ is bounded in probability under $H_0$. Therefore,
+as in~\eqref{eq:logbf01} the diverging term $\log(1 + \tau^2/\sigma_n^2)$
+dominates the stochastically bounded term $(\hat{\theta}_n/\sigma_n)^2$, the log
+Bayes factor diverges to $+\infty$ in probability. Consequently, under $H_0$ the
+allocation probabilities converge to equal randomization in probability.
+
+Using a similar argument, this can also be shown for the case with more than one
+treatment group ($K > 1$). Here, the logarithm of the Bayes factor is
+\begin{align}
+  \label{eq:logbf01multi}
+  \log \mathrm{BF}_{01} =
+  \frac{1}{2} \left\{(\boldsymbol{\hat{\theta}}_n - \boldsymbol{\mu})^\top (\boldsymbol{\Sigma}_n + \boldsymbol{\mathcal{T}})^{-1} (\boldsymbol{\hat{\theta}}_n - \boldsymbol{\mu}) +
+  %% \log\left(|\boldsymbol{I}_K + \boldsymbol{\mathcal{T}} \boldsymbol{\Sigma}^{-1}_n|\right)
+  \log\left(\frac{|\boldsymbol{\Sigma}_n + \boldsymbol{\mathcal{T}}|}{|\boldsymbol{\Sigma}_n|} \right)
+  - \boldsymbol{\hat{\theta}}^\top_n \boldsymbol{\Sigma}^{-1}_n \boldsymbol{\hat{\theta}}_n \right\}.
+\end{align}
+As under $H_0$ every group is sampled infinitely often,
+$\boldsymbol{\hat{\theta}}_n \to \boldsymbol{0}$, $\boldsymbol{\Sigma}_n \to
+\boldsymbol{0}$ (a matrix of zeros), and $|\boldsymbol{\Sigma}_n| \rightarrow
+0$. The first term in~\eqref{eq:logbf01multi} thus converges to the constant
+$\boldsymbol{\mu}^\top\boldsymbol{\mathcal{T}}^{-1}\boldsymbol{\mu}$, while the
+second term diverges to $+\infty$. The final quadratic form
+$\boldsymbol{\hat{\theta}}^\top_n \boldsymbol{\Sigma}^{-1}_n
+\boldsymbol{\hat{\theta}}_n$ has, conditional on $H_0$ and the realized sample
+sizes $n_C, n_1, \dots, n_K$, expectation
+\begin{align*}
+  \mathbb{E}[\boldsymbol{\hat{\theta}}^\top_n \boldsymbol{\Sigma}^{-1}_n
+\boldsymbol{\hat{\theta}}_n \mid H_0, n_C, n_1, \dots, n_K]
+  &= \mathbb{E}[\operatorname{tr}(\boldsymbol{\hat{\theta}}^\top_n \boldsymbol{\Sigma}^{-1}_n
+\boldsymbol{\hat{\theta}}_n) \mid H_0, n_C, n_1, \dots, n_K] \\
+  &= \mathbb{E}[\operatorname{tr}(\boldsymbol{\Sigma}^{-1}_n
+\boldsymbol{\hat{\theta}}_n \boldsymbol{\hat{\theta}}^\top_n) \mid H_0, n_C, n_1, \dots, n_K] \\
+  &= \operatorname{tr}(\boldsymbol{\Sigma}^{-1}_n
+\mathbb{E}[\boldsymbol{\hat{\theta}}_n \boldsymbol{\hat{\theta}}^\top_n \mid H_0, n_C, n_1, \dots, n_K]) \\
+&= \operatorname{tr}\{\boldsymbol{\Sigma}^{-1}_n
+\operatorname{Var}(\boldsymbol{\hat{\theta}}_n \mid H_0, n_C, n_1, \dots, n_K)\} \\
+  & = \operatorname{tr}(\boldsymbol{\Sigma}^{-1}_n \boldsymbol{\Sigma}_n) \\
+&= K.
+\end{align*}
+Thus, by Markov's inequality $\Pr(\boldsymbol{\hat{\theta}}^\top_n
+\boldsymbol{\Sigma}^{-1}_n \boldsymbol{\hat{\theta}}_n \geq 1/\alpha \mid H_0,
+n_C, n_1, \dots, n_K) \leq K \alpha$ for every $\alpha \leq 1/K$, a bound that
+does not depend on the sample sizes. Averaging over their distribution leaves
+the bound intact, so the quadratic form is bounded in probability. The diverging
+log-determinant term in~\eqref{eq:logbf01multi} therefore dominates, and $\log
+\mathrm{BF}_{01} \to +\infty$ in probability, so that under $H_0$ randomization
+probabilities converge to equal randomization also for the case of multiple
+treatment groups.
+
 
 \section{Null hypothesis Bayesian RAR under multivariate normality}
 Suppose there are $K > 1$ treatment groups and consequently $K$ effect
 estimates, each estimate quantifying the effect of the corresponding treatment
-relative to the control. A natural generalization univariate normal Bayesian RAR
-is to stack the estimates into a vector $\boldsymbol{\hat{\theta}} =
+relative to the control. A natural generalization of univariate normal Bayesian
+RAR is to stack the estimates into a vector $\boldsymbol{\hat{\theta}} =
 (\hat{\theta}_1, \dots, \hat{\theta}_K)^\top$ and assume a $K$-variate normal
 distribution $\boldsymbol{\hat{\theta}} \mid \boldsymbol{\theta} \sim
-\mathrm{N}_K(\boldsymbol{\theta}, \boldsymbol{\boldsymbol{\Sigma}})$, where
+\mathrm{N}_K(\boldsymbol{\theta}, \boldsymbol{\Sigma}_n)$, where
 $\boldsymbol{\theta} = (\theta_1, \dots, \theta_K)^\top$ is the vector of true
-effects and $\boldsymbol{\boldsymbol{\Sigma}}$ is the (assumed to be known)
-covariance matrix of $\boldsymbol{\hat{\theta}}$. For example,
-$\boldsymbol{\hat{\theta}}$ could be a vector of estimated regression
-coefficients and $\boldsymbol{\boldsymbol{\Sigma}}$ its estimated covariance
-matrix.
+effects and $\boldsymbol{\boldsymbol{\Sigma}}_n$ is the (assumed to be known)
+covariance matrix of $\boldsymbol{\hat{\theta}}$ that depends on the sample size
+$n$. For example, $\boldsymbol{\hat{\theta}}$ could be a vector of estimated
+regression coefficients and $\boldsymbol{\Sigma}_n$ its estimated
+covariance matrix.
 
 The hypotheses from Section~2 in the main text then translate into
 \begin{align*}
@@ -67,35 +181,36 @@ equipoise. Similarly, the prior hypothesis probabilities $\Pr(H_{+i})$ for $i=1,
 over the hypotheses. Additionally, specifying a prior covariance matrix
 $\boldsymbol{\mathcal{T}}$ with uniform correlation of 0.5 ensures equal
 treatment prior probabilities for any number of treatment groups $K$, and thus
-seems a sensible default in the absence of prior knowledege.
+seems a sensible default in the absence of prior knowledge.
 
+\begin{sloppypar}
 The normal-normal conjugate framework allows us to derive marginal likelihoods
 in closed-form. The marginal likelihood under $H_{0}$ is
 \begin{align*}
-  p(\boldsymbol{\hat{\theta}} \mid H_{0})
-  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{0}, \boldsymbol{\Sigma}),
+  p(\boldsymbol{\hat{\theta}} \mid H_{0}, n)
+  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{0}, \boldsymbol{\Sigma}_n),
 \end{align*}
 while the marginal likelihood under $H_{-}$ is
 \begin{align*}
-  p(\boldsymbol{\hat{\theta}} \mid H_{-})
+  p(\boldsymbol{\hat{\theta}} \mid H_{-}, n)
   %% &= \int_{(-\infty, 0)^K} \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{\theta}, \boldsymbol{\Sigma}) \,
   %% \frac{\mathrm{N}_K(\boldsymbol{\theta} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})} \, \mathrm{d}\boldsymbol{\theta} \\
-  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma} + \boldsymbol{\mathcal{T}}) \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}_*, \boldsymbol{\mathcal{T}}_*)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}
+  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma}_n + \boldsymbol{\mathcal{T}}) \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}_*, \boldsymbol{\mathcal{T}}_*)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}
 \end{align*}
 with $\mathrm{N}_K(\boldsymbol{x} \mid \boldsymbol{m}, \boldsymbol{V})$ and
 $\Phi_K(\boldsymbol{x} \mid \boldsymbol{m}, \boldsymbol{V})$ the density and
 cumulative distribution functions of the $K$-variate normal distribution with
 mean vector $\boldsymbol{m}$ and covariance matrix $\boldsymbol{V}$ evaluated at
 $\boldsymbol{x}$, and posterior mean $\boldsymbol{\mu}_* =
-(\boldsymbol{\Sigma}^{-1} +
-\boldsymbol{\mathcal{T}}^{-1})^{-1}(\boldsymbol{\Sigma}^{-1}\boldsymbol{\hat{\theta}}
+(\boldsymbol{\Sigma}^{-1}_n +
+\boldsymbol{\mathcal{T}}^{-1})^{-1}(\boldsymbol{\Sigma}^{-1}_n\boldsymbol{\hat{\theta}}
 + \boldsymbol{\mathcal{T}}^{-1}\boldsymbol{\mu})$ and covariance
-$\boldsymbol{\mathcal{T}}_* = (\boldsymbol{\Sigma}^{-1} +
+$\boldsymbol{\mathcal{T}}_* = (\boldsymbol{\Sigma}^{-1}_n +
 \boldsymbol{\mathcal{T}}^{-1})^{-1}$. Finally, the marginal likelihood under
 $H_{+i}$ is given by
 \begin{align*}
-  p(\boldsymbol{\hat{\theta}} \mid H_{+i})
-  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma} + \boldsymbol{\mathcal{T}}) \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K} \boldsymbol{\mu}_*, \boldsymbol{A}_{i,K} \boldsymbol{\mathcal{T}}_* \boldsymbol{A}_{i,K}^\top)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K}\boldsymbol{\mu}, \boldsymbol{A}_{i,K}\boldsymbol{\mathcal{T}}\boldsymbol{A}_{i,K}^\top)}
+  p(\boldsymbol{\hat{\theta}} \mid H_{+i}, n)
+  &= \mathrm{N}_K(\boldsymbol{\hat{\theta}} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma}_n + \boldsymbol{\mathcal{T}}) \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K} \boldsymbol{\mu}_*, \boldsymbol{A}_{i,K} \boldsymbol{\mathcal{T}}_* \boldsymbol{A}_{i,K}^\top)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K}\boldsymbol{\mu}, \boldsymbol{A}_{i,K}\boldsymbol{\mathcal{T}}\boldsymbol{A}_{i,K}^\top)}
 \end{align*}
 where $\boldsymbol{A}_{i,K}$ is a $K \times K$ contrast matrix that maps
 $\boldsymbol{\theta}$ to the space where the negative orthant corresponds to the
@@ -112,10 +227,10 @@ is
 with the first row encoding the constraint of $\theta_2$ being positive, and the
 second and third rows encoding the constraints of $\theta_2$ being larger than
 $\theta_1$ and $\theta_3$, respectively. As expected, for $K=1$, these marginal
-likelihoods reduce to the univariate ones~(7) in the main text. Moreover, since
-they are all available in closed-form, Bayes factors, posterior probabilities,
-and randomization probabilities are also available in closed-form. Crucially,
-only the exact evaluation of multivariate normal densities and cumulative
+likelihoods reduce to the univariate ones in the main text. Moreover, since they
+are all available in closed-form, Bayes factors, posterior probabilities, and
+randomization probabilities are also available in closed-form. Crucially, only
+the exact evaluation of multivariate normal densities and cumulative
 distribution functions is required, and both are efficiently implemented in
 statistical software \citep[e.g., in the \texttt{mvtnorm} R
   package,][]{Genz2009}. This thus leads to an efficient Bayesian RAR method
@@ -123,9 +238,10 @@ that allows experimenters to compute randomization probabilities in complex
 settings, for instance, multiple regression, where a full Bayesian analysis may
 involve additional complexities, such as priors for nuisance parameters and
 Markov chain Monte Carlo methods for the computation of posteriors.
+\end{sloppypar}
 
 << "check-multivariate", eval = FALSE >>=
-## simulate and compute probability of H+1
+## verification of probability of H+1 formula
 set.seed(44)
 mu <- c(0.3, -0.4)
 Sigma <- matrix(c(1, 0.8,
@@ -184,78 +300,112 @@ det(diag(4) + Tau %*% solve(Sigma))
 det(diag(4) + solve(Sigma) %*% Tau)
 @
 
-%% For example, Bayes factors are given by
-%% \begin{align*}
-%%   %% \mathrm{BF}_{0-}(\boldsymbol{\hat{\theta}})
-%%   %% &= \sqrt{|\boldsymbol{I}_K + \boldsymbol{\mathcal{T}} \boldsymbol{\Sigma}^{-1}|} \times
-%%   %% \exp\left[-\frac{1}{2}\left\{\boldsymbol{\hat{\theta}}^\top \boldsymbol{\Sigma}^{-1} \boldsymbol{\hat{\theta}} - (\boldsymbol{\hat{\theta}} - \boldsymbol{\mu})^\top (\boldsymbol{\Sigma} + \boldsymbol{\mathcal{T}})^{-1} (\boldsymbol{\hat{\theta}} - \boldsymbol{\mu}) \right\}\right] \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}_*, \boldsymbol{\mathcal{T}}_*)} \\
-%%   \mathrm{BF}_{+i0}(\boldsymbol{\hat{\theta}}) =& \exp\left[-\frac{1}{2}\left\{(\boldsymbol{\hat{\theta}} - \boldsymbol{\mu})^\top (\boldsymbol{\Sigma} + \boldsymbol{\mathcal{T}})^{-1} (\boldsymbol{\hat{\theta}} - \boldsymbol{\mu}) - \boldsymbol{\hat{\theta}}^\top \boldsymbol{\Sigma}^{-1} \boldsymbol{\hat{\theta}} \right\}\right] \times \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K} \boldsymbol{\mu}_*, \boldsymbol{A}_{i,K} \boldsymbol{\mathcal{T}}_* \boldsymbol{A}_{i,K}^\top)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K}\boldsymbol{\mu}, \boldsymbol{A}_{i,K}\boldsymbol{\mathcal{T}}\boldsymbol{A}_{i,K}^\top)} \\ &\bigg / \sqrt{|\boldsymbol{I}_K + \boldsymbol{\mathcal{T}} \boldsymbol{\Sigma}^{-1}|} \\
-%%   \mathrm{BF}_{+i-}(\boldsymbol{\hat{\theta}}) =& \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K} \boldsymbol{\mu}_*, \boldsymbol{A}_{i,K} \boldsymbol{\mathcal{T}}_* \boldsymbol{A}_{i,K}^\top)}{\Phi_K(\boldsymbol{0} \mid \boldsymbol{A}_{i,K}\boldsymbol{\mu}, \boldsymbol{A}_{i,K}\boldsymbol{\mathcal{T}}\boldsymbol{A}_{i,K}^\top)} \, \bigg / \, \frac{\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}_*, \boldsymbol{\mathcal{T}}_*)}  {\Phi_K(\boldsymbol{0} \mid \boldsymbol{\mu}, \boldsymbol{\mathcal{T}})}
-%% \end{align*}
-%% and Bayes factors for other hypothesis comparisons can again be computed through
-%% reciprocity and transitivity.
-
 
 \begin{figure}[!htb]
-<< "example-multinormal", fig.height = 4, cache = TRUE >>=
+<< "simulated-example-multinormal", fig.height = 6.5, cache = TRUE >>=
+## simulate a multinormal data sequence with BRAR
+simulate_multi_brar <- function(burnin, n, nincr = 1, muc, mut, sd, pm, psd,
+                                rho, pH0) {
+    ## prior mean and covariance
+    pm <- rep(0, K)
+    psigma <- matrix(rho, nrow = K, ncol = K)
+    diag(psigma) <- psd^2
+
+    ## simulate burnin data
+    datC <- data.frame(y = rnorm(n = ceiling(burnin/(K + 1)), mean = muc,
+                                 sd = sd),
+                       group = "Control")
+    datT <- do.call("rbind", lapply(seq(1, K), function(k) {
+        data.frame(y = rnorm(n = ceiling(burnin/(K + 1)), mean = mut[k],
+                             sd = sd),
+                   group = paste("Treatment", k))
+    }))
+    dat <- rbind(datC, datT)
+    dat$n <- seq(1, nrow(dat), 1)
+    dat[, c("pc", paste0("p", 1:K))] <- 1/(K + 1)
+
+    ## simulate RAR data
+    nseq <- seq(dat$n[length(dat$n)] + 1, n, nincr)
+    for (ni in nseq) {
+        fit <- lm(y ~ group, data = dat, subset = n < ni)
+        estimate <- fit$coef[-1]
+        sigma <- vcov(fit)[-1,-1]
+        brar <- brar_normal(estimate = estimate, sigma = sigma, pm = pm,
+                            psigma = psigma, pH0 = pH0)
+        prand <- unname(brar$prand)
+        names(prand) <- c("pc", paste0("p", 1:K))
+        grpindex <- sample(x = 1:(K + 1), size = nincr, replace = TRUE,
+                           prob = prand)
+        grp <- c("Control", paste("Treatment", 1:K))[grpindex]
+        newdat <- rnorm(n = nincr, mean = c(muc, mut)[grpindex], sd = sd)
+        dati <- data.frame(n = seq(ni, ni + nincr - 1, 1), group = grp,
+                           y = newdat)
+        dat <- rbind(dat, cbind(dati, data.frame(t(prand))))
+    }
+    return(dat)
+}
+
 ## simulate RAR
 set.seed(42)
 n <- 200
 nseq <- seq_len(n)
+nincr <- 1
 sd <- 1 # true standard deviation
 muc <- 0 # true mean in control group
-mus <- c(0.25, 0, -0.25) # true means in treatment groups
-K <- length(mus) # number of treatments
-datC <- data.frame(y = rnorm(n = n, mean = muc, sd = sd), group = "Control",
-                   time = nseq)
-datT <- do.call("rbind", lapply(seq(1, K), function(k) {
-    data.frame(y = rnorm(n = n, mean = mus[k], sd = sd),
-               group = paste("Treatment", k), time = nseq)
-}))
-dat <- rbind(datC, datT)
+mut <- c(0.25, 0, -0.25) # true means in treatment groups
+K <- length(mut) # number of treatments
+burnin <- 2*(K + 1)
 
-## priors
+## prior
 pm <- rep(0, K)
+psd <- 1
 rho <- 0.5 # to have equal prior probabilities
 psigma <- matrix(rho, nrow = K, ncol = K)
-tau <- 1
-diag(psigma) <- tau^2
-pH0seq <- seq(0, 1, 0.25)
+diag(psigma) <- psd^2
+pH0 <- 0
 
-## perform BRAR for accumulating data
-plotDF <- do.call("rbind", lapply(X = seq(5, n), FUN = function(ni) {
-    fit <- lm(y ~ group, data = dat, subset = time <= ni)
+## simulate one sequence under Thompson sampling
+set.seed(12345)
+datmulti <- simulate_multi_brar(burnin = burnin, n = n, nincr = nincr,
+                                muc = muc, mut = mut, sd = sd, pm = pm,
+                                psd = psd, rho = rho, pH0 = pH0)
+## re-compute RAR probabilities for different pH0
+pH0seq <- seq(0, 1, 0.25)
+plotDF <- do.call("rbind",
+                  lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
+    dat <- datmulti
+    dat$pH0 <- pH0
+    fit <- lm(y ~ group, data = dat, subset = n < ni)
     estimate <- fit$coef[-1]
     sigma <- vcov(fit)[-1,-1]
     do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
         brar <- brar_normal(estimate = estimate, sigma = sigma, pm = pm,
-                                 psigma = psigma, pH0 = pH0)
-        res <- data.frame("time" = ni, "pH0" = pH0, "prand" = brar$prand,
-                          "group" = names(brar$prand))
-        rownames(res) <- NULL
-        return(res)
+                            psigma = psigma, pH0 = pH0)
+        dat[ni:(ni + nincr - 1), c("pc", paste0("p", 1:K))] <-
+            matrix(rep(brar$prand, nincr), ncol = K + 1, byrow = TRUE)
+        dat$pH0 <- pH0
+        dat[ni:(ni + nincr - 1),]
     }))
 }))
+plotDFlong <- tidyr::pivot_longer(plotDF, cols = c("pc", paste0("p", 1:K)),
+                                  names_to = "arm", values_to = "p")
 
-
-pH0lvls <- unique(plotDF$pH0)
+## plot simulated RAR sequence
+pH0lvls <- unique(plotDFlong$pH0)
 pH0labs <- as.character(pH0lvls)
 pH0labs[pH0lvls == 0] <- "0 (Thompson sampling)"
 pH0labs[pH0lvls == 1] <- "1 (equal randomization)"
-plotDF$pH0fac <- factor(plotDF$pH0, ordered = TRUE,
-                        levels = pH0lvls, labels = pH0labs)
-lvls <- c("Control", paste("Treatment", seq(1, K)))
-## labs <- c(paste("'Control (' ~ mu == ", muc, "~ ')'"),
-##           paste("'Treatment",  seq(1, K), "(' * mu == ", mus, "* ')'"))
+plotDFlong$pH0fac <- factor(plotDFlong$pH0, ordered = TRUE, levels = pH0lvls,
+                            labels = pH0labs)
+lvls <- c("pc", paste0("p", seq(1, K)))
 labs <- c("Control",
           paste("'Treatment",  seq(1, K), "(' * theta[", seq(1, K),
-                "] == ", mus - muc, "* ')'"))
-plotDF$groupLab <- factor(plotDF$group, levels = lvls, labels = labs)
-ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
-    facet_wrap(~ groupLab, labeller = label_parsed) +
+                "] == ", mut - muc, "* ')'"))
+plotDFlong$armLab <- factor(plotDFlong$arm, levels = lvls, labels = labs)
+pltmultia <- ggplot(data = plotDFlong, aes(x = n, y = p, color = pH0fac)) +
+    facet_wrap(~ armLab, labeller = label_parsed) +
     labs(x = "Sample size per group", y = "Randomization probability",
-         color = bquote("Pr(" * italic(H)[0] * ")"), linetype = "Method") +
-    ## geom_hline(yintercept = 1/(K + 1), lty = 2, alpha = 0.5) +
+         color = bquote("Pr(" * italic(H)[0] * ")")) +
     geom_step(alpha = 0.8) +
     scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
     theme_bw() +
@@ -263,23 +413,174 @@ ggplot(data = plotDF, aes(x = time, y = prand, color = pH0fac)) +
           strip.background = element_rect(fill = "#00000003"),
           legend.position = "top")
 
+## simulate multigroup BRAR for different prior correlation structures
+Design <- createDesign(rho = seq(0, 0.75, 0.25))
+muc <- 0
+mut <- c(0.25, 0, -0.25)
+sd <- 1
+K <- length(mut)
+pm <- rep(0, K)
+psd <- 1
+pH0 <- 0.5
+n <- 200
+nincr <- 1
+burnin <- 2 * (K + 1)
+
+Generate <- function(condition, fixed_objects) {
+    rho <- condition$rho
+    with(fixed_objects, {
+        ## Prior mean and covariance
+        pm <- rep(0, K)
+        psigma <- matrix(rho, nrow = K, ncol = K)
+        diag(psigma) <- psd^2
+
+        ## simulate burn-in data
+        datC <- data.frame(
+            y = rnorm(ceiling(burnin / (K + 1)), mean = muc, sd = sd),
+            group = "Control"
+        )
+        datT <- do.call("rbind", lapply(seq_len(K), function(k) {
+            data.frame(
+                y = rnorm(ceiling(burnin / (K + 1)), mean = mut[k], sd = sd),
+                group = paste("Treatment", k)
+            )
+        }))
+        dat <- rbind(datC, datT)
+        dat$n <- seq_len(nrow(dat))
+        dat[, c("pc", paste0("p", 1:K))] <- 1 / (K + 1)
+
+        ## simulate RAR data
+        nseq <- seq(tail(dat$n, 1) + 1, n, nincr)
+        for (ni in nseq) {
+            fit <- lm(y ~ group, data = dat, subset = n < ni)
+            estimate <- fit$coef[-1]
+            sigma <- vcov(fit)[-1, -1]
+
+            brar <- brar_normal(estimate = estimate, sigma = sigma,
+                                pm = pm, psigma = psigma, pH0 = pH0)
+            prand <- unname(brar$prand)
+            names(prand) <- c("pc", paste0("p", 1:K))
+
+            grpindex <- sample(1:(K + 1), size = nincr, replace = TRUE, prob = prand)
+            grp <- c("Control", paste("Treatment", 1:K))[grpindex]
+            newdat <- rnorm(nincr, mean = c(muc, mut)[grpindex], sd = sd)
+
+            dati <- data.frame(n = seq(ni, ni + nincr - 1), group = grp, y = newdat)
+            dat <- rbind(dat, cbind(dati, data.frame(t(prand))))
+        }
+
+        dat
+    })
+}
+
+Analyse <- function(condition, dat, fixed_objects) {
+    ## Extract randomization probabilities at interim snapshots
+    snapshots <- dat[dat$n %in% c(50, 100, 150, 200), ]
+    with(snapshots, {
+        ## Mean randomisation probability for treatment 1 at each snapshot
+        p1_by_n <- tapply(p1, n, mean)
+        setNames(as.numeric(p1_by_n), paste0("p1_n", names(p1_by_n)))
+    })
+}
+
+Summarise <- function(condition, results, fixed_objects) {
+    ## Compute mean and quantiles for p1 at each interim snapshot
+    do.call("c", lapply(colnames(results), function(col) {
+        x <- results[, col]
+        q <- quantile(x, probs = c(0.25, 0.5, 0.75))
+        setNames(
+            c(mean(x), q),
+            c(paste0(col, "_mean"), paste0(col, "_q", c(25, 50, 75)))
+        )
+    }))
+}
+
+nsim <- 10000
+if ("cor-sim.rds" %in% list.files(path = "simulation")) {
+    corsimres <- readRDS("simulation/cor-sim.rds")
+} else {
+    set.seed(4242)
+    cores <- pmax(parallel::detectCores() - 2, 1) # adjust to machine
+    corsimres <- runSimulation(
+        design = Design,
+        replications = nsim,
+        generate = Generate,
+        analyse = Analyse,
+        summarise = Summarise,
+        fixed_objects = list(
+            muc = muc,
+            mut = mut,
+            sd = sd,
+            K = K,
+            pm = pm,
+            psd = psd,
+            pH0 = pH0,
+            n = n,
+            nincr = nincr,
+            burnin = burnin
+        ),
+        parallel = TRUE,
+        ncores = cores,
+        store_results = TRUE,
+        save = TRUE,
+        filename = "simulation/cor-sim.rds",
+        packages = c("brar")
+    )
+}
+raw <- SimExtract(corsimres, what = "results")
+plot_dat <- raw |>
+    tidyr::pivot_longer(
+        cols = starts_with("p1_n"),
+        names_to = "n",
+        names_prefix = "p1_n",
+        values_to = "p1"
+    ) |>
+    dplyr::mutate(n = as.integer(n))
+
+## plot simulation results
+pltmultib <- plot_dat |>
+    dplyr::mutate(
+        nfac = factor(n),
+        rhofac = factor(rho)
+    ) |>
+    ggplot(aes(x = nfac, y = p1, fill = rhofac)) +
+    geom_boxplot(alpha = 0.3, outlier.size = 0, outlier.alpha = 0.01) +
+    labs(x = "Total sample size",
+         y = "Randomization probability (group 1)",
+         fill = bquote("Prior correlation" ~ rho)) +
+    scale_fill_viridis_d(option = "plasma") +
+    scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+    theme_bw() +
+    theme(legend.position = "top",
+          panel.grid.minor = element_blank(),
+          panel.grid.major.x = element_blank())
+
+## combine both simulation plots
+ggarrange(pltmultia, pltmultib, ncol = 1, heights = c(1.2, 1), labels = c("(a)", "(b)"),
+          hjust = 0)
 @
-\caption{Evolution of Bayesian RAR probabilities for \Sexpr{length(mus)}
-  treatments and a control group. In each step, one observation from each group
-  is simulated from a normal distribution with a standard deviation of
-  \Sexpr{sd} and corresponding mean differences as indicated in the panel titles
-  (treatment 1 is the most effective treatment), and a mean difference effect
-  estimate $\boldsymbol{\hat{\theta}}$ and its estimated covariance matrix
-  $\boldsymbol{\Sigma}$ computed with linear regression. Randomization
-  probabilities are then computed using a normal spike-and-slab prior for
-  centered at the origin and with covariance matrix $\boldsymbol{\mathcal{T}}$
-  with $\boldsymbol{\mathcal{T}}_{ij} = \Sexpr{rho}$ for $i\neq j$ and
-  $\boldsymbol{\mathcal{T}}_{ij} = \Sexpr{tau^2}$ for $i = j$, and for different
-  prior probabilities $\Pr(H_0)$.}
+\caption{Plot (a) shows a simulated evolution of Bayesian RAR probabilities for
+  3 treatments and a control group. In each step, one patient is allocated to
+  the control group or one of the treatment groups group using Thompson sampling
+  based on a normal prior centered at zero and with covariance matrix
+  $\boldsymbol{\mathcal{T}}$ with $\boldsymbol{\mathcal{T}}_{ij} = \Sexpr{rho}$
+  for $i\neq j$ and $\boldsymbol{\mathcal{T}}_{ij} = \Sexpr{psd^2}$ for $i = j$.
+  Patient outcomes are then simulated from a normal distribution with a standard
+  deviation of \Sexpr{sd} and corresponding mean differences as indicated in the
+  panel titles (treatment 1 is the most effective treatment), and a mean
+  difference effect estimate $\boldsymbol{\hat{\theta}}$ and its estimated
+  covariance matrix $\boldsymbol{\Sigma}_n$ computed with linear regression.
+  Randomization probabilities are based on a spike-and-slab prior ($\Pr(H_0) >
+  0$) with the same multivariate normal component as Thompson sampling, and are
+  computed from the same data sequence to enable comparability. Plot (b) shows
+  the distribution of randomization probabilities for different total sample
+  sizes based on \Sexpr{prettyNum(nsim, big.mark = "'")} simulations under
+  Bayesian RAR with $\Pr(H_0) = \Sexpr{pH0}$ with varying prior correlation
+  $\boldsymbol{\mathcal{T}}_{ij} = \rho$ for $i\neq j$.}
 \label{fig:example-multinormal}
 \end{figure}
 
-Figure~\ref{fig:example-multinormal} shows sequences of randomization
+Figure~\ref{fig:example-multinormal}a shows sequences of randomization
 probabilities computed from simulated normal data with $K = \Sexpr{K}$ treatment
 groups. We see that assigning a prior probability $\Pr(H_0) = 1$ leads to static
 equal randomization at $\pi_i = 1/(K+1)= \Sexpr{round(100*(1/(K+1)), 2)}\%$,
@@ -289,10 +590,21 @@ is the most effective, randomization probabilities based on $\Pr(H_0) < 1$
 converge towards $\pi_1 = 100\%$ and toward $0\%$ for the remaining treatments.
 While convergence is the fastest for $\Pr(H_0) = 0$, this prior probability also
 accidentally produces rather high randomization probabilities for the control
-group at the start of the study, which is less pronounced for positive prior
-probabilities $\Pr(H_0) > 0$.
+group in the first half of the study, which is less pronounced for positive
+prior probabilities $\Pr(H_0) > 0$.
 
-
+\begin{sloppypar}
+Figure~\ref{fig:example-multinormal}b shows the distribution of randomization
+probabilities for the best treatment (treatment 1) simulated under Bayesian RAR
+with $\Pr(H_0) = \Sexpr{pH0}$ and for different correlation structures of the
+multivariate normal prior distribution for the treatment effect vector. While
+the simulation in Figure~\ref{fig:example-multinormal}a used $\rho = 0.5$ to
+achieve equal prior probabilities of treatments at the study start, the
+simulations in Figure~\ref{fig:example-multinormal}b also consider smaller and
+larger values. We can see that with increasing correlation, the randomization
+becomes more aggressive towards the effective treatment, though also the spread
+of the randomization probabilities seems to increase.
+\end{sloppypar}
 
 \section{Simulation study}
 \label{app:simulation}
@@ -359,9 +671,6 @@ exact method uses success counts and sample sizes only. In case a method fails
 to converge, equal randomization is applied as a back-up strategy, as this
 mimics what an experimenter might do in practice when a RAR method fails to
 converge \citep{Paweletal2025c}.
-%% Since the normal and binomial priors use weakly-informative defaults but are in
-%% no way ``matched'', results can also be considered as sensitivity analyses of
-%% Bayesian RAR.
 
 We also consider three modifications of these methods: In some conditions, a
 ``burn-in'' phase is carried out during which the first 50 patients are always
@@ -482,15 +791,15 @@ si <- readRDS("simulation/sessioninfo-server.rds")
 The simulation study was run on a server running \Sexpr{si$running} and
 \Sexpr{si$R.version$version.string}. The SimDesign R package was used to
 organize and run the simulation study \citep{Chalmers2020}. Our newly developed
-\texttt{brar} R package was used to perform Bayesian RAR.
-%%  (see Appendix~\ref{app:package} for an illustration).
-Code and data to reproduce this simulation study are available at
+\texttt{brar} R package was used to perform Bayesian RAR. Code and data to
+reproduce this simulation study are available at
 \url{https://github.com/SamCH93/brar} and persistenly archived at
 \url{https://doi.org/10.5281/zenodo.17248628}.
 
 \subsection{Results}
 
 << "preprare-simulation-data" >>=
+## prepare results from simulation study
 summaries <- readRDS("simulation/sim-summaries.rds") |>
     mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
                             labels = c("none", "[0.1,0.9]")),
@@ -517,11 +826,11 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
            burninlab = paste0("'Burn-in' == ", burnin),
            rd1lab = paste0("'RD'[1] == ", pt1 - pc))
 
-## ## warnings and errors
+## ## uncomment to see warnings and errors (none)
 ## SimExtract(simres, what = "warnings")
 ## SimExtract(simres, what = "errors")
 
-## ## compare to results from Robertson et al. (2023)
+## ## uncomment to compare to results from Robertson et al. (2023)
 ## summaries |>
 ##     filter(K == 1, pc == 0.25, pt1 == 0.35, capping_eps == 0.5, burnin == 0,
 ##            c == "1", pH0 %in% c(0, 1), method %in% c("Exact BRAR",
@@ -570,12 +879,14 @@ shapes <- c("none" = 19,
 @
 
 << "minimum-convergence" >>=
+## extract condition with lowest convergence
 maxNC <- summaries |>
     slice_min(order_by = meanconvergence)
 @
 
 
 \paragraph{Convergence}
+\begin{sloppypar}
 Non-convergence happened only rarely for the normal approximation method due to
 logistic regression not converging at the start of the study when no events were
 observed for some groups. In this case, equal randomization was applied. The
@@ -584,12 +895,14 @@ groups where \Sexpr{round(100 - 100*maxNC[,"meanconvergence"], 1)}\% of the $n$
 logistic regressions did not converge. No other forms of missingness were
 observed. Figures and tables with per-condition-method non-convergence rates are
 available at \url{https://samch93.github.io/brar/}.
+\end{sloppypar}
 
 \afterpage{
 \begin{landscape}
 
 \begin{figure}[!htb]
 << "plot-success-rate", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+## plot mean rate of successes
 ggplot(data = summaries,
        aes(x = pH0, y = PS, col = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -619,6 +932,7 @@ ggplot(data = summaries,
 
 \begin{figure}[!htb]
 << "plot-extreme-probabilities", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+## plot mean proportion of extreme randomization probabilities
 ggplot(data = summaries,
        aes(x = pH0, y = PExtreme, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -649,6 +963,7 @@ ggplot(data = summaries,
 
 \begin{figure}[!htb]
 << "plot-negative-imbalance", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+## plot negative sample size imbalance
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = S01, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -678,6 +993,7 @@ ggplot(data = filter(summaries, pt1 > pc),
 
 \begin{figure}[!htb]
 << "plot-bias", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+## plot bias
 ggplot(data = summaries,
        aes(x = pH0, y = biasRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -706,6 +1022,7 @@ ggplot(data = summaries,
 
 \begin{figure}[!htb]
 << "plot-coverage", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+## plot 95% CI coverage
 ggplot(data = summaries,
        aes(x = pH0, y = covRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -735,6 +1052,7 @@ ggplot(data = summaries,
 
 \begin{figure}[!htb]
 << "plot-t1e", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+## plot type I error rate
 ggplot(data = filter(summaries, pt1 == pc),
        aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -766,6 +1084,7 @@ ggplot(data = filter(summaries, pt1 == pc),
 
 \begin{figure}[!htb]
 << "plot-power", dependson = "simulation-data", fig.height = 8, fig.width = 12 >>=
+## plot power
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
@@ -859,8 +1178,34 @@ differences, power was slightly increased for the exact compared to the normal
 version of RAR, while for Thompson sampling the type I rate was slightly higher
 for the exact compared to the normal version.
 
+\section{The R package brar}
+\label{app:package}
+Our R package can be installed by running \texttt{install.packages("brar")} in
+an R console. The main functions of the package are \texttt{brar\_normal} and
+\texttt{brar\_binomial}, which implement the normal method from Section~3 and
+the binomial method from Section~4 in the main text. The following code chunk
+illustrates how the latter function can be used.
 
-\section{Software and data}
+\begin{spacing}{1}
+<< "brar-package-demonstration", echo = TRUE, size = "normalsize" >>=
+library(brar) # load package
+
+## observed successes and trials in control and 3 treatment groups
+y <- c(10, 9, 14, 13)
+n <- c(20, 20, 22, 21)
+
+## conduct exact point null Bayesian RAR
+brar_binomial(y = y, n = n,
+              ## uniform prior for common probability under H0
+              a0 = 1, b0 = 1,
+              ## uniform priors for all probabilities
+              a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
+              ## prior probability of the null hypothesis
+              pH0 = 0.5)
+@
+\end{spacing}
+
+\section*{Software and data}
 Code and data to reproduce our analyses are openly available at
 \url{https://github.com/SamCH93/brar}. A snapshot of the repository at the time
 of writing is available at \url{https://doi.org/10.5281/zenodo.17248628}. We

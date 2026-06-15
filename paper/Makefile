@@ -1,4 +1,4 @@
-all: pdf code clean
+all: pdf clean
 
 # names of .Rnw .bib. and .bst files
 FILE=BFBRAR
@@ -30,12 +30,20 @@ code: $(FILE).Rnw
 	Rscript -e "knitr::purl('$(FILE).Rnw')" --vanilla
 
 ## use texdiff to show difference to previous version
-$(FILE)-changes.pdf: tex old/$(FILE)-v1.tex old/ld.cfg
-	-latexdiff -c old/ld.cfg old/$(FILE)-v1.tex $(FILE).tex > $(FILE)-changes.tex
+$(FILE)-changes.pdf: tex old/$(FILE)-v2.tex old/ld.cfg
+	-latexdiff -c old/ld.cfg old/$(FILE)-v2.tex $(FILE).tex > $(FILE)-changes.tex
 	-pdflatex --interaction nonstopmode $(FILE)-changes
 	-bibtex $(FILE)-changes
 	-pdflatex --interaction nonstopmode $(FILE)-changes
 	-pdflatex --interaction nonstopmode $(FILE)-changes
+
+## use texdiff to show difference to previous version
+supplement-changes.pdf: supplement old/supplement-v2.tex old/ld.cfg
+	-latexdiff -c old/ld.cfg old/supplement-v2.tex supplement.tex > supplement-changes.tex
+	-pdflatex --interaction nonstopmode supplement-changes
+	-bibtex supplement-changes
+	-pdflatex --interaction nonstopmode supplement-changes
+	-pdflatex --interaction nonstopmode supplement-changes
 
 ## clean
 clean:  
@@ -44,8 +52,12 @@ clean:
 	supplement.aux  supplement.blg  supplement.log  supplement.tex  supplement.bbl \
 	supplement.out supplement.brf supplement.synctex.gz \
 	$(FILE)-changes.aux  $(FILE)-changes.blg  $(FILE)-changes.log $(FILE)-changes.bbl $(FILE)-changes.fff \
-	$(FILE)-changes.out $(FILE)-changes.brf $(FILE)-changes.tex $(FILE)-changes.synctex.gz
+	$(FILE)-changes.out $(FILE)-changes.brf $(FILE)-changes.tex $(FILE)-changes.synctex.gz \
+	supplement-changes.aux  supplement-changes.blg  supplement-changes.log supplement-changes.bbl supplement-changes.fff \
+	supplement-changes.out supplement-changes.brf supplement-changes.tex supplement-changes.synctex.gz
 
 cleanall: clean
 	-rm -r ./figure/
 	-rm -r ./cache/
+
+.PHONY: all clean cleanall pdf code pdf2 tex
