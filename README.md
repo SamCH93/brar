@@ -39,6 +39,10 @@ several days to run on a server with 100 CPU cores. Run the R script
 for the paper and/or the Quarto results dashboard
 (`paper/simulation/simulation-dashboard.Qmd`).
 
+The R session info (R version, platform, and package versions) used to produce
+the results in the paper is recorded at the end of the compiled PDF manuscript
+(`/paper/BFBRAR.pdf`).
+
 ## Reproducing the paper with Docker
 
 Make sure to have Docker and Make installed, then run `make docker-rstudio` from
@@ -51,3 +55,12 @@ Server before running the R scripts. Running `make docker-paper` produces the
 `paper/BFBRAR.tex` file from the `paper/BFBRAR.Rnw` source file (dynamically
 inserting numbers and figures) and then compiles it to a PDF (requires a local
 LaTeX installation; only tested with TeX Live 2023/Debian).
+
+## License
+
+The code is released under the [GPL-3 License](LICENSE).
+
+## Contact
+
+For questions or issues, please contact Samuel Pawel
+([samuel.pawel@uzh.ch](mailto:samuel.pawel@uzh.ch)).
