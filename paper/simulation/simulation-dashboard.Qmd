@@ -126,7 +126,6 @@ Different performance measures were used
 - The mean rate of allocations to treatment group 1 (the best group in all conditions where $\theta_1 > \theta_C$)
 - The mean sample size difference between treatment group 1 and the average sample size in the remaining groups
 - The rate of simulations with 10% sample size imbalance in favor of inferior treatments, i.e., $\hat{S}_{0.1} = \Pr(\frac{n - n_1}{K} - n_1 > 0.1n)$. For $K= 1$, this reduces to the $\hat{S}_{0.1}$ measure from Robertson et al. (2023, <https://doi.org/10.1214/22-STS865>), which in turn was inspired by the performance evaluation in the simulation study from Thall, Fox, and Wathen (2015, <https://doi.org/10.1093/annonc/mdv238>).  Note that the $\hat{S}_{0.1}$ measure is difficult to translate into an actual patient benefit measure because the patient benefit loss related to imbalance depends on the size of the treatment effect. For instance, imbalance is less consequential if the treatment effect is small than if it is large. We include the $\hat{S}_{0.1}$ measure primarily for comparability with previous simulation studies.
-  with previous simulation studies.
 - The rate of simulations with extreme randomization probabilities (less than 10\%0.1 or greater than 90\%).
 
 #### Parameter estimation performance
