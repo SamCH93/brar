@@ -14,7 +14,7 @@ effect of a treatment relative to control}
 
 \item{sigma}{Covariance matrix of the effect estimate vector. If there is
 only one effect estimate, this is the squared standard error of the
-estimate.}
+estimate}
 
 \item{pm}{Mean vector of the normal prior assigned to the effects under the
 alternative hypothesis. Defaults to \code{rep(0, length(estimate))}}
