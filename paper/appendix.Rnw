@@ -301,7 +301,7 @@ det(diag(4) + solve(Sigma) %*% Tau)
 @
 
 
-\begin{figure}[!htb]
+\begin{figure}[p]
 << "simulated-example-multinormal", fig.height = 6.5, cache = TRUE >>=
 ## simulate a multinormal data sequence with BRAR
 simulate_multi_brar <- function(burnin, n, nincr = 1, muc, mut, sd, pm, psd,
@@ -371,22 +371,28 @@ datmulti <- simulate_multi_brar(burnin = burnin, n = n, nincr = nincr,
                                 psd = psd, rho = rho, pH0 = pH0)
 ## re-compute RAR probabilities for different pH0
 pH0seq <- seq(0, 1, 0.25)
-plotDF <- do.call("rbind",
-                  lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
-    dat <- datmulti
+burninDF <- do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
+    dat <- datmulti[seq_len(burnin), ]
+    dat[, c("pc", paste0("p", 1:K))] <- 1/(K + 1)
     dat$pH0 <- pH0
+    dat
+}))
+rarDF <- do.call("rbind",
+                 lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
+    dat <- datmulti
     fit <- lm(y ~ group, data = dat, subset = n < ni)
     estimate <- fit$coef[-1]
-    sigma <- vcov(fit)[-1,-1]
+    sigma <- vcov(fit)[-1, -1]
     do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
         brar <- brar_normal(estimate = estimate, sigma = sigma, pm = pm,
                             psigma = psigma, pH0 = pH0)
         dat[ni:(ni + nincr - 1), c("pc", paste0("p", 1:K))] <-
             matrix(rep(brar$prand, nincr), ncol = K + 1, byrow = TRUE)
         dat$pH0 <- pH0
-        dat[ni:(ni + nincr - 1),]
+        dat[ni:(ni + nincr - 1), ]
     }))
 }))
+plotDF <- rbind(burninDF, rarDF)
 plotDFlong <- tidyr::pivot_longer(plotDF, cols = c("pc", paste0("p", 1:K)),
                                   names_to = "arm", values_to = "p")
 
@@ -1210,7 +1216,7 @@ Code and data to reproduce our analyses are openly available at
 \url{https://github.com/SamCH93/brar}. A snapshot of the repository at the time
 of writing is available at \url{https://doi.org/10.5281/zenodo.17248628}. We
 used the statistical programming language
-\Sexpr{R.Version()[["version.string"]]} for analyses \citep{R2024} along with
+\Sexpr{R.Version()[["version.string"]]} for analyses \citep{R2026} along with
 the \texttt{ggplot2} \citep{Wickham2016}, \texttt{dplyr} \citep{Wickham2023},
 \texttt{SimDesign} \citep{Chalmers2020}, \texttt{mvtnorm} \citep{Genz2009},
 \texttt{ggh4x} \citep{Brand2024}, \texttt{ggpubr} \citep{Kassambara2023},
