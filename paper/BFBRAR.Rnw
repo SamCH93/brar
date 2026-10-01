@@ -1,7 +1,7 @@
-%% %% ----------------------------------------------------------------------------
-%% %% journal template
+%% ----------------------------------------------------------------------------
+%% journal template
 %% \documentclass[useAMS,usenatbib,referee]{biom}
-%% %% ----------------------------------------------------------------------------
+%% ----------------------------------------------------------------------------
 
 \documentclass[letter, 12pt]{article}
 \usepackage{amsmath, amssymb} % math
@@ -46,7 +46,8 @@
   Center for Reproducible Science and Research Synthesis (CRS) \\
   University of Zurich \\
   \texttt{\{samuel.pawel,leonhard.held\}@uzh.ch} \\[1ex]
-  \today
+  June 19, 2026
+  %% \today
 }
 
 %% %% ----------------------------------------------------------------------------
@@ -134,8 +135,6 @@ col3 <- "#009E73"
 \end{abstract}
 \end{onehalfspacing}
 
-%% %% ----------------------------------------------------------------------------
-%% %% journal template
 %% \date{{\it Received XXX}. {\it Revised YYY}.  {\it
 %% Accepted ZZZ}.}
 
@@ -149,18 +148,15 @@ col3 <- "#009E73"
 %% \label{firstpage}
 
 %% \begin{abstract}
-%% Response-adaptive randomization (RAR) methods can be used to adapt randomization probabilities based on accumulating data, aiming to increase the probability of allocating patients to effective treatments. A popular RAR method is Thompson sampling, which randomizes patients proportionally to the Bayesian posterior probability that each treatment is the most effective. However, its high variability can also increase the risk of assigning patients to inferior treatments and lead to inferential problems such as confidence interval undercoverage. We propose a principled method based on Bayesian hypothesis testing to address these issues: We introduce a null hypothesis postulating equal effectiveness of treatments. Bayesian model averaging then induces shrinkage toward equal randomization probabilities, with the degree of shrinkage controlled by the prior probability of the null hypothesis. Equal randomization and Thompson sampling arise as special cases when the prior probability is one or zero, respectively.
-%% %% Simulated and real-world examples illustrate that the method balances highly variable Thompson sampling with static equal randomization.
-%% A simulation study demonstrates that the method can mitigate issues with Thompson sampling and has comparable statistical properties to Thompson sampling with common ad hoc modifications such as power transformation and probability capping. Under the null hypothesis and a normal model, the randomization probabilities are shown to  converge asymptotically to equal randomization, unlike those of Thompson sampling. We implement the method in the free and open-source R package \texttt{brar}, enabling experimenters to easily perform null hypothesis Bayesian RAR and support more effective randomization of patients.
+%% Response-adaptive randomization (RAR) methods can be used to adapt randomization probabilities based on accumulating data, aiming to increase the probability of allocating patients to effective treatments. A popular RAR method is Thompson sampling, which randomizes patients proportionally to the Bayesian posterior probability that each treatment is the most effective. However, its high variability can also increase the risk of assigning patients to inferior treatments and lead to inferential problems such as confidence interval undercoverage. We propose a principled method based on Bayesian hypothesis testing to address these issues: We introduce a null hypothesis postulating equal effectiveness of treatments. Bayesian model averaging then induces shrinkage toward equal randomization probabilities, with the degree of shrinkage controlled by the prior probability of the null hypothesis. Equal randomization and Thompson sampling arise as special cases when the prior probability is one or zero, respectively. A simulation study demonstrates that the method can mitigate issues with Thompson sampling and has comparable statistical properties to Thompson sampling with common ad hoc modifications such as power transformation and probability capping. Under the null hypothesis and a normal model, the randomization probabilities are shown to  converge asymptotically to equal randomization, unlike those of Thompson sampling. We implement the method in the free and open-source R package \texttt{brar}, enabling experimenters to easily perform null hypothesis Bayesian RAR and support more effective randomization of patients.
 %% \end{abstract}
 
 %% \begin{keywords}
 %% Adaptive trials; Bayes factor; Bayesian model averaging; outcome-adaptive
 %% randomization; spike-and-slab prior
 %% \end{keywords}
-%% %% ----------------------------------------------------------------------------
 
-\maketitle
+%% \maketitle
 
 \section{Introduction}
 Response-adaptive randomization (RAR) methods randomly allocate patients to
@@ -420,7 +416,7 @@ randomization probability to treatment group $i$ can be expressed as the mixture
 \begin{align}
   \label{eq:mixture}
   \pi_i = w \times \underbrace{\Pr(H_{+i} \mid y, H_1)}_{\text{Thompson sampling}}
-  + (1 - w) \times \underbrace{1/(K + 1)}_{\text{equal randomization}}
+  + (1 - w) \times \kern-1em \underbrace{1/(K + 1)}_{\text{equal randomization}}
 \end{align}
 with weight $w = 1/[1 + \mathrm{BF}_{01}(y) \times \Pr(H_0) / \{1 - \Pr(H_0)\}]$
 governed by the Bayes factor $\mathrm{BF}_{01}(y)$ contrasting $H_0$ to $H_1$.
@@ -690,7 +686,10 @@ datHm <- simulate_brar(burnin = burnin, n = n, nincr = nincr, muc = mut,
 ## re-compute RAR probabilities for different pH0
 pH0seq <- seq(0, 1, 0.25)
 applyRAR <- function(dat) {
-    do.call("rbind", lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
+    ## burn-in: equal randomization for every pH0
+    resBurnin <- expand.grid(n = seq(1, burnin, 1), pH0 = pH0seq)
+    resBurnin$prand <- 0.5
+    resRAR <- do.call("rbind", lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
         fit <- lm(y ~ group, data = dat, subset = n < ni)
         estimate <- summary(fit)$coefficients[2,1]
         se <- summary(fit)$coefficients[2,2]
@@ -701,6 +700,7 @@ applyRAR <- function(dat) {
                        prand = rep(unname(brar$prand[2]), nincr))
         }))
     }))
+    rbind(resBurnin, resRAR)
 }
 resHp <- applyRAR(dat = datHp)
 resH0 <- applyRAR(dat = datH0)
@@ -834,7 +834,7 @@ ggarrange(pltnorm1, pltnorm2, ncol = 1, heights = c(1, 1.3),
 \caption{Plot (a) shows the evolution of Bayesian RAR probabilities for three
   simulated data sequences. In each step, one patient is allocated to the
   treatment or control group using Thompson sampling assuming a normal prior
-  centered at zero with standard deviation $\tau = \Sexpr{tau}$. Patient
+  centered at zero with standard deviation $\tau = \Sexpr{psd}$. Patient
   outcomes are then simulated from a normal distribution with a true standard
   deviation of \Sexpr{sd} and assuming a true mean difference $\theta$ between
   treatment and control group as indicated in the plot panels. Randomization
@@ -856,7 +856,7 @@ $\theta$, the probability to randomize to the treatment group based on $\Pr(H_0)
 = 1$ remains static at $50\%$ (yellow). In contrast, for a beneficial treatment
 effect ($\theta > 0$; left plot), the randomization probabilities based on
 $\Pr(H_0) < 1$ tend towards $100\%$ as more data accumulate, whereas for a
-harmful treatment effect ($\theta > 0$; right plot), they tend towards 0\%.
+harmful treatment effect ($\theta < 0$; right plot), they tend towards 0\%.
 Moreover, a clear ordering is visible: Probabilities under $\Pr(H_0) = 0$
 (Thompson sampling) are the most extreme both in the ``correct'' and ``wrong''
 direction. Probabilities based on $0 < \Pr(H_0) < 1$ show the same qualitative
@@ -1537,11 +1537,11 @@ investigate whether more efficient RAR can be obtained by tuning the prior
 distribution.
 
 \paragraph{Acknowledgments and conflict of interest}
-We thank František Bartoš and Małgorzata Roos for valuable comments. We thank
-the associate editor and two anonymous reviewers for excellent suggestions, and
-especially one reviewer for providing the proof sketch establishing that the
-randomization probabilities converge to equal randomization under $H_0$. We
-declare no conflict of interest.
+We thank František Bartoš, Małgorzata Roos, and Manuela Ott for valuable
+comments. We thank the associate editor and two anonymous reviewers for
+excellent suggestions, and especially one reviewer for providing the proof
+sketch establishing that the randomization probabilities converge to equal
+randomization under $H_0$. We declare no conflict of interest.
 
 \paragraph{Supplementary materials}
 Web Appendices referenced in Sections~\ref{sec:general-theory},
