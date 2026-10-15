@@ -1381,7 +1381,7 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
         trans = factor(trans, levels = c("none", "capping", "c=1/2",
                                          "capping and c=1/2","c=i/(2n)",
                                          "capping and c=i/(2n)"))) |>
-    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.2, pH0)) |>
+    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.25, pH0)) |>
     ## don't show normal BRAR method in main paper
     filter(method != "normal") |>
     mutate(method = factor(method, levels = c("exact", "normal", "equal",
@@ -1402,7 +1402,7 @@ theme_dashboard <- function() {
                  panel.grid.major.x = element_blank(),
                  strip.background = element_rect(fill = "#00000003"))
 }
-dodge_width <- 0.2
+dodge_width <- 0.1
 errorbar_width <- 0
 errorbar_alpha <- 0.8
 cols <- c("BRAR" = "#0072B2",
@@ -1437,7 +1437,8 @@ simplta <- ggplot(data = summaries,
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), y = "Mean rate of successes",
          color = "Method", shape = "Modifications") +
     theme_dashboard() +
-    theme(axis.text.y = element_text(size = rel(0.95)))
+    theme(axis.text.y = element_text(size = rel(0.95)),
+          axis.ticks.x = element_blank())
 
 ## plot 95% CI coverage
 simpltb <- ggplot(data = summaries,
@@ -1457,7 +1458,8 @@ simpltb <- ggplot(data = summaries,
          y = bquote("95% CI Coverage (RD"[1] * ")"),
          shape = "Modifications", color = "Method") +
     theme_dashboard() +
-    theme(axis.text.y = element_text(size = rel(0.95)))
+    theme(axis.text.y = element_text(size = rel(0.95)),
+          axis.ticks.x = element_blank())
 ggarrange(simplta, simpltb, ncol = 1, common.legend = TRUE, legend = "top",
           labels = c("(a)", "(b)"), hjust = 0)
 @
