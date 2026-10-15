@@ -31,6 +31,7 @@ theme_dashboard <- function() {
   ggplot2::theme_bw() + 
   ggplot2::theme(legend.position = "top",
                  panel.grid.minor = element_blank(),
+                 axis.ticks.x = element_blank(),
                  panel.grid.major.x = element_blank(),
                  strip.background = element_rect(fill = "#00000003"))
 }
@@ -60,7 +61,7 @@ summaries <- readRDS("sim-summaries.rds") |>
         trans = factor(trans, levels = c("none", "capping", "c=1/2", 
                                          "capping and c=1/2","c=i/(2n)", 
                                          "capping and c=i/(2n)"))) |>
-    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.2, pH0)) |>
+    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.25, pH0)) |>
     mutate(method = factor(method, levels = c("exact", "normal", "equal",
                                               "gittins", "bayesUCB"),
                            labels = c("Exact BRAR", "Normal BRAR",
@@ -72,7 +73,7 @@ summaries <- readRDS("sim-summaries.rds") |>
            rd1lab = paste0("'RD'[1] == ", pt1 - pc))
 
 ## plot parameters
-dodge_width <- 0.2
+dodge_width <- 0.1
 errorbar_width <- 0
 errorbar_alpha <- 0.8
 cols <- c("Exact BRAR" = "#0072B2",
