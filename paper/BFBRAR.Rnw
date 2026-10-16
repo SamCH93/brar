@@ -46,7 +46,7 @@
   Center for Reproducible Science and Research Synthesis (CRS) \\
   University of Zurich \\
   \texttt{\{samuel.pawel,leonhard.held\}@uzh.ch} \\[1ex]
-  June 19, 2026
+  October 15, 2026
   %% \today
 }
 
@@ -199,7 +199,7 @@ variability, and if so, how it relates to ad hoc modifications.
 Principled Bayesian alternatives to Thompson sampling have also been proposed
 outside clinical trials, particularly in the multi-armed bandit literature. For
 instance, RAR based on the Gittins index prioritizes treatments with the
-greatest expected reward \citep{Gittins2011}, or the Bayesian upper confidence
+greatest expected reward \citep{Gittins2011}, and the Bayesian upper confidence
 bound method allocates treatments based on posterior quantiles and offers
 theoretical performance guarantees \citep{Kaufmann2012}. These methods are
 primarily used in online decision problems but rarely in clinical trials, where
@@ -247,7 +247,7 @@ consider the hypotheses:
 \end{align*}
 How exactly these are translated into statistical hypotheses about parameters
 depends on the data model, but often relates to an effect size parameter being
-less, equal, or greater than zero. If there is no control group, the method can
+less than, equal to, or greater than zero. If there is no control group, the method can
 still be used with the control replaced by a reference group. This hypothesis
 setup is similar to \citet{Cai2013} but with the addition of $H_0$, which
 introduces a different behavior of the resulting randomization probabilities.
@@ -273,15 +273,15 @@ $\theta \in \Theta$ under $H_i$, and
 = \frac{p(y \,\vert\, H_j)}{p(y \,\vert\, H_i)}
 \end{align}
 is the Bayes factor contrasting $H_j$ to $H_i$ \citep{Kass1995}. The Bayes
-factor~\eqref{eq:BF} is the updating factor of the prior odds of $H_j$ to $H_i$
+factor~\eqref{eq:BF} is the updating factor of the prior odds of $H_j$ versus $H_i$
 to the corresponding posterior odds (first equality), which is equivalent to the
 ratio of marginal likelihoods of the data under $H_j$ and $H_i$ (second
 equality). The posterior probabilities~\eqref{eq:posterior} can thus be computed
-from the marginal likelihoods of the data under each considered hypotheses along
+from the marginal likelihoods of the data under each considered hypothesis along
 with their prior probabilities, or from the Bayes factors and prior odds
 relative to some reference hypothesis.
 
-Regardless in which way they are computed, the question is how to translate
+Regardless of which way they are computed, the question is how to translate
 posterior probabilities into randomization probabilities. We propose to
 randomize a future patient to the treatment group with probability
 \begin{align}
@@ -344,7 +344,7 @@ PlotTools::SpectrumLegend("topleft", palette = colpal,
 \label{fig:ternary}
 \end{figure}
 
-This scheme can be motivated as Bayesian hypothesis averaged randomization
+This scheme can be motivated as a Bayesian hypothesis-averaged randomization
 probability where the hypothesis-specific treatment randomization probabilities
 are $0\%$, $50\%$, and $100\%$, under $H_{-}$, $H_{0}$, and $H_{+}$,
 respectively. That is, if we knew that $H_{+}$ or $H_{-}$ is true, we should
@@ -396,7 +396,7 @@ can be achieved by modifying the factor of $\Pr(H_0 \,\vert\, y)$
 in~\eqref{eq:multirand} from $1/(K + 1)$ to the desired baseline randomization
 probability. For example, the aim may be to test all $K$ pairwise differences
 between the treatments and the common control using Dunnett's test. A square
-root allocation rule (with $\sqrt{K}$ more patients in the control group than in
+root allocation rule (with $\sqrt{K}$ times as many patients in the control group as in
 each treatment group) is commonly used to maximize the power of the test
 assuming equal outcome variances across groups \citep[p.156]{Kieser2020}. We may
 therefore use $\pi_i = \Pr(H_{+i} \,\vert\, y) + \Pr(H_0 \,\vert\, y) \, / \, (K
@@ -404,7 +404,7 @@ therefore use $\pi_i = \Pr(H_{+i} \,\vert\, y) + \Pr(H_0 \,\vert\, y) \, / \, (K
 probabilities, $\pi_i = 1/(K + \sqrt{K})$ for treatment $i = 1, \dots, K$, and
 $1 - \sum_{i = 1}^K \pi_i = \sqrt{K}/(K + \sqrt{K})$ for control. However,
 Dunnett-type or other alternative baseline probabilities may seem unnatural from
-a Bayesian hypothesis averaging perspective, since knowing $H_0$ to be true,
+a Bayesian hypothesis-averaging perspective, since knowing $H_0$ to be true,
 there is no power to maximize and equal randomization is a more natural choice.
 
 \subsection{Asymptotic randomization probabilities}
@@ -422,9 +422,9 @@ with weight $w = 1/[1 + \mathrm{BF}_{01}(y) \times \Pr(H_0) / \{1 - \Pr(H_0)\}]$
 governed by the Bayes factor $\mathrm{BF}_{01}(y)$ contrasting $H_0$ to $H_1$.
 When the data favor $H_1$, $\mathrm{BF}_{01}(y)$ is small, the weight $w$ is
 close to one, and the randomization probabilities lie close to Thompson
-sampling, which favor the more effective treatments. When the data favor $H_0$,
-$\mathrm{BF}_{01}(y)$ is large, the weight $w$ is close to zero, and the
-randomization probabilities lie close to equal randomization.
+sampling. When the data favor $H_0$, $\mathrm{BF}_{01}(y)$ is large, the weight
+$w$ is close to zero, and the randomization probabilities lie close to equal
+randomization.
 
 The latter limiting behavior can be established formally under $H_0$. Section~A
 of the supplement shows that the Bayes factor is almost surely bounded away from
@@ -435,7 +435,7 @@ sampling remain consistent under null hypothesis Bayesian RAR \citep{Melfi2000}.
 The supplement further shows that under the normal model (introduced in the next
 Section~\ref{sec:normal}) the Bayes factor diverges to infinity, so that the
 randomization probabilities converge in probability to equal randomization if
-$\Pr(H_0) > 0$. This is an important difference to Thompson sampling, whose
+$\Pr(H_0) > 0$. This is an important difference from Thompson sampling, whose
 randomization probabilities do not converge under $H_0$ but remain random
 \citep{Deliu2025}. The following Section~\ref{sec:normal} also demonstrates this
 convergence empirically through simulation, and likewise provides empirical
@@ -484,11 +484,11 @@ representing equipoise between absent and present effects \citep{Johnson2013b}.
 For a given $\Pr(H_0)$, it is then natural to set the prior probabilities of
 $H_{+}$ and $H_{-}$ to $\Pr(H_{+}) = \{1 - \Pr(H_0)\} \times \Phi(\mu/\tau)$ and
 $\Pr(H_{-}) = \{1 - \Pr(H_0)\} \times \Phi(-\mu/\tau)$, with $\Phi(\cdot)$ the
-standard normal CDF, so that to the prior distribution averaged over $H_{+}$ and
+standard normal CDF, so that the prior distribution averaged over $H_{+}$ and
 $H_{-}$ is again the $\mathrm{N}(\mu, \tau^2)$ distribution. For example,
 specifying $\Pr(H_0) = 0.5$ and a zero-centered prior, we obtain $\Pr(H_{+}) =
 \Pr(H_{-}) = 0.5 \times 0.5 = 0.25.$ Averaging the prior over all hypotheses
-leads then to a spike-and-slab prior, as illustrated in
+then leads to a spike-and-slab prior, as illustrated in
 Figure~\ref{fig:spike-slab}.
 
 \begin{figure}[!htb]
@@ -542,7 +542,7 @@ text(x = -1, y = 0.1*0.5, labels = bquote(italic(H)["-"]), cex = 1.25, col = col
 With the priors specified, we can compute the marginal likelihood of the
 observed effect estimate under each hypothesis and obtain posterior
 probabilities~\eqref{eq:posterior}. In the normal likelihood and prior
-framework, all are available in closed-form. Denoting by $\mathrm{N}(x \,\vert\, m,
+framework, all are available in closed form. Denoting by $\mathrm{N}(x \,\vert\, m,
 v)$ the normal density function with mean $m$ and variance $v$ evaluated at $x$,
 the marginal likelihoods are
 \begin{align*}
@@ -869,18 +869,18 @@ plot), the probabilities based on $0 < \Pr(H_0) < 1$ stay relatively close to
 Figure~\ref{fig:example-normal1}b shows the distribution of randomization
 probabilities obtained from \Sexpr{format(nsim, big.mark = "'")} simulations of
 the scenarios from Figure~\ref{fig:example-normal1}a and for two prior standard
-deviations $\tau$. When the true means differ from zero ($\theta = \pm
-\Sexpr{mgrid$mc[2]}$; first and third row), we see that the randomization
-probabilities for both $\Pr(H_0) = 0$ (Thompson sampling) and $\Pr(H_0) = 0.5$
-correctly converge to 100\% and 0\%, respectively, although the convergence
-of $\Pr(H_0) = 0.5$ is slower. In contrast, when there is no difference ($\theta
-= 0$; second row), only the randomization probabilities based on $\Pr(H_0) =
-0.5$ converge to 50\%, whereas the Thompson sampling randomization probabilities
-remain roughly uniformly distributed for all sample sizes. The qualitative
-behavior of the randomization probabilities is the same for both values of the
-prior standard deviation $\tau$. However, convergence to 100\% and 0\% is
-slightly faster for smaller $\tau$ (blue), whereas convergence to 50\% is
-faster for larger $\tau$ (orange).
+deviations $\tau$. When the true mean difference is non-zero ($\theta = \pm
+\Sexpr{mgrid$mc[2]}$; first and third row), the randomization probabilities for
+both $\Pr(H_0) = 0$ (Thompson sampling) and $\Pr(H_0) = 0.5$ correctly converge
+to 100\% and 0\%, respectively, although the convergence of $\Pr(H_0) = 0.5$ is
+slower. In contrast, when there is no difference ($\theta = 0$; second row),
+only the randomization probabilities based on $\Pr(H_0) = 0.5$ converge to 50\%,
+whereas the Thompson sampling randomization probabilities remain roughly
+uniformly distributed for all sample sizes. The qualitative behavior of the
+randomization probabilities is the same for both values of the prior standard
+deviation $\tau$. However, convergence to 100\% and 0\% is slightly faster for
+smaller $\tau$ (blue), whereas convergence to 50\% is faster for larger $\tau$
+(orange).
 
 
 \subsection{More than two groups}
@@ -953,7 +953,7 @@ text(x = -2, y = 2, labels = bquote(italic(H)["+2"]), cex = 1.25, col = col3)
 text(x = -2.25, y = -2, labels = bquote(italic(H)["-"]), cex = 1.25, col = col1)
 @
 \caption{Illustration of a spike-and-slab prior for a two-dimensional effect
-  $\boldsymbol{\theta} = (\theta_1, \theta_2)^\top$. A point mass prior at $(0,
+  $\boldsymbol{\theta} = (\theta_1, \theta_2)^\top$. A point prior at $(0,
   0)^\top$ is assumed under $H_0$. A normal prior $\theta \sim
   \mathrm{N}((\Sexpr{mu})^\top, \boldsymbol{\mathcal{T}})$ with
   $\boldsymbol{\mathcal{T}}_{ij} = \Sexpr{rho}$ for $i\neq j$ and
@@ -971,10 +971,10 @@ $\boldsymbol{\mathcal{T}}$ is set to a uniform correlation of 0.5 which ensures
 that the prior probabilities of all hypotheses but $H_0$ are equal. Note that a
 zero-centered prior with uniform correlation of 0.5 ensures equal treatment
 prior probabilities for any number of treatment groups $K$, and thus is a
-sensible default in the absence of prior knowledege.
+sensible default in the absence of prior knowledge.
 
 Also for $K > 1$, marginal likelihoods, Bayes factors, posterior probabilities,
-and randomization probabilities are available in closed-form (shown in Section~B
+and randomization probabilities are available in closed form (shown in Section~B
 of the supplement). Crucially, only the evaluation of multivariate normal
 densities and CDFs is required. This thus leads to an efficient Bayesian RAR
 method that allows experimenters to compute randomization probabilities in
@@ -988,7 +988,7 @@ posteriors.
 \label{sec:binary}
 Suppose now that we observe binary data of the form $y = \{y_C, y_1, \dots,
 y_{K}\}$ and $n = \{n_C, n_1, \dots, n_{K}\}$ where $y_i$ denotes the number of
-successes out of $n_i$ trials in group $i \in \{C, 1, \dots, K\}$ coming from a
+successes out of $n_i$ patients in group $i \in \{C, 1, \dots, K\}$ coming from a
 control group ($C$) and $K$ treatment groups. All success counts are assumed to
 be binomially distributed with probabilities $\theta_C, \theta_1, \dots,
 \theta_{K}$, respectively, with higher values indicating greater benefit. The
@@ -1018,7 +1018,7 @@ the corresponding hypothesis. This leads to the marginal likelihood of the data
   &= \prod_{j\in\{C,1,\dots,K\}} \binom{n_j}{y_j} \times \frac{\mathrm{B}(a_j + y_j, b_j + n_j - y_j)}{\mathrm{B}(a_j, b_j)} \\
   & \times \frac{Q_i(a_C + y_C, a_1 + y_1, \dots, a_{K} + y_{K}, b_C + n_C - y_C, b_1 + n_1 - y_1, \dots, b_{K} + n_{K} - y_{K})}{Q_i(a_C, a_1, \dots, a_{K}, b_C, b_1, \dots, b_{K})}
 \end{align*}
-under $H_i \in \{H_C, H_{+1}, \dots, H_{+K}\}$ and with
+under $H_i \in \{H_{-}, H_{+1}, \dots, H_{+K}\}$ and with
 \begin{align*}
   Q_i(a_C, a_1, \dots, a_{K}, b_C, b_1, \dots, b_{K})
   %% &= \Pr(\theta_i = \max\{\theta_C, \theta_1, \dots, \theta_{K}\} \,\vert\,
@@ -1026,12 +1026,13 @@ under $H_i \in \{H_C, H_{+1}, \dots, H_{+K}\}$ and with
   %% &= \int_0^1 p(\theta_i \,\vert\, a_i, b_i) \times \prod_{j\in\{C,1,\dots,K\} \setminus \{i\}} \Pr(\theta_j < \theta_i  \,\vert\, a_j, b_j) \, \mathrm{d}\theta_i \\
   &= \int_0^1 \frac{\theta_i^{a_i - 1} (1 - \theta_i)^{b_i - 1}}{\mathrm{B}(a_i, b_i)} \times \prod_{j\in\{C,1,\dots,K\} \setminus \{i\}} I_{\theta_i}(a_j, b_j) \, \mathrm{d}\theta_i,
 \end{align*}
-where $I_{x}(a, b)$
+where $i = C$ under $H_{-}$ and $i$ is the index of the superior treatment under
+$H_{+i}$, and where $I_{x}(a, b)$ is
 %% $I_{x}(a, b) = \{\int_0^x t^{a - 1}(1 - t)^{b-1} \, \mathrm{d}t\}/\mathrm{B}(a, b)$
-is the CDF of the beta distribution. These marginal likelihoods can be
-efficiently computed with numerical integration. For priors with integer
-hyperparameters, there even exist closed-form solutions \citep{Howard1998,
-  Miller2015}.
+the CDF of the $\mathrm{Beta}(a, b)$ distribution evaluated at $x$. These
+marginal likelihoods can be efficiently computed with numerical integration. For
+priors with integer hyperparameters, there even exist closed-form solutions
+\citep{Howard1998, Miller2015}.
 %% For the one treatment group case, these were already discovered by Carl
 %% Liebermeister in 1877 \citep[see e.g.,][]{Seneta1994, Held2022}.
 %% For example, for one treatment group ($K = 1$), we have that $Q_1(a_C, a_1, b_C,
@@ -1272,7 +1273,7 @@ to the log odds ratio for the normal method, while uniform priors were assigned
 to the probabilities for the binomial method. Log odds ratio estimates were
 computed by adding a half to each cell to avoid zero cell issues. This
 correction induces a slight anomaly, as the probabilities from the normal method
-slightly decrease after the first newborn despite that it survived. This does
+slightly decrease after the first newborn even though it survived. This does
 not happen for the exact method whose probabilities increase after every
 additional patient. Furthermore, the randomization probabilities differ notably
 between the normal and exact methods, even at the end of the study. This
@@ -1303,13 +1304,13 @@ treatment being effective. Depending on $\Pr(H_0)$, the posterior probability at
 the end of the trial may be very high (e.g., $\Pr(H_{+} \,\vert\, y) =
 \Sexpr{round(post0, 2)}$ for $\Pr(H_0) = 0$), or only moderately favoring ECMO
 (e.g., $\Pr(H_{+} \,\vert\, y) = \Sexpr{round(post5, 2)}$ for $\Pr(H_0) = 0.5$).
-Stopping the trial seems thus only a sensible decision if the prior probability
-of no ECMO effect was low.
+Stopping the trial thus seems sensible only if the prior probability of no ECMO
+effect was low.
 
 Figure~\ref{fig:ECMO}c shows the probability of observing the ECMO allocation
 sequence under Bayesian RAR with different $\Pr(H_0)$. The probability is
 highest for $\Pr(H_0) = 0$ (Thompson sampling) and decreases with increasing
-$\Pr(H_0)$ until $(1/2)^{12} = \Sexpr{round(100*0.5^12, 3)}\%$ for $\Pr(H_0) =
+$\Pr(H_0)$ to $(1/2)^{12} = \Sexpr{round(100*0.5^12, 3)}\%$ for $\Pr(H_0) =
 1$ (equal randomization). Interestingly, the probability under RPW is also
 rather low (\Sexpr{pdatarppwround}\%). Hence, observing the ECMO allocation
 sequence under Bayesian RAR would only be less likely than under RPW for
@@ -1320,8 +1321,8 @@ $\Pr(H_0) > \Sexpr{pH0lowrpwexact}$ (exact method) and $\Pr(H_0) >
 \section{Simulation study}
 \label{sec:simulation}
 We conducted a simulation study to evaluate the performance of null hypothesis
-Bayesian RAR for different values $\Pr(H_0)$, and compare it to Thompson
-sampling (potentially modified with burn-in periods, probability capping, power
+Bayesian RAR for different values of $\Pr(H_0)$, and compare it to Thompson
+sampling (potentially modified with burn-in periods, probability capping, or power
 transformations), equal randomization, the Gittins index \citep{Gittins2011},
 and Bayes upper confidence bound (UCB) \citep{Kaufmann2012}. Considered patient
 benefit measures were the mean rate of successes, the rate of extreme
@@ -1356,7 +1357,7 @@ the mean success rate changed noticeably. Increasing $\Pr(H_0)$ reduced
 imbalance toward the inferior treatment, though negative imbalance was also
 strongly influenced by effect size. In conditions with large effect size
 ($\text{RD}_1 = 0.2$), the proportion of negative imbalance was often lower for
-RAR methods (including Thompson sampling) than equal randomization, thus
+RAR methods (including Thompson sampling) than for equal randomization, thus
 confirming the results from \citet{Robertson2023}. These findings highlight the
 importance of evaluating operating characteristics during trial design, since
 appropriately specified RAR designs may enable improved patient benefit without
@@ -1368,8 +1369,9 @@ simres <- readRDS("simulation/brar-sim.rds")
 nsim <- unique(simres$REPLICATIONS)
 summaries <- readRDS("simulation/sim-summaries.rds") |>
     mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
-                            labels = c("none", "[0.1,0.9]")),
-           method = ifelse(pH0 == 1, "equal", method)) |>
+                            labels = c("none", "[0.1,0.9]"))## ,
+           ## method = ifelse(pH0 == 1, "equal", method)
+           ) |>
     mutate(trans = case_when(
         capping_eps == 0.5 & c == "1" ~ "none",
         capping_eps == 0.4 & c == "1" ~ "capping",
@@ -1386,7 +1388,7 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
     filter(method != "normal") |>
     mutate(method = factor(method, levels = c("exact", "normal", "equal",
                                               "gittins", "bayesUCB"),
-                           labels = c("BRAR", "Normal BRAR",
+                           labels = c("Bayesian RAR (exact)", "Normal BRAR",
                                       "Equal Randomization",
                                       "Gittins", "Bayes UCB"))) |>
     mutate(Klab = paste0("italic(K) == ", K),
@@ -1405,7 +1407,7 @@ theme_dashboard <- function() {
 dodge_width <- 0.1
 errorbar_width <- 0
 errorbar_alpha <- 0.8
-cols <- c("BRAR" = "#0072B2",
+cols <- c("Bayesian RAR (exact)" = "#0072B2",
           "Normal BRAR" = "#D55E00",
           "Equal Randomization" = "#000000",
           "Gittins" = "#009E73",
@@ -1420,12 +1422,13 @@ shapes <- c("none" = 19,
 
 
 \begin{figure}[p]
-<< "plot-simulation-results", dependson = "simulation-data", fig.height = 11, fig.width = 8.5 >>=
+<< "plot-simulation-results", dependson = "simulation-main-paper", fig.height = 11, fig.width = 8.5 >>=
 ## plot mean rate of successes
 simplta <- ggplot(data = summaries,
                   aes(x = pH0, y = PS, col = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
+    ## geom_vline(xintercept = -0.125, lty = 1, alpha = 0.3) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
@@ -1444,7 +1447,8 @@ simplta <- ggplot(data = summaries,
 simpltb <- ggplot(data = summaries,
                   aes(x = pH0, y = covRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
+    ## geom_vline(xintercept = -0.125, lty = 1, alpha = 0.3) +
     geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
@@ -1470,7 +1474,9 @@ ggarrange(simplta, simpltb, ncol = 1, common.legend = TRUE, legend = "top",
   \Sexpr{signif(100*max(summaries[,"PS_mcse"]), 2)}\%. Plot (b) shows the
   empirical coverage rate of the 95\% Wald confidence interval for the response
   rate difference $\text{RD}_1$. The maximum MCSE is
-  \Sexpr{signif(100*max(summaries[,"covRD1_mcse"]), 2)}\%.}
+  \Sexpr{signif(100*max(summaries[,"covRD1_mcse"]), 2)}\%. Gittins index and
+  Bayes UCB do not depend on $\Pr(H_0)$ and are shown to the left of $\Pr(H_0) =
+  0$ for comparison.}
 \label{fig:simulationmain}
 \end{figure}
 
@@ -1499,10 +1505,10 @@ similarity is thus only a finite-sample phenomenon.
 
 We have proposed a modification of Thompson sampling by recasting the problem in
 a Bayesian hypothesis testing framework and introducing a null hypothesis of
-equal effectiveness. This method can interpolate between equal randomization and
+equal effectiveness. The method can interpolate between equal randomization and
 Thompson sampling by changing the prior probability of the null hypothesis
-$\Pr(H_0)$. This allows balancing patient benefit with inferential properties.
-For large values of $\Pr(H_0)$, we observed similar characteristics as with ad
+$\Pr(H_0)$. This allows balancing patient benefit with inferential performance.
+For large values of $\Pr(H_0)$, we observed similar characteristics to those of ad
 hoc modifications of Thompson sampling.
 
 One advantage of the method is that randomization probabilities coherently
@@ -1521,7 +1527,7 @@ futility stopping (e.g., dropping of arms at interim) and under time trends
 (e.g., effects attenuating over time because the standard of care improves). RAR
 is often impractical when primary outcomes require long follow-up. An
 alternative could be to perform Bayesian RAR with a surrogate outcome that is
-sooner observed \citep{Gao2024}. Finally, further theoretical work is needed to
+observed sooner \citep{Gao2024}. Finally, further theoretical work is needed to
 better understand the asymptotic behavior of the method under non-normal models
 such as the binomial model considered in Section~\ref{sec:binary}.
 
@@ -1530,13 +1536,12 @@ issues in our study, yet higher values may also be considered. Similar
 considerations apply to the prior distributions of the parameters. For instance,
 rather than setting the correlation of the multivariate normal prior to achieve
 equal randomization probabilities, it could be set so that the prior probability
-of the control being superior is always $\Pr(H_{0}) = 0.5$ and the remaining
+of the control being superior is always $\Pr(H_{-}) = 0.5$ and the remaining
 probability is equally distributed among the treatments. Other choices of the
-correlation structure may also improve operating characteristics, and this
-should be investigated in future research. Similarly, concurrent allocation to
-the control group may be desirable \citep{Trippa2012}. Future work may therefore
-investigate whether more efficient RAR can be obtained by tuning the prior
-distribution.
+correlation structure may also improve operating characteristics. Similarly,
+concurrent allocation to the control group may be desirable \citep{Trippa2012}.
+Future work may therefore investigate whether more efficient RAR can be obtained
+by tuning the prior distribution.
 
 \paragraph{Acknowledgments and conflict of interest}
 We thank František Bartoš, Małgorzata Roos, and Manuela Ott for valuable
