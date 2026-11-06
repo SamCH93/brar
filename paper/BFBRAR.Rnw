@@ -1,7 +1,7 @@
-%% ----------------------------------------------------------------------------
-%% journal template
+%% %% ----------------------------------------------------------------------------
+%% %% journal template
 %% \documentclass[useAMS,usenatbib,referee]{biom}
-%% ----------------------------------------------------------------------------
+%% %% ----------------------------------------------------------------------------
 
 \documentclass[letter, 12pt]{article}
 \usepackage{amsmath, amssymb} % math
@@ -97,7 +97,12 @@ opts_chunk$set(fig.height = 4,
                message = FALSE,
                cache = TRUE,
                eval = TRUE,
-               fig.align = "center")
+               fig.align = "center",
+               dev = c("pdf", "tiff"), # first device is included others only saved
+               dev.args = list(tiff = list(compression = "lzw", type = "cairo",
+                                           bg = "white")),
+               dpi = 600 # resolution for tiff
+)
 
 ## printed digits
 options(scipen = 100000)
@@ -298,6 +303,7 @@ black asterisk, the randomization probability is $\pi = 0.2 + 0.5/2 = 45\%$.
 
 \begin{figure}[!htb]
 << "ternary-plot", fig.height = 3.5, fig.width = 3.5 >>=
+par(bg = "white")
 ## create a ternary plot showing null hypothesis Bayesian randomization scheme
 x <- seq(0, 1, length.out = 20)
 df <- na.omit(do.call("rbind", lapply(X = x, FUN = function(pp) {
@@ -493,6 +499,7 @@ Figure~\ref{fig:spike-slab}.
 
 \begin{figure}[!htb]
 << "spike-and-slab", fig.height = 2.75, fig.width = 4 >>=
+par(bg = "white")
 ## visualize spike and slab prior
 par(mar = c(4, 4, 0.5, 0.1))
 tseqn <- seq(-3, 0, length.out = 500)
@@ -914,6 +921,7 @@ recovered when the prior is averaged over the hypotheses.
 
 \begin{figure}[!htb]
 << "two-dimensional-prior", fig.height = 3.2, fig.width = 3.2 >>=
+par(bg = "white")
 ## visualize two-dimensional spike-and-slab prior
 ngrid <- 300
 tseq <- seq(-3, 3, length.out = ngrid)
@@ -1428,7 +1436,6 @@ simplta <- ggplot(data = summaries,
                   aes(x = pH0, y = PS, col = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
-    ## geom_vline(xintercept = -0.125, lty = 1, alpha = 0.3) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
@@ -1448,7 +1455,6 @@ simpltb <- ggplot(data = summaries,
                   aes(x = pH0, y = covRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
     geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
-    ## geom_vline(xintercept = -0.125, lty = 1, alpha = 0.3) +
     geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +

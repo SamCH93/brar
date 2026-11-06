@@ -13,7 +13,7 @@ opts_chunk$set(fig.height = 4,
 options(scipen = 100000)
 
 ## should sessionInfo be printed at the end?
-Reproducibility <- FALSE
+Reproducibility <- TRUE
 
 ## packages
 library(parallel)
@@ -192,7 +192,10 @@ datHm <- simulate_brar(burnin = burnin, n = n, nincr = nincr, muc = mut,
 ## re-compute RAR probabilities for different pH0
 pH0seq <- seq(0, 1, 0.25)
 applyRAR <- function(dat) {
-    do.call("rbind", lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
+    ## burn-in: equal randomization for every pH0
+    resBurnin <- expand.grid(n = seq(1, burnin, 1), pH0 = pH0seq)
+    resBurnin$prand <- 0.5
+    resRAR <- do.call("rbind", lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
         fit <- lm(y ~ group, data = dat, subset = n < ni)
         estimate <- summary(fit)$coefficients[2,1]
         se <- summary(fit)$coefficients[2,2]
@@ -203,6 +206,7 @@ applyRAR <- function(dat) {
                        prand = rep(unname(brar$prand[2]), nincr))
         }))
     }))
+    rbind(resBurnin, resRAR)
 }
 resHp <- applyRAR(dat = datHp)
 resH0 <- applyRAR(dat = datH0)
@@ -575,8 +579,9 @@ simres <- readRDS("simulation/brar-sim.rds")
 nsim <- unique(simres$REPLICATIONS)
 summaries <- readRDS("simulation/sim-summaries.rds") |>
     mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
-                            labels = c("none", "[0.1,0.9]")),
-           method = ifelse(pH0 == 1, "equal", method)) |>
+                            labels = c("none", "[0.1,0.9]"))## ,
+           ## method = ifelse(pH0 == 1, "equal", method)
+           ) |>
     mutate(trans = case_when(
         capping_eps == 0.5 & c == "1" ~ "none",
         capping_eps == 0.4 & c == "1" ~ "capping",
@@ -588,12 +593,12 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
         trans = factor(trans, levels = c("none", "capping", "c=1/2",
                                          "capping and c=1/2","c=i/(2n)",
                                          "capping and c=i/(2n)"))) |>
-    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.2, pH0)) |>
+    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.25, pH0)) |>
     ## don't show normal BRAR method in main paper
     filter(method != "normal") |>
     mutate(method = factor(method, levels = c("exact", "normal", "equal",
                                               "gittins", "bayesUCB"),
-                           labels = c("BRAR", "Normal BRAR",
+                           labels = c("Bayesian RAR (exact)", "Normal BRAR",
                                       "Equal Randomization",
                                       "Gittins", "Bayes UCB"))) |>
     mutate(Klab = paste0("italic(K) == ", K),
@@ -609,10 +614,10 @@ theme_dashboard <- function() {
                  panel.grid.major.x = element_blank(),
                  strip.background = element_rect(fill = "#00000003"))
 }
-dodge_width <- 0.2
+dodge_width <- 0.1
 errorbar_width <- 0
 errorbar_alpha <- 0.8
-cols <- c("BRAR" = "#0072B2",
+cols <- c("Bayesian RAR (exact)" = "#0072B2",
           "Normal BRAR" = "#D55E00",
           "Equal Randomization" = "#000000",
           "Gittins" = "#009E73",
@@ -625,12 +630,12 @@ shapes <- c("none" = 19,
             "capping and c=i/(2n)" = 1)
 
 
-## ----"plot-simulation-results", dependson = "simulation-data", fig.height = 11, fig.width = 8.5----
+## ----"plot-simulation-results", dependson = "simulation-main-paper", fig.height = 11, fig.width = 8.5----
 ## plot mean rate of successes
 simplta <- ggplot(data = summaries,
                   aes(x = pH0, y = PS, col = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
     scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
@@ -642,13 +647,14 @@ simplta <- ggplot(data = summaries,
     labs(x = bquote("Pr(" * italic(H)[0] * ")"), y = "Mean rate of successes",
          color = "Method", shape = "Modifications") +
     theme_dashboard() +
-    theme(axis.text.y = element_text(size = rel(0.95)))
+    theme(axis.text.y = element_text(size = rel(0.95)),
+          axis.ticks.x = element_blank())
 
 ## plot 95% CI coverage
 simpltb <- ggplot(data = summaries,
                   aes(x = pH0, y = covRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
@@ -662,7 +668,8 @@ simpltb <- ggplot(data = summaries,
          y = bquote("95% CI Coverage (RD"[1] * ")"),
          shape = "Modifications", color = "Method") +
     theme_dashboard() +
-    theme(axis.text.y = element_text(size = rel(0.95)))
+    theme(axis.text.y = element_text(size = rel(0.95)),
+          axis.ticks.x = element_blank())
 ggarrange(simplta, simpltb, ncol = 1, common.legend = TRUE, legend = "top",
           labels = c("(a)", "(b)"), hjust = 0)
 
@@ -798,22 +805,28 @@ datmulti <- simulate_multi_brar(burnin = burnin, n = n, nincr = nincr,
                                 psd = psd, rho = rho, pH0 = pH0)
 ## re-compute RAR probabilities for different pH0
 pH0seq <- seq(0, 1, 0.25)
-plotDF <- do.call("rbind",
-                  lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
-    dat <- datmulti
+burninDF <- do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
+    dat <- datmulti[seq_len(burnin), ]
+    dat[, c("pc", paste0("p", 1:K))] <- 1/(K + 1)
     dat$pH0 <- pH0
+    dat
+}))
+rarDF <- do.call("rbind",
+                 lapply(X = seq(burnin + 1, n, nincr), FUN = function(ni) {
+    dat <- datmulti
     fit <- lm(y ~ group, data = dat, subset = n < ni)
     estimate <- fit$coef[-1]
-    sigma <- vcov(fit)[-1,-1]
+    sigma <- vcov(fit)[-1, -1]
     do.call("rbind", lapply(X = pH0seq, FUN = function(pH0) {
         brar <- brar_normal(estimate = estimate, sigma = sigma, pm = pm,
                             psigma = psigma, pH0 = pH0)
         dat[ni:(ni + nincr - 1), c("pc", paste0("p", 1:K))] <-
             matrix(rep(brar$prand, nincr), ncol = K + 1, byrow = TRUE)
         dat$pH0 <- pH0
-        dat[ni:(ni + nincr - 1),]
+        dat[ni:(ni + nincr - 1), ]
     }))
 }))
+plotDF <- rbind(burninDF, rarDF)
 plotDFlong <- tidyr::pivot_longer(plotDF, cols = c("pc", paste0("p", 1:K)),
                                   names_to = "arm", values_to = "p")
 
@@ -996,12 +1009,12 @@ nsim <- unique(simres$REPLICATIONS)
 si <- readRDS("simulation/sessioninfo-server.rds")
 
 
-## ----"preprare-simulation-data"-----------------------------------------------
+## ----"simulation-data"--------------------------------------------------------
 ## prepare results from simulation study
 summaries <- readRDS("simulation/sim-summaries.rds") |>
     mutate(capping = factor(capping_eps, levels = c(0.5, 0.4),
-                            labels = c("none", "[0.1,0.9]")),
-           method = ifelse(pH0 == 1, "equal", method)) |>
+                            labels = c("none", "[0.1,0.9]"))
+           ) |>
     mutate(trans = case_when(
         capping_eps == 0.5 & c == "1" ~ "none",
         capping_eps == 0.4 & c == "1" ~ "capping",
@@ -1013,7 +1026,7 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
         trans = factor(trans, levels = c("none", "capping", "c=1/2",
                                          "capping and c=1/2","c=i/(2n)",
                                          "capping and c=i/(2n)"))) |>
-    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.2, pH0)) |>
+    mutate(pH0 = ifelse(method %in% c("bayesUCB", "gittins"), -0.25, pH0)) |>
     mutate(method = factor(method, levels = c("exact", "normal", "equal",
                                               "gittins", "bayesUCB"),
                            labels = c("Exact BRAR", "Normal BRAR",
@@ -1055,10 +1068,11 @@ summaries <- readRDS("simulation/sim-summaries.rds") |>
 ## plot parameters
 theme_dashboard <- function() {
   ggplot2::theme_bw() +
-  ggplot2::theme(legend.position = "top",
-                 panel.grid.minor = element_blank(),
-                 panel.grid.major.x = element_blank(),
-                 strip.background = element_rect(fill = "#00000003"))
+      ggplot2::theme(legend.position = "top",
+                     axis.ticks.x = element_blank(),
+                     panel.grid.minor = element_blank(),
+                     panel.grid.major.x = element_blank(),
+                     strip.background = element_rect(fill = "#00000003"))
 }
 dodge_width <- 0.2
 errorbar_width <- 0
@@ -1087,7 +1101,7 @@ maxNC <- summaries |>
 ggplot(data = summaries,
        aes(x = pH0, y = PS, col = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     # geom_hline(aes(yintercept = pt1), lty = 2, alpha = 0.5) +
     # geom_hline(aes(yintercept = (pt1 + pc)/2), lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
@@ -1095,7 +1109,8 @@ ggplot(data = summaries,
     ##               width = errorbar_width, alpha = errorbar_alpha,
     ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
@@ -1110,14 +1125,15 @@ ggplot(data = summaries,
 ggplot(data = summaries,
        aes(x = pH0, y = PExtreme, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     ## geom_errorbar(aes(ymin = PExtreme - PExtreme_mcse,
     ##                   ymax = PExtreme + PExtreme_mcse),
     ##               width = errorbar_width, alpha = errorbar_alpha,
     ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
@@ -1133,13 +1149,14 @@ ggplot(data = summaries,
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = S01, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     ## geom_errorbar(aes(ymin = S01 - S01_mcse, ymax = S01 + S01_mcse),
     ##               width = errorbar_width, alpha = errorbar_alpha,
     ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
@@ -1155,14 +1172,15 @@ ggplot(data = filter(summaries, pt1 > pc),
 ggplot(data = summaries,
        aes(x = pH0, y = biasRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     geom_hline(yintercept = 0, lty = 2, alpha = 0.3) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     ## geom_errorbar(aes(ymin = biasRD1 - biasRD1_mcse, ymax = biasRD1 + biasRD1_mcse),
     ##               width = errorbar_width, alpha = errorbar_alpha,
     ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
     guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
@@ -1177,14 +1195,15 @@ ggplot(data = summaries,
 ggplot(data = summaries,
        aes(x = pH0, y = covRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     geom_hline(yintercept = 0.95, lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     ## geom_errorbar(aes(ymin = covRD1 - covRD1_mcse, ymax = covRD1 + covRD1_mcse),
     ##               width = errorbar_width, alpha = errorbar_alpha,
     ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
@@ -1200,16 +1219,17 @@ ggplot(data = summaries,
 ggplot(data = filter(summaries, pt1 == pc),
        aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     geom_hline(yintercept = 0.025, lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     ## geom_errorbar(aes(ymin = rrRD1 - rrRD1_mcse, ymax = rrRD1 + rrRD1_mcse),
     ##               width = errorbar_width, alpha = errorbar_alpha,
     ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
     scale_y_continuous(breaks = seq(0, 0.15, 0.025),
-                       labels = scales::percent) + #, limits = c(0, 1)) +
+                       labels = scales::percent) +
     expand_limits(y = 0) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
@@ -1225,14 +1245,15 @@ ggplot(data = filter(summaries, pt1 == pc),
 ggplot(data = filter(summaries, pt1 > pc),
        aes(x = pH0, y = rrRD1, color = method, shape = trans)) +
     facet_nested(nlab + rd1lab ~ burninlab + Klab, labeller = label_parsed) +
-    geom_vline(xintercept = seq(-0.125, 1.25, 0.25), alpha = 0.1) +
+    geom_vline(xintercept = seq(-0.125, 0.975, 0.25), alpha = 0.1) +
     ## geom_hline(yintercept = 0.8, lty = 2, alpha = 0.5) +
     geom_line(alpha = 0.3, position = position_dodge(width = dodge_width)) +
     ## geom_errorbar(aes(ymin = rrRD1 - rrRD1_mcse, ymax = rrRD1 + rrRD1_mcse),
     ##               width = errorbar_width, alpha = errorbar_alpha,
     ##               position = position_dodge(width = dodge_width)) +
     geom_point(position = position_dodge(width = dodge_width)) +
-    scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+    scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                       labels = c("0", ".25", ".5", ".75", "1")) +
     scale_y_continuous(labels = scales::percent) +
     scale_color_manual(values = cols) +
     scale_shape_manual(values = shapes) +
@@ -1246,18 +1267,20 @@ ggplot(data = filter(summaries, pt1 > pc),
 ## ----"brar-package-demonstration", echo = TRUE, size = "normalsize"-----------
 library(brar) # load package
 
-## observed successes and trials in control and 3 treatment groups
+## successes and observations in control and 3 treatment groups
 y <- c(10, 9, 14, 13)
 n <- c(20, 20, 22, 21)
 
 ## conduct exact point null Bayesian RAR
-brar_binomial(y = y, n = n,
-              ## uniform prior for common probability under H0
-              a0 = 1, b0 = 1,
-              ## uniform priors for all probabilities
-              a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
-              ## prior probability of the null hypothesis
-              pH0 = 0.5)
+res <- brar_binomial(y = y, n = n,
+                     ## uniform prior for common probability under H0
+                     a0 = 1, b0 = 1,
+                     ## uniform priors for all probabilities
+                     a = c(1, 1, 1, 1), b = c(1, 1, 1, 1),
+                     ## prior probability of the null hypothesis
+                     pH0 = 0.5)
+res # print results
+res$prand # extract randomization probabilities for RAR
 
 
 
